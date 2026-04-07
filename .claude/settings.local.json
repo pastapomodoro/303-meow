@@ -5,7 +5,8 @@
       "Bash(cmake -B /Users/eugenio.bellini/Documents/MISC/WEB/claudio/build -G Ninja -DCMAKE_BUILD_TYPE=Release)",
       "Bash(cmake -B /Users/eugenio.bellini/Documents/MISC/WEB/claudio/build -G Ninja -DCMAKE_BUILD_TYPE=Release -S /Users/eugenio.bellini/Documents/MISC/WEB/claudio)",
       "Bash(cmake --build /Users/eugenio.bellini/Documents/MISC/WEB/claudio/build)",
-      "Bash(cmake --build build)"
+      "Bash(cmake --build build)",
+      "Bash(cmake --build build --config Release)"
     ]
   }
 }

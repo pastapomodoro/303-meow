@@ -5,12 +5,12 @@
 #include "Presets.h"
 
 //==============================================================================
-// Light warm-cream LookAndFeel — orange accents
+// MeowLookAndFeel — dark-metal skeuomorphic + orange/green accents
 //==============================================================================
-class TB303LookAndFeel : public juce::LookAndFeel_V4
+class MeowLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
-    TB303LookAndFeel();
+    MeowLookAndFeel();
 
     void drawRotarySlider(juce::Graphics&,
                           int x, int y, int w, int h,
@@ -40,54 +40,73 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
+    void mouseDown(const juce::MouseEvent& e) override;
 
 private:
     TB303Processor& processor;
-    TB303LookAndFeel laf;
+    MeowLookAndFeel laf;
 
-    //── Sequencer grid ──────────────────────────────────────────────────────
+    //── Tab ──────────────────────────────────────────────────────────────────
+    int currentTab = 0;   // 0=SYNTH  1=SEQ  2=FX  3=PRESET  4=SETTINGS
+    void showCurrentTab();
+
+    //── Sequencer grid ───────────────────────────────────────────────────────
     SequencerGrid sequencerGrid;
 
-    //── Header: preset dropdowns ─────────────────────────────────────────────
+    //── Presets ──────────────────────────────────────────────────────────────
     juce::Label    fullPresetLbl, synthPresetLbl;
-    juce::ComboBox fullPresetBox;    // 8 factory full presets
-    juce::ComboBox synthPresetBox;   // 12 synth-only presets
+    juce::ComboBox fullPresetBox, synthPresetBox;
 
-    //── Pattern select buttons (8) + step resolution (3) + MIDI mode ───────
+    //── Buttons ──────────────────────────────────────────────────────────────
     std::array<juce::TextButton, StepSequencer::NUM_PATTERNS> patternButtons;
-    std::array<juce::TextButton, 3>                           resButtons;   // 1/16, 1/8, 1/4
-    juce::TextButton                                          midiModeButton;
+    std::array<juce::TextButton, 3>                           resButtons;
+    juce::TextButton midiModeButton, playButton, waveformButton, midiExportButton;
 
-    //── Main knobs (row 1) ───────────────────────────────────────────────────
+    //── Synth knobs ──────────────────────────────────────────────────────────
     juce::Slider cutoffKnob, resonanceKnob, envModKnob, decayKnob;
-    juce::Slider accentKnob, volumeKnob, distortionKnob, tuningKnob;
-    juce::Label  cutoffLbl, resonanceLbl, envModLbl, decayLbl;
-    juce::Label  accentLbl, volumeLbl, distortionLbl, tuningLbl;
+    juce::Slider accentKnob, volumeKnob, tuningKnob;
+    juce::Label  cutoffLbl,  resonanceLbl,  envModLbl,  decayLbl;
+    juce::Label  accentLbl,  volumeLbl,     tuningLbl;
 
-    //── FX knobs (row 2) ────────────────────────────────────────────────────
-    juce::Slider delayTimeKnob, delayFbKnob, delayMixKnob;
-    juce::Slider reverbSizeKnob, reverbMixKnob, tempoKnob;
-    juce::Label  delayTimeLbl, delayFbLbl, delayMixLbl;
-    juce::Label  reverbSizeLbl, reverbMixLbl, tempoLbl;
+    //── FX knobs ─────────────────────────────────────────────────────────────
+    juce::Slider distortionKnob, tempoKnob;
+    juce::Slider delayTimeKnob,  delayFbKnob,   delayMixKnob;
+    juce::Slider reverbSizeKnob, reverbMixKnob;
+    juce::Label  distortionLbl,  tempoLbl;
+    juce::Label  delayTimeLbl,   delayFbLbl,    delayMixLbl;
+    juce::Label  reverbSizeLbl,  reverbMixLbl;
 
-    //── Waveform toggle & play button ───────────────────────────────────────
-    juce::TextButton waveformButton;
-    juce::TextButton playButton;
+    //── APVTS ────────────────────────────────────────────────────────────────
+    using SA = juce::AudioProcessorValueTreeState::SliderAttachment;
+    std::unique_ptr<SA> cutoffAtt, resonanceAtt, envModAtt, decayAtt;
+    std::unique_ptr<SA> accentAtt, volumeAtt, distortionAtt, tuningAtt;
+    std::unique_ptr<SA> delayTimeAtt, delayFbAtt, delayMixAtt;
+    std::unique_ptr<SA> reverbSizeAtt, reverbMixAtt, tempoAtt;
 
-    //── APVTS attachments ────────────────────────────────────────────────────
-    using SliderAttach = juce::AudioProcessorValueTreeState::SliderAttachment;
-    std::unique_ptr<SliderAttach> cutoffAtt, resonanceAtt, envModAtt, decayAtt;
-    std::unique_ptr<SliderAttach> accentAtt, volumeAtt, distortionAtt, tuningAtt;
-    std::unique_ptr<SliderAttach> delayTimeAtt, delayFbAtt, delayMixAtt;
-    std::unique_ptr<SliderAttach> reverbSizeAtt, reverbMixAtt, tempoAtt;
+    //── File chooser ─────────────────────────────────────────────────────────
+    std::unique_ptr<juce::FileChooser> fileChooser;
+
+    //── Animation ────────────────────────────────────────────────────────────
+    float oscPhase = 0.0f;
 
     //── Helpers ──────────────────────────────────────────────────────────────
     void setupKnob(juce::Slider& k, juce::Label& l, const juce::String& name);
-    void drawLCDScreen(juce::Graphics& g, juce::Rectangle<int> bounds);
-    void drawSectionPanel(juce::Graphics& g, juce::Rectangle<int> bounds,
-                          const juce::String& title);
-    void drawLogo(juce::Graphics& g, juce::Rectangle<int> bounds);
 
+    void drawTabBar       (juce::Graphics& g);
+    void drawSynthTab     (juce::Graphics& g);
+    void drawSequencerTab (juce::Graphics& g);
+    void drawFxTab        (juce::Graphics& g);
+    void drawPresetTab    (juce::Graphics& g);
+    void drawSettingsTab  (juce::Graphics& g);
+
+    void drawPanel   (juce::Graphics& g, juce::Rectangle<int> r,
+                      const juce::String& title,
+                      juce::Colour accent = juce::Colour(0xffff6600));
+    void drawLCDPanel(juce::Graphics& g, juce::Rectangle<int> r);
+    void drawLogo    (juce::Graphics& g);
+    void drawRivet   (juce::Graphics& g, float x, float y, float r = 4.5f);
+
+    void exportMidiPattern();
     void updatePatternButtons();
     void updatePlayButton();
     void updateWaveformButton();

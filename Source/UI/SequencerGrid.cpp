@@ -1,25 +1,45 @@
 #include "SequencerGrid.h"
 
-// ── Dark futuristic / cyber-minimal palette ──────────────────────────────────
-namespace GCol {
-    const juce::Colour bg       { 0xff0b0b18 };   // deep navy bg
-    const juce::Colour colBg    { 0xff101020 };   // step column bg (even)
-    const juce::Colour colBgAlt { 0xff0d0d1c };   // step column bg (odd)
-    const juce::Colour inactive { 0xff080812 };   // inactive step (darker)
-    const juce::Colour gateOn   { 0xff00cce0 };   // electric cyan gate ON
-    const juce::Colour gateOff  { 0xff181830 };   // dark gate OFF
-    const juce::Colour playGlow { 0xffffcc00 };   // amber playhead glow
-    const juce::Colour accent   { 0xffff9900 };   // amber-orange accent
-    const juce::Colour slide    { 0xff0088ff };   // blue slide indicator
-    const juce::Colour text     { 0xffaab8d0 };   // cool blue-grey text
-    const juce::Colour textDim  { 0xff404868 };   // dim text
-    const juce::Colour border   { 0xff1c1c34 };   // column border
-    const juce::Colour btnBg    { 0xff161628 };   // control button bg
-    const juce::Colour btnAct   { 0xff00aabb };   // active control button (dim cyan)
-    const juce::Colour octNeg   { 0xff1a5090 };   // -1 octave (blue)
-    const juce::Colour octZero  { 0xff1a5050 };   //  0 octave (teal)
-    const juce::Colour octPos   { 0xff705020 };   // +1 octave (amber-brown)
-    const juce::Colour noteBtn  { 0xff2a3448 };   // ▲▼ button tint
+// ── Dark-metal + orange palette (matches new sketch) ──────────────────────────
+namespace GCol
+{
+    // Backgrounds
+    const juce::Colour panelDark    { 0xff181818 };
+    const juce::Colour panelDarker  { 0xff111111 };
+    const juce::Colour sectionBg    { 0xff1f1f1f };
+
+    // Borders (unused legacy names kept for compat)
+    const juce::Colour copper       { 0xff3a3a3a };
+    const juce::Colour copperHi     { 0xff3a3a3a };
+    const juce::Colour borderCopper { 0xff2e2e2e };
+
+    // Green — step ON (acid signature)
+    const juce::Colour neon         { 0xff00dd55 };
+    const juce::Colour neonGlow     { 0xff44ff88 };
+    const juce::Colour neonDim      { 0xff003318 };
+
+    // Orange — playhead + accent (primary accent from sketch)
+    const juce::Colour amber        { 0xffff6600 };
+    const juce::Colour amberGlow    { 0xffff8833 };
+
+    // Labels
+    const juce::Colour labelActive  { 0xffff6600 };   // orange header
+    const juce::Colour labelDim     { 0xff666666 };   // dim grey
+
+    // Step states
+    const juce::Colour stepOn       { 0xff00dd55 };   // green ON
+    const juce::Colour stepOff      { 0xff1f1f1f };   // dark OFF
+    const juce::Colour stepBorder   { 0xff2e2e2e };   // dark border
+    const juce::Colour stepPlaying  { 0xffffffff };   // white playhead
+
+    // Dots
+    const juce::Colour accentDotOn  { 0xffff6600 };   // orange accent dot
+    const juce::Colour slideDotOn   { 0xff0088ff };   // blue slide dot
+    const juce::Colour dotOff       { 0xff282828 };   // dark off
+
+    // Octave buttons
+    const juce::Colour octBg        { 0xff181818 };
+    const juce::Colour octText      { 0xff666666 };
 }
 
 SequencerGrid::SequencerGrid(StepSequencer& seq)
@@ -38,7 +58,7 @@ void SequencerGrid::timerCallback()
     repaint();
 }
 
-void SequencerGrid::resized() {}   // layout computed on-the-fly in paint/hitTest
+void SequencerGrid::resized() {}
 
 // ── Hit testing ─────────────────────────────────────────────────────────────
 SequencerGrid::HitResult SequencerGrid::hitTest(juce::Point<float> p) const
@@ -48,23 +68,31 @@ SequencerGrid::HitResult SequencerGrid::hitTest(juce::Point<float> p) const
 
     const float cw   = colW();
     const int   step = juce::jlimit(0, Pattern::MAX_STEPS - 1, int(p.x / cw));
-    const float relX = p.x - step * cw;
+    const float relX = p.x - float(step) * cw;
     const float relY = p.y;
 
-    if (relY < kGateTop)   return { step, Z_LABEL };
-    if (relY < kNoteUpTop) return { step, Z_GATE };
-    if (relY < kNoteNmTop) return { step, Z_NOTE_UP };
-    if (relY < kNoteDnTop) return { step, Z_NOTE_NM };  // display only
-    if (relY < kOctTop)    return { step, Z_NOTE_DN };
-    if (relY < kAccentTop) {
-        // Octave zone: split horizontally into 3
+    const float stepRowTop    = kTopStripH + kVerticalGap;
+    const float stepRowBottom = stepRowTop + kStepRowH;
+    const float dotRowTop     = stepRowBottom + kVerticalGap;
+    const float dotRowBottom  = dotRowTop + kDotRowH;
+
+    if (relY >= stepRowTop && relY <= stepRowBottom)
+        return { step, Z_STEP };
+
+    if (relY >= dotRowTop && relY <= dotRowBottom)
+    {
+        if (relX < cw * 0.5f) return { step, Z_ACCENT };
+        return { step, Z_SLIDE };
+    }
+
+    if (relY >= kTopStripH - 18.0f && relY <= kTopStripH)
+    {
         float third = cw / 3.0f;
-        if (relX < third)         return { step, Z_OCT_M1 };
-        if (relX < third * 2.0f)  return { step, Z_OCT_0  };
+        if (relX < third)        return { step, Z_OCT_M1 };
+        if (relX < third * 2.0f) return { step, Z_OCT_0  };
         return { step, Z_OCT_P1 };
     }
-    if (relY < kSlideTop)  return { step, Z_ACCENT };
-    if (relY < kPlayTop)   return { step, Z_SLIDE  };
+
     return { step, Z_NONE };
 }
 
@@ -77,196 +105,213 @@ juce::String SequencerGrid::noteNameStr(int midiNote)
     return juce::String(names[n]) + juce::String(oct);
 }
 
-// ── Draw a single step column ────────────────────────────────────────────────
-void SequencerGrid::drawColumn(juce::Graphics& g,
-                                int   idx,
-                                float x,
-                                float w,
-                                const Step& s,
-                                bool  active,
-                                bool  isPlayhead,
-                                bool  playing) const
+// ── Draw a single step ───────────────────────────────────────────────────────
+void SequencerGrid::drawStep(juce::Graphics& g,
+                             int   idx,
+                             float x,
+                             float w,
+                             const Step& s,
+                             bool  active,
+                             bool  isPlayhead,
+                             bool  playing) const
 {
-    const float gap  = 1.5f;          // gap between columns
-    const float bx   = x + gap;
-    const float bw   = w - gap * 2.0f;
-    const juce::Colour colBg = (idx % 2 == 0) ? GCol::colBg : GCol::colBgAlt;
+    const float stepRowTop    = kTopStripH + kVerticalGap;
+    const float stepRowBottom = stepRowTop + kStepRowH;
+    const float dotRowTop     = stepRowBottom + kVerticalGap;
 
-    // ── Column background ─────────────────────────────────────────────────
-    g.setColour(active ? colBg : GCol::inactive);
-    g.fillRect(bx, 0.0f, bw, kColH);
+    const float bx = x + 2.5f;
+    const float bw = w - 5.0f;
 
-    // Playhead glow border
-    if (isPlayhead && playing)
-    {
-        g.setColour(GCol::playGlow.withAlpha(0.35f));
-        g.fillRect(bx, 0.0f, bw, kColH);
-        g.setColour(GCol::playGlow);
-        g.drawRect(bx, 0.0f, bw, kColH, 2.0f);
-    }
+    // Step index number (dim, above button)
+    g.setColour(GCol::labelDim);
+    g.setFont(juce::Font(juce::FontOptions().withName("Menlo").withHeight(9.0f)));
+    g.drawText(juce::String(idx + 1),
+               juce::Rectangle<float>(bx, 4.0f, bw, 10.0f),
+               juce::Justification::centred, false);
 
     if (!active)
     {
-        // Inactive: just show dim step number and return
-        g.setColour(GCol::textDim);
-        g.setFont(juce::Font(juce::FontOptions(9.0f)));
-        g.drawText(juce::String(idx + 1),
-                   juce::Rectangle<float>(bx, kLabelTop + 1.0f, bw, kGateTop - 2.0f),
-                   juce::Justification::centred, false);
+        // Inactive: very dim, dark mahogany
+        juce::Rectangle<float> r(bx, stepRowTop, bw, kStepRowH);
+        g.setColour(GCol::stepOff.withAlpha(0.7f));
+        g.fillRoundedRectangle(r, 4.0f);
+        g.setColour(GCol::stepBorder.withAlpha(0.5f));
+        g.drawRoundedRectangle(r, 4.0f, 0.8f);
         return;
     }
 
-    // ── Step number label ─────────────────────────────────────────────────
+    // === Main step button ===
     {
-        g.setColour(isPlayhead ? GCol::playGlow : GCol::textDim);
-        g.setFont(juce::Font(juce::FontOptions(9.0f)));
-        g.drawText(juce::String(idx + 1),
-                   juce::Rectangle<float>(bx, kLabelTop + 1.0f, bw, kGateTop - 2.0f),
-                   juce::Justification::centred, false);
-    }
-
-    // ── Gate button ───────────────────────────────────────────────────────
-    {
-        const float gy = kGateTop + 2.0f;
-        const float gh = kNoteUpTop - kGateTop - 4.0f;
-        juce::Rectangle<float> gateR(bx + 2.0f, gy, bw - 4.0f, gh);
+        juce::Rectangle<float> r(bx, stepRowTop, bw, kStepRowH);
 
         if (s.gate)
         {
-            juce::ColourGradient grad(GCol::gateOn.brighter(0.15f),
-                                      gateR.getX(), gateR.getY(),
-                                      GCol::gateOn.darker(0.2f),
-                                      gateR.getX(), gateR.getBottom(), false);
-            g.setGradientFill(grad);
+            // Acid green fill with glow
+            juce::ColourGradient gateGrad(
+                GCol::neonGlow,  bx,        stepRowTop,
+                GCol::neon,      bx,        stepRowBottom, false);
+            g.setGradientFill(gateGrad);
+            g.fillRoundedRectangle(r, 4.0f);
+
+            // Inner glow border
+            g.setColour(GCol::neonGlow.withAlpha(0.30f));
+            g.drawRoundedRectangle(r.expanded(1.2f), 5.0f, 1.4f);
         }
         else
         {
-            juce::ColourGradient grad(GCol::gateOff.brighter(0.05f),
-                                      gateR.getX(), gateR.getY(),
-                                      GCol::gateOff.darker(0.1f),
-                                      gateR.getX(), gateR.getBottom(), false);
-            g.setGradientFill(grad);
+            // Off: dark with subtle copper tint
+            juce::ColourGradient offGrad(
+                GCol::panelDark.brighter(0.04f), bx, stepRowTop,
+                GCol::panelDarker,               bx, stepRowBottom, false);
+            g.setGradientFill(offGrad);
+            g.fillRoundedRectangle(r, 4.0f);
+            g.setColour(GCol::stepBorder);
+            g.drawRoundedRectangle(r, 4.0f, 0.8f);
         }
-        g.fillRoundedRectangle(gateR, 4.0f);
-        g.setColour(s.gate ? GCol::gateOn.darker(0.4f) : GCol::border);
-        g.drawRoundedRectangle(gateR, 4.0f, 1.0f);
 
-        // Note name inside gate (when gate ON)
-        if (s.gate)
+        // Playhead — amber outline (SteamPunk playhead — very distinctive)
+        if (isPlayhead && playing)
         {
-            int midiNote = juce::jlimit(0, 127, s.note + s.octave * 12);
-            g.setColour(juce::Colours::white);
-            g.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
-            g.drawText(noteNameStr(midiNote), gateR, juce::Justification::centred, false);
+            // Outer amber glow
+            g.setColour(GCol::amber.withAlpha(0.22f));
+            g.drawRoundedRectangle(r.expanded(3.0f), 6.0f, 3.0f);
+            // Main border
+            g.setColour(GCol::stepPlaying);
+            g.drawRoundedRectangle(r.expanded(1.5f), 5.0f, 2.0f);
         }
-        else
-        {
-            // "+" hint when gate off
-            g.setColour(GCol::textDim.withAlpha(0.5f));
-            g.setFont(juce::Font(juce::FontOptions(20.0f)));
-            g.drawText("+", gateR, juce::Justification::centred, false);
-        }
-    }
 
-    // ── Note ▲ button ────────────────────────────────────────────────────
-    {
-        juce::Rectangle<float> r(bx + 2.0f, kNoteUpTop + 1.0f, bw - 4.0f, kNoteNmTop - kNoteUpTop - 2.0f);
-        g.setColour(GCol::btnBg);
-        g.fillRoundedRectangle(r, 2.0f);
-        g.setColour(GCol::noteBtn);
-        g.setFont(juce::Font(juce::FontOptions(10.0f)));
-        g.drawText(juce::CharPointer_UTF8("\xe2\x96\xb2"), r, juce::Justification::centred, false); // ▲
-    }
-
-    // ── Note name display ─────────────────────────────────────────────────
-    {
-        juce::Rectangle<float> r(bx, kNoteNmTop, bw, kNoteDnTop - kNoteNmTop);
+        // Note name / gate hint
         int midiNote = juce::jlimit(0, 127, s.note + s.octave * 12);
-        g.setColour(s.gate ? GCol::text : GCol::textDim);
-        g.setFont(juce::Font(juce::FontOptions(9.5f, juce::Font::bold)));
-        g.drawText(noteNameStr(midiNote), r, juce::Justification::centred, false);
+        juce::String label = s.gate ? noteNameStr(midiNote) : "+";
+        g.setFont(juce::Font(juce::FontOptions().withName("Menlo").withHeight(10.0f).withStyle("Bold")));
+        g.setColour(s.gate ? juce::Colour(0xff040d05) : GCol::labelDim);
+        g.drawText(label, r, juce::Justification::centred, false);
     }
 
-    // ── Note ▼ button ────────────────────────────────────────────────────
+    // === Accent + slide dots ===
     {
-        juce::Rectangle<float> r(bx + 2.0f, kNoteDnTop + 1.0f, bw - 4.0f, kOctTop - kNoteDnTop - 2.0f);
-        g.setColour(GCol::btnBg);
-        g.fillRoundedRectangle(r, 2.0f);
-        g.setColour(GCol::noteBtn);
-        g.setFont(juce::Font(juce::FontOptions(10.0f)));
-        g.drawText(juce::CharPointer_UTF8("\xe2\x96\xbc"), r, juce::Justification::centred, false); // ▼
+        const float dotR   = 4.2f;
+        const float dotCxA = bx + bw * 0.25f;
+        const float dotCxS = bx + bw * 0.75f;
+        const float dotCy  = dotRowTop + kDotRowH * 0.5f;
+
+        auto drawDot = [&](float cx, bool on, juce::Colour onCol)
+        {
+            juce::Rectangle<float> dr(cx - dotR, dotCy - dotR, dotR * 2.0f, dotR * 2.0f);
+            g.setColour(on ? onCol : GCol::dotOff);
+            g.fillEllipse(dr);
+            if (on)
+            {
+                g.setColour(onCol.withAlpha(0.65f));
+                g.drawEllipse(dr.expanded(1.2f), 1.0f);
+            }
+        };
+
+        drawDot(dotCxA, s.accent, GCol::accentDotOn);
+        drawDot(dotCxS, s.slide,  GCol::slideDotOn);
     }
 
-    // ── Octave buttons [-1] [0] [+1] ─────────────────────────────────────
+    // === Octave mini-buttons (in top strip, bottom portion) ===
     {
-        const float oy  = kOctTop + 1.0f;
-        const float oh  = kAccentTop - kOctTop - 2.0f;
-        const float ow  = (bw - 4.0f) / 3.0f;
-        struct OctBtn { int val; juce::Colour col; const char* label; };
-        OctBtn octs[3] = { {-1, GCol::octNeg, "-1"}, {0, GCol::octZero, "0"}, {1, GCol::octPos, "+1"} };
+        const float rowBottom = kTopStripH;
+        const float rowTop    = rowBottom - 16.0f;
+        const float y         = rowTop + 2.0f;
+        const float h         = (rowBottom - 4.0f) - y;
+        const float third     = bw / 3.0f;
+
+        struct OctBtn { int val; const char* label; };
+        const OctBtn octs[3] = { { -1, "-" }, { 0, "0" }, { +1, "+" } };
 
         for (int i = 0; i < 3; ++i)
         {
-            juce::Rectangle<float> r(bx + 2.0f + i * ow, oy, ow - 1.0f, oh);
+            float ox = bx + float(i) * third;
+            juce::Rectangle<float> r(ox + 1.0f, y, third - 2.0f, h);
             bool sel = (s.octave == octs[i].val);
-            g.setColour(sel ? octs[i].col : GCol::btnBg);
-            g.fillRoundedRectangle(r, 2.0f);
-            g.setColour(sel ? juce::Colours::white : GCol::textDim);
-            g.setFont(juce::Font(juce::FontOptions(8.0f, sel ? juce::Font::bold : juce::Font::plain)));
+
+            if (sel)
+            {
+                juce::ColourGradient selGr(GCol::neonDim.brighter(0.1f), r.getX(), r.getY(),
+                                           GCol::neonDim,                 r.getX(), r.getBottom(), false);
+                g.setGradientFill(selGr);
+                g.fillRoundedRectangle(r, 2.0f);
+                g.setColour(GCol::neon.withAlpha(0.6f));
+                g.drawRoundedRectangle(r, 2.0f, 0.7f);
+            }
+            else
+            {
+                g.setColour(GCol::octBg);
+                g.fillRoundedRectangle(r, 2.0f);
+                g.setColour(GCol::borderCopper.withAlpha(0.4f));
+                g.drawRoundedRectangle(r, 2.0f, 0.5f);
+            }
+
+            g.setFont(juce::Font(juce::FontOptions().withName("Menlo").withHeight(8.0f).withStyle("Bold")));
+            g.setColour(sel ? GCol::neon : GCol::octText);
             g.drawText(octs[i].label, r, juce::Justification::centred, false);
         }
-    }
-
-    // ── Accent button ────────────────────────────────────────────────────
-    {
-        juce::Rectangle<float> r(bx + 2.0f, kAccentTop + 2.0f, bw - 4.0f, kSlideTop - kAccentTop - 4.0f);
-        g.setColour(s.accent ? GCol::accent : GCol::btnBg);
-        g.fillRoundedRectangle(r, 2.0f);
-        g.setColour(s.accent ? juce::Colours::white : GCol::textDim);
-        g.setFont(juce::Font(juce::FontOptions(8.0f, s.accent ? juce::Font::bold : juce::Font::plain)));
-        g.drawText("ACC", r, juce::Justification::centred, false);
-    }
-
-    // ── Slide button ─────────────────────────────────────────────────────
-    {
-        juce::Rectangle<float> r(bx + 2.0f, kSlideTop + 2.0f, bw - 4.0f, kPlayTop - kSlideTop - 4.0f);
-        g.setColour(s.slide ? GCol::slide : GCol::btnBg);
-        g.fillRoundedRectangle(r, 2.0f);
-        g.setColour(s.slide ? juce::Colours::white : GCol::textDim);
-        g.setFont(juce::Font(juce::FontOptions(8.0f, s.slide ? juce::Font::bold : juce::Font::plain)));
-        g.drawText("SLD", r, juce::Justification::centred, false);
-    }
-
-    // ── Playhead bar ──────────────────────────────────────────────────────
-    {
-        juce::Rectangle<float> r(bx, kPlayTop, bw, kColH - kPlayTop);
-        g.setColour(isPlayhead && playing ? GCol::playGlow : GCol::btnBg.darker(0.05f));
-        g.fillRect(r);
     }
 }
 
 // ── paint ────────────────────────────────────────────────────────────────────
 void SequencerGrid::paint(juce::Graphics& g)
 {
-    g.fillAll(GCol::bg);
+    // Dark mahogany background
+    juce::ColourGradient bg(GCol::panelDarker, 0.0f, 0.0f,
+                            GCol::panelDark,   0.0f, float(getHeight()), false);
+    g.setGradientFill(bg);
+    g.fillAll();
 
-    const Pattern& pat      = sequencer.getPattern(sequencer.getCurrentPatternIndex());
-    const int      patLen   = pat.getLength();
-    const int      curStep  = sequencer.getCurrentStep();
-    const bool     playing  = sequencer.isPlaying();
-    const float    cw       = colW();
+    auto bounds = getLocalBounds().toFloat();
+
+    // === Section header strip ===
+    {
+        juce::Rectangle<float> hdr = bounds.removeFromTop(kTopStripH);
+        juce::Rectangle<float> titleR = hdr.removeFromTop(18.0f);
+
+        // Gradient title bar
+        juce::ColourGradient titleBg(GCol::sectionBg,   titleR.getX(), titleR.getY(),
+                                     GCol::panelDarker,  titleR.getX(), titleR.getBottom(), false);
+        g.setGradientFill(titleBg);
+        g.fillRect(titleR);
+
+        // Amber accent glow on title
+        g.setColour(GCol::amberGlow.withAlpha(0.05f));
+        g.fillRect(titleR);
+
+        // Title text
+        g.setColour(GCol::labelActive);
+        {
+            auto f = juce::Font(juce::FontOptions().withName("Menlo")
+                                                    .withHeight(9.0f).withStyle("Bold"));
+            g.setFont(f);
+        }
+        g.drawText("STEP  SEQUENCER",
+                   titleR.reduced(8.0f, 0.0f),
+                   juce::Justification::centredLeft, false);
+
+        // Copper accent bottom line
+        g.setColour(GCol::borderCopper.withAlpha(0.5f));
+        g.fillRect(titleR.getX(), titleR.getBottom() - 1.0f, titleR.getWidth(), 1.0f);
+    }
+
+    // === Draw all steps ===
+    const Pattern& pat     = sequencer.getPattern(sequencer.getCurrentPatternIndex());
+    const int      patLen  = pat.getLength();
+    const int      curStep = sequencer.getCurrentStep();
+    const bool     playing = sequencer.isPlaying();
+    const float    cw      = colW();
 
     for (int i = 0; i < Pattern::MAX_STEPS; ++i)
     {
         const Step& s = pat.getStep(i);
-        drawColumn(g, i, i * cw, cw, s,
-                   /*active*/   i < patLen,
-                   /*playhead*/ i == curStep,
-                   playing);
+        drawStep(g, i, float(i) * cw, cw, s,
+                 /*active*/   i < patLen,
+                 /*playhead*/ i == curStep,
+                 playing);
     }
 
-    // Outer border
-    g.setColour(GCol::border);
+    // === Outer frame — copper border ===
+    g.setColour(GCol::borderCopper.withAlpha(0.55f));
     g.drawRect(getLocalBounds().toFloat(), 1.0f);
 }
 
@@ -279,16 +324,13 @@ void SequencerGrid::mouseDown(const juce::MouseEvent& e)
     Pattern& pat    = sequencer.getPattern(sequencer.getCurrentPatternIndex());
     const int patLen = pat.getLength();
 
-    // Only allow interaction on active steps
     if (hr.step >= patLen) return;
 
     Step& s = pat.getStep(hr.step);
 
     switch (hr.zone)
     {
-        case Z_GATE:    s.gate   = !s.gate; break;
-        case Z_NOTE_UP: s.note   = juce::jmin(s.note + 1, 72); break;
-        case Z_NOTE_DN: s.note   = juce::jmax(s.note - 1, 24); break;
+        case Z_STEP:    s.gate   = !s.gate; break;
         case Z_OCT_M1:  s.octave = -1; break;
         case Z_OCT_0:   s.octave =  0; break;
         case Z_OCT_P1:  s.octave = +1; break;
