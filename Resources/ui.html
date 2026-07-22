@@ -2021,6 +2021,202 @@ function setMode(mode){
 })();
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     WEBAUDIO ENGINE — port del DSP TB-303 in AudioWorklet.
+     Attivo SOLO nel browser (quando non c'è il bridge JUCE). Nel plugin
+     comanda il C++, quindi qui si esce subito. Rende il sito suonabile.
+════════════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  if (typeof window.__JUCE__ !== 'undefined') return;   // nel plugin: no-op
+
+  // ── Pattern di default "Classic Acid" (stesso del preset C++) ──
+  const S=(note,gate,accent,slide,octave)=>({note,gate:!!gate,accent:!!accent,slide:!!slide,octave});
+  const DEFAULT_PATTERN=[
+    S(45,1,1,0,0),S(48,1,0,0,0),S(45,1,0,1,0),S(43,1,0,0,0),
+    S(45,1,0,0,0),S(40,1,1,0,0),S(43,1,0,0,0),S(45,1,0,0,0),
+    S(50,1,0,1,0),S(45,1,0,0,0),S(48,1,0,0,0),S(45,1,1,0,0),
+    S(43,1,0,0,0),S(41,1,0,0,0),S(40,1,0,1,0),S(38,1,0,0,0)
+  ];
+  const DEFAULTS={cutoff:600,resonance:0.75,envMod:0.70,decay:0.20,accent:0.75,
+                  volume:0.80,distortion:0.0,tuning:0,waveform:0,tempo:160,resolution:4};
+
+  // ── Codice dell'AudioWorkletProcessor (porting fedele dei .cpp) ──
+  const WORKLET_CODE = `
+class TB303Processor extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    const sr=sampleRate; this.sr=sr;
+    this.phase=0; this.phaseInc=0; this.curFreq=440; this.tgtFreq=440; this.sliding=false;
+    this.slideCoeff=Math.pow(0.001,1/(0.070*sr)); this.waveform=0; this.tuningCents=0;
+    this.stage=[0,0,0,0]; this.stageT=[0,0,0,0]; this.prevIn=0; this.dcX=0; this.dcY=0;
+    this.baseCutoff=800; this.resonance=0.5; this.envMod=0.5; this.accentMod=0.5;
+    this.nVal=0; this.nState=0; this.nAtt=Math.exp(-1/(0.003*sr)); this.nDec=Math.exp(-1/(0.3*sr));
+    this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.003*sr)); this.aDec=Math.exp(-1/(0.2*sr));
+    this.volume=0.8; this.distortion=0.0; this.dX=0; this.dY=0;
+    this.pattern=[]; this.len=16; this.bpm=160; this.res=4;
+    this.playing=false; this.step=0; this.counter=0; this.firstBeat=false;
+    this.prevNote=36; this.prevSlide=false;
+    this.port.onmessage=(e)=>this.onMsg(e.data);
+  }
+  onMsg(d){
+    if(d.type==='param') this.setParam(d.id,d.value);
+    else if(d.type==='pattern'){ this.pattern=d.steps; this.len=d.steps.length||16; }
+    else if(d.type==='transport'){ if(d.playing) this.start(); else this.playing=false; }
+  }
+  setParam(id,v){
+    if(id==='cutoff') this.baseCutoff=v;
+    else if(id==='resonance') this.resonance=v;
+    else if(id==='envMod') this.envMod=v;
+    else if(id==='decay') this.nDec=Math.exp(-1/(Math.max(0.005,v)*this.sr));
+    else if(id==='accent') this.accentMod=v;
+    else if(id==='volume') this.volume=v;
+    else if(id==='distortion') this.distortion=v;
+    else if(id==='tuning') this.tuningCents=v;
+    else if(id==='waveform') this.waveform=v|0;
+    else if(id==='tempo') this.bpm=v;
+    else if(id==='resolution') this.res=v|0;
+  }
+  start(){ this.playing=true; this.step=0; this.counter=0; this.firstBeat=true; this.prevSlide=false; }
+  noteToHz(n,c){ return 440*Math.pow(2,(n-69+c/100)/12); }
+  setNote(n){ this.tgtFreq=this.noteToHz(n,this.tuningCents); if(!this.sliding) this.curFreq=this.tgtFreq; }
+  setSlide(en,from,to){ this.sliding=en; this.curFreq=this.noteToHz(from,this.tuningCents); this.tgtFreq=this.noteToHz(to,this.tuningCents); }
+  noteOn(n,acc,sl,prev){ if(sl){ this.setSlide(true,prev,n);} else { this.setSlide(false,n,n); this.setNote(n);} this.nState=1; if(acc) this.aState=1; }
+  sendStep(step){ const s=this.pattern[step]; if(!s||!s.gate) return; let n=s.note+(s.octave||0)*12; if(n<0)n=0; if(n>127)n=127; this.noteOn(n,!!s.accent,this.prevSlide,this.prevNote); this.prevNote=n; this.prevSlide=!!s.slide; }
+  advance(){ this.step=(this.step+1)%this.len; this.sendStep(this.step); }
+  polyBlep(t,dt){ if(t<dt){t/=dt; return t+t-t*t-1;} else if(t>1-dt){t=(t-1)/dt; return t*t+t+t+1;} return 0; }
+  vcoTick(){
+    if(this.sliding){ const diff=this.tgtFreq-this.curFreq; if(Math.abs(diff)<0.01){this.curFreq=this.tgtFreq; this.sliding=false;} else { this.curFreq+=(this.tgtFreq-this.curFreq)*(1-this.slideCoeff);} }
+    this.phaseInc=this.curFreq/this.sr;
+    let out;
+    if(this.waveform===0){ out=2*this.phase-1; out-=this.polyBlep(this.phase,this.phaseInc); }
+    else { out=this.phase<0.5?1:-1; out+=this.polyBlep(this.phase,this.phaseInc); let p2=this.phase+0.5; if(p2>=1)p2-=1; out-=this.polyBlep(p2,this.phaseInc); }
+    this.phase+=this.phaseInc; if(this.phase>=1) this.phase-=1;
+    return out;
+  }
+  envTick(){
+    if(this.nState===0) this.nVal=0;
+    else if(this.nState===1){ this.nVal=1-(1-this.nVal)*this.nAtt; if(this.nVal>=0.999){this.nVal=1; this.nState=2;} }
+    else { this.nVal*=this.nDec; if(this.nVal<1e-6){this.nVal=0; this.nState=0;} }
+    if(this.aState===0) this.aVal=0;
+    else if(this.aState===1){ this.aVal=1-(1-this.aVal)*this.aAtt; if(this.aVal>=0.999){this.aVal=1; this.aState=2;} }
+    else { this.aVal*=this.aDec; if(this.aVal<1e-6){this.aVal=0; this.aState=0;} }
+  }
+  cutG(hz){ const sr2=this.sr*2; let f=Math.min(Math.max(hz,20),sr2*0.49); const g=Math.tan(Math.PI*f/sr2); return g/(1+g); }
+  fStep(input,g,res4){ const fb=Math.tanh((input-res4*this.stage[3])*0.5); for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const v=g*(si-this.stageT[i]); const ns=v+this.stage[i]; this.stage[i]=ns+v; this.stageT[i]=Math.tanh(this.stage[i]*0.5);} }
+  vcf(input,env,acc){
+    let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
+    let mod=Math.pow(2,logC+this.envMod*3*env+this.accentMod*1.5*acc); mod=Math.min(Math.max(mod,20),this.sr*0.45);
+    let res=this.resonance+acc*this.accentMod*0.15; res=Math.min(Math.max(res,0),0.99);
+    const g=this.cutG(mod), res4=res*4;
+    const mid=0.5*(this.prevIn+input); this.fStep(mid,g,res4); this.fStep(input,g,res4); this.prevIn=input;
+    const xn=this.stageT[3]*2; const yn=xn-this.dcX+0.9995*this.dcY; this.dcX=xn; this.dcY=yn; return yn;
+  }
+  vca(input){ let amp=this.nVal+this.aVal; if(amp>2)amp=2; return Math.tanh(input*amp*this.volume); }
+  dist(x){ if(this.distortion<1e-4) return x; const dr=1+this.distortion*9; const t=Math.tanh(dr); const o=Math.tanh(x*dr)/t; const yn=o-this.dX+0.9995*this.dY; this.dX=o; this.dY=yn; return yn; }
+  process(inputs,outputs){
+    const out=outputs[0]; const chL=out[0], chR=out[1]||out[0]; const N=chL.length;
+    const spp=60/this.bpm/this.res*this.sr;
+    for(let i=0;i<N;i++){
+      if(this.playing){
+        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.firstBeat=false; } this.counter+=spp; }
+        this.counter-=1;
+        if(this.counter<=0) this.advance();
+      }
+      this.envTick();
+      let s=0;
+      if(this.playing || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal); s=this.dist(this.vca(b)); }
+      chL[i]=s; if(chR!==chL) chR[i]=s;
+    }
+    return true;
+  }
+}
+registerProcessor('tb303-processor', TB303Processor);
+`;
+
+  // ── Controller lato UI ──
+  let ctx=null, node=null, ready=false, starting=false, webPlaying=false;
+  function post(m){ if(node) node.port.postMessage(m); }
+  function send(id,value){ post({type:'param',id,value}); }
+
+  async function ensureAudio(){
+    if(ready) return true;
+    if(starting){ for(let i=0;i<40 && !ready;i++) await new Promise(r=>setTimeout(r,25)); return ready; }
+    starting=true;
+    try{
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const url = URL.createObjectURL(new Blob([WORKLET_CODE],{type:'application/javascript'}));
+      await ctx.audioWorklet.addModule(url);
+      node = new AudioWorkletNode(ctx,'tb303-processor',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
+      node.connect(ctx.destination);
+      post({type:'pattern',steps:DEFAULT_PATTERN});
+      send('cutoff',DEFAULTS.cutoff); send('resonance',DEFAULTS.resonance);
+      send('envMod',DEFAULTS.envMod); send('decay',DEFAULTS.decay);
+      send('accent',DEFAULTS.accent); send('volume',DEFAULTS.volume);
+      send('distortion',DEFAULTS.distortion); send('tuning',DEFAULTS.tuning*100);
+      send('waveform',DEFAULTS.waveform); send('tempo',bpm); send('resolution',DEFAULTS.resolution);
+      ready=true;
+    }catch(e){ console.error('WebAudio init error',e); }
+    starting=false;
+    return ready;
+  }
+  async function audioPlay(){ await ensureAudio(); if(ctx && ctx.state==='suspended') await ctx.resume(); post({type:'transport',playing:true}); }
+  function audioStop(){ post({type:'transport',playing:false}); }
+
+  // ── Transport: avvolge le funzioni del sketch (mantiene l'animazione visiva) ──
+  const _tp=window.togglePlay, _ds=window.doStop, _tp2=window.togglePlay2, _ds2=window.doStop2;
+  window.togglePlay = function(){ _tp&&_tp(); webPlaying=!webPlaying; webPlaying?audioPlay():audioStop(); };
+  window.doStop     = function(){ if(!webPlaying){ _ds&&_ds(); return;} _tp&&_tp(); webPlaying=false; audioStop(); };
+  window.togglePlay2= function(){ _tp2&&_tp2(); webPlaying=!webPlaying; webPlaying?audioPlay():audioStop(); };
+  window.doStop2    = function(){ if(!webPlaying){ _ds2&&_ds2(); return;} _tp2&&_tp2(); webPlaying=false; audioStop(); };
+
+  // ── Waveform ──
+  const _sw=window.setWave;
+  window.setWave = function(el){ _sw&&_sw(el); send('waveform', (el.textContent||'').trim()==='SQR'?1:0); };
+
+  // ── Tempo (default 160) ──
+  let bpm=DEFAULTS.tempo;
+  function showBpm(){ document.querySelectorAll('#bpm-hdr,#bpm-lcd,#bpm-lcd2,#bpm-display').forEach(e=>e.textContent=bpm); }
+  const _cb=window.changeBPM;
+  window.changeBPM = function(d){ bpm=Math.max(60,Math.min(200,bpm+(d||0))); showBpm(); send('tempo',bpm); };
+
+  // ── Knob draggabili (nel browser i knob SYNTH non erano interattivi) ──
+  const RANGES={
+    'Cutoff':{p:'cutoff',min:20,max:20000,skew:0.25,fmt:v=>Math.round(v)+'Hz'},
+    'Resonance':{p:'resonance',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
+    'Env Mod':{p:'envMod',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
+    'Decay':{p:'decay',min:0.05,max:2,skew:0.4,fmt:v=>v.toFixed(2)+'s'},
+    'Volume':{p:'volume',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
+    'Distort':{p:'distortion',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
+    'Accent':{p:'accent',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
+    'Tuning':{p:'tuning',min:-12,max:12,skew:1,fmt:v=>v.toFixed(1)}
+  };
+  const n2v=(r,n)=>r.min+(r.max-r.min)*Math.pow(Math.max(0,Math.min(1,n)),1/r.skew);
+  const v2n=(r,v)=>Math.pow(Math.max(0,Math.min(1,(v-r.min)/(r.max-r.min))),r.skew);
+
+  function wireKnobs(){
+    document.querySelectorAll('.knob-wrap').forEach(w=>{
+      const lbl=w.querySelector('.knob-lbl'); const knob=w.querySelector('.knob'); const val=w.querySelector('.knob-val');
+      if(!lbl||!knob) return;
+      const base=RANGES[(lbl.textContent||'').trim()]; if(!base) return;
+      const cur=DEFAULTS[base.p];
+      let norm=v2n(base,cur);
+      if(window.setKnobFrame) window.setKnobFrame(knob,norm);
+      if(val) val.textContent=base.fmt(cur);
+      knob.style.cursor='ns-resize';
+      let drag=false, sy=0, sv=0;
+      knob.addEventListener('mousedown',e=>{ drag=true; sy=e.clientY; sv=norm; e.preventDefault(); });
+      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1, sv+(sy-e.clientY)/150)); const v=n2v(base,norm); if(window.setKnobFrame) window.setKnobFrame(knob,norm); if(val) val.textContent=base.fmt(v); send(base.p, base.p==='tuning'? v*100 : v); });
+      window.addEventListener('mouseup',()=>drag=false);
+    });
+  }
+
+  // init dopo che il sketch ha costruito la UI
+  setTimeout(()=>{ showBpm(); wireKnobs(); }, 400);
+})();
+</script>
+
+
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 //  JUCE 8 WebView bridge — overlays on top of the sketch JS
