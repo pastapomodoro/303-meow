@@ -44,7 +44,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TB303Processor::createParame
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "tempo", "Tempo",
-        juce::NormalisableRange<float>(60.0f, 200.0f, 0.1f), 120.0f));
+        juce::NormalisableRange<float>(60.0f, 200.0f, 0.1f), 160.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "play", "Play",
@@ -95,6 +95,13 @@ TB303Processor::TB303Processor()
     pDelayMix      = apvts.getRawParameterValue("delayMix");
     pReverbSize    = apvts.getRawParameterValue("reverbSize");
     pReverbMix     = apvts.getRawParameterValue("reverbMix");
+
+    // Default 303 preset così il plugin apre già su un punto di partenza musicale
+    // ("Classic Acid" = 303 classico, non aggressivo). Il tempo del preset (130)
+    // viene sovrascritto a 160 BPM come richiesto.
+    loadPreset(0);
+    if (auto* t = apvts.getParameter("tempo"))
+        t->setValueNotifyingHost(t->convertTo0to1(160.0f));
 }
 
 TB303Processor::~TB303Processor() {}

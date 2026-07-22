@@ -1,5 +1,9 @@
 # Build output
 build/
+build-release/
+
+# Dependencies (JUCE fetched via CMake FetchContent)
+.deps/
 
 # macOS
 .DS_Store

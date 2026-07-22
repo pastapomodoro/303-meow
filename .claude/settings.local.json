@@ -6,7 +6,12 @@
       "Bash(cmake -B /Users/eugenio.bellini/Documents/MISC/WEB/claudio/build -G Ninja -DCMAKE_BUILD_TYPE=Release -S /Users/eugenio.bellini/Documents/MISC/WEB/claudio)",
       "Bash(cmake --build /Users/eugenio.bellini/Documents/MISC/WEB/claudio/build)",
       "Bash(cmake --build build)",
-      "Bash(cmake --build build --config Release)"
+      "Bash(cmake --build build --config Release)",
+      "Bash(python3 -m http.server 8753)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:8753/sketch%20definitivo.html\")",
+      "Bash(pkill -f \"AcidLab\")",
+      "Bash(pkill -f \"303 Meow\")",
+      "Bash(open \"build/TB303Clone_artefacts/Debug/Standalone/AcidLab.app\")"
     ]
   }
 }

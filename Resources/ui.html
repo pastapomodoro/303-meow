@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcidLab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap');
+
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — SKEUOMORPHIC WHITE
+═══════════════════════════════════════════════ */
+:root {
+  /* Superfici — grigio-azzurro (direzione ibrida glossy) */
+  --body-bg:    #aab0ba;
+  --body-grad:  radial-gradient(ellipse at 40% 20%, #cdd3dd 0%, #99a1ad 100%);
+
+  /* Pannello principale */
+  --panel-face: #e6eaf0;
+  --panel-hi:   #ffffff;
+  --panel-mid:  #d3d9e3;
+  --panel-shad: #b6bdca;
+  --panel-edge: #99a2b0;
+
+  /* Superfici incassate */
+  --inset-bg:   #ccd3dd;
+  --inset-deep: #bac2ce;
+
+  /* Superfici rialzate */
+  --raised-hi:  #fbfcfd;
+  --raised-mid: #e2e7ee;
+  --raised-shad:#c2cad6;
+
+  /* Verde acido */
+  --acid:       #88ff00;
+  --acid-hi:    #bbff66;
+  --acid-mid:   #66dd00;
+  --acid-dark:  #3a7a00;
+  --acid-deep:  #1e4400;
+  --acid-glow:  rgba(136,255,0,0.45);
+  --acid-bg:    rgba(136,255,0,0.12);
+  --acid-btn-t: linear-gradient(to bottom, #aaff33 0%, #77dd00 50%, #55bb00 100%);
+  --acid-btn-s: inset 0 1px 0 rgba(255,255,255,.6),
+                inset 0 -4px 8px rgba(90,150,20,.5),
+                0 0 18px rgba(136,255,0,.55),
+                0 3px 7px rgba(70,110,10,.35);
+
+  /* LCD */
+  --lcd-bg:     #050c02;
+  --lcd-green:  #88ff00;
+  --lcd-mid:    #44aa00;
+  --lcd-dim:    #183008;
+  --lcd-border: #0a1e04;
+
+  /* Testo */
+  --text:       #1a1a18;
+  --text-mid:   #555550;
+  --text-dim:   #888882;
+  --text-xs:    #aaaaaa;
+
+  /* Mono font */
+  --mono: 'IBM Plex Mono', monospace;
+
+  /* Shadows */
+  --panel-shadow:
+    0 20px 60px rgba(0,0,0,.35),
+    0 8px 20px rgba(0,0,0,.25),
+    0 2px 4px rgba(0,0,0,.15);
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  background: var(--body-grad);
+  font-family: var(--mono);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN CHASSIS
+═══════════════════════════════════════════════ */
+.chassis {
+  width: 100%;
+  max-width: 1160px;
+  background:
+    linear-gradient(160deg, #f8f8f4 0%, #e8e8e4 40%, #d8d8d4 100%);
+  border-radius: 12px;
+  box-shadow:
+    var(--panel-shadow),
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 -2px 0 rgba(0,0,0,.12),
+    inset 2px 0 0 rgba(255,255,255,.5),
+    inset -2px 0 0 rgba(0,0,0,.08);
+  border: 1px solid var(--panel-edge);
+  overflow: hidden;
+}
+
+/* ── Texture noise sul pannello ── */
+.chassis::before {
+  content:'';
+  position:absolute; inset:0; border-radius:12px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; opacity:.4;
+}
+
+/* ── Topbar / Nameplate ── */
+.nameplate {
+  display:flex; align-items:center; gap:0;
+  padding: 0 20px;
+  height: 52px;
+  background:
+    linear-gradient(to bottom, #f4f4f0 0%, #e4e4e0 100%);
+  border-bottom: 1px solid var(--panel-shad);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 3px 8px rgba(0,0,0,.1);
+}
+.logo-text {
+  font-size:18px; font-weight:600; letter-spacing:4px;
+  background: linear-gradient(135deg, #3a7a00 0%, #88cc00 50%, #3a7a00 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;
+  margin-right: 12px;
+}
+.logo-sub {
+  font-size:8px; font-weight:300; letter-spacing:2px;
+  color: var(--text-dim); margin-right:auto; margin-top:2px;
+}
+/* Nav tabs */
+.nav-tabs {
+  display:flex; align-items:stretch; height:100%; gap:1px;
+}
+.tab {
+  display:flex; align-items:center; gap:6px;
+  padding: 0 16px;
+  font-size:9px; font-weight:500; letter-spacing:2px; text-transform:uppercase;
+  color: var(--text-dim);
+  border:none; background:transparent; cursor:pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .12s;
+  position:relative;
+}
+.tab:hover { color:var(--text-mid); background:rgba(0,0,0,.03); }
+.tab.active {
+  color: var(--acid-dark);
+  border-bottom-color: var(--acid);
+  background: rgba(136,255,0,.06);
+}
+.tab-n { font-size:7px; color:var(--text-xs); font-weight:300; }
+/* Status LED */
+.status-area { display:flex; align-items:center; gap:8px; font-size:9px; color:var(--text-dim); }
+.led-run {
+  width:8px; height:8px; border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, #bbff44, #44cc00);
+  box-shadow: 0 0 6px var(--acid-glow), 0 0 12px rgba(136,255,0,.25), inset 0 1px 0 rgba(255,255,255,.4);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+@keyframes led-pulse { 0%,100%{opacity:1;box-shadow:0 0 6px var(--acid-glow),0 0 12px rgba(136,255,0,.25)} 50%{opacity:.6;box-shadow:0 0 3px var(--acid-glow)} }
+
+/* ── Content area ── */
+.content { padding:16px; }
+.page { display:none; }
+.page.active { display:block; }
+
+/* ═══════════════════════════════════════════════
+   PANEL CARD (skeuomorfismo)
+═══════════════════════════════════════════════ */
+.card {
+  background: linear-gradient(160deg, #f6f6f2 0%, #ededea 60%, #e4e4e0 100%);
+  border-radius: 8px;
+  border: 1px solid var(--panel-shad);
+  box-shadow:
+    0 4px 12px rgba(0,0,0,.12),
+    0 1px 3px rgba(0,0,0,.08),
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(0,0,0,.06),
+    inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(0,0,0,.05);
+  overflow:hidden;
+}
+.card-hdr {
+  display:flex; align-items:center; gap:8px;
+  padding: 8px 14px;
+  background: linear-gradient(to bottom, #ebebе7 0%, #e0e0dc 100%);
+  border-bottom: 1px solid var(--panel-shad);
+  box-shadow: 0 1px 0 rgba(255,255,255,.7);
+}
+.card-hdr::before {
+  content:''; width:3px; height:13px; border-radius:2px; flex-shrink:0;
+  background: linear-gradient(to bottom, var(--acid-hi), var(--acid-mid));
+  box-shadow: 0 0 4px var(--acid-glow);
+}
+.card-hdr.blue::before  { background:linear-gradient(to bottom,#88ccff,#4488ff); box-shadow:0 0 4px rgba(100,150,255,.5); }
+.card-hdr.red::before   { background:linear-gradient(to bottom,#ff8866,#ff3311); box-shadow:0 0 4px rgba(255,80,0,.5); }
+.card-hdr.gray::before  { background:linear-gradient(to bottom,#cccccc,#999999); box-shadow:none; }
+.card-hdr-txt { font-size:8px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); }
+.card-body { padding:14px; }
+
+/* ═══════════════════════════════════════════════
+   KNOB — CSS skeuomorfismo completo
+═══════════════════════════════════════════════ */
+.knobs-row { display:flex; gap:8px; flex-wrap:wrap; }
+.knob-wrap { display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:54px; }
+
+.knob {
+  width:54px; height:54px; border-radius:50%;
+  position:relative; cursor:pointer; flex-shrink:0;
+  /* corpo a cupola lucida (luce in alto) */
+  background:
+    radial-gradient(circle at 50% 30%, #ffffff 0%, #f4f6f9 32%, #dde2ea 68%, #c8ced8 88%, #b7becb 100%);
+  /* profondità: drop morbida + inset chiaro sopra + inset scuro sotto */
+  box-shadow:
+    0 10px 20px rgba(70,80,100,.34),
+    0 4px 8px rgba(70,80,100,.22),
+    inset 0 3px 5px rgba(255,255,255,.95),
+    inset 0 -8px 15px rgba(110,120,140,.28),
+    0 0 0 1px rgba(150,160,175,.5),
+    0 0 0 2px rgba(255,255,255,.5);
+  transition: box-shadow .12s;
+}
+.knob:hover {
+  box-shadow:
+    0 13px 26px rgba(70,80,100,.4),
+    0 5px 10px rgba(70,80,100,.26),
+    inset 0 3px 5px rgba(255,255,255,.95),
+    inset 0 -8px 15px rgba(110,120,140,.28),
+    0 0 0 1px rgba(150,160,175,.5),
+    0 0 0 2px rgba(255,255,255,.55);
+}
+/* tick ring esterno inciso */
+.knob::before {
+  content:''; position:absolute; inset:-8px; border-radius:50%;
+  border:1.5px solid rgba(90,100,120,.12);
+  border-bottom-color: rgba(255,255,255,.6);
+  border-left-color: rgba(255,255,255,.4);
+}
+/* riflesso speculare "spazzato" in alto (firma glossy) */
+.knob::after {
+  content:''; position:absolute; top:7%; left:15%; width:70%; height:46%;
+  border-radius:50%; pointer-events:none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.35) 42%, rgba(255,255,255,0) 74%);
+  transform: rotate(-6deg);
+}
+/* glint secondario opzionale (elemento .knob-hl) */
+.knob-hl {
+  position:absolute;
+  width:22px; height:12px; border-radius:50%;
+  background: radial-gradient(ellipse, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 100%);
+  top:9px; left:9px; pointer-events:none;
+  transform: rotate(-30deg);
+}
+/* indicatore ruotante — wrapper a tutta area, ruota attorno al centro */
+.knob-ind {
+  position:absolute; inset:0;
+  transform-origin:center center;
+  pointer-events:none;
+  transition: transform .05s linear;
+}
+/* dot indicatore (dentro .knob-ind) */
+.knob-dot {
+  position:absolute;
+  width:7px; height:7px; border-radius:50%;
+  top:7px; left:50%; margin-left:-3.5px;
+  background: radial-gradient(circle at 40% 30%, #bbff44, #55bb00);
+  box-shadow: 0 0 6px var(--acid-glow), 0 1px 2px rgba(0,0,0,.3);
+  pointer-events:none;
+}
+.knob-dot.gray {
+  background: radial-gradient(circle at 40% 30%, #888880, #444440);
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.knob-lbl { font-size:8px; letter-spacing:1.5px; color:var(--text-dim); text-align:center; text-transform:uppercase; }
+.knob-val { font-size:8px; color:var(--text-xs); text-align:center; }
+
+/* ═══════════════════════════════════════════════
+   2-LAYER KNOB — corpo plastica statico + dot acid ruotato
+   attorno al centro via JS (setKnobFrame). Sostituisce lo
+   spritesheet a 61 frame (che era vuoto oltre il frame 0).
+   .sprite-knob resta come alias innocuo così i chiamanti
+   esistenti (bridge JUCE, mountSpriteKnobs) continuano a girare.
+═══════════════════════════════════════════════ */
+.sprite-knob { background-image:none !important; }
+.fx-sprite-knob { display:block; cursor:ns-resize; }
+
+/* ═══════════════════════════════════════════════
+   BUTTON — skeuomorfismo completo
+═══════════════════════════════════════════════ */
+.btn {
+  font-family:var(--mono); font-size:9px; font-weight:500;
+  letter-spacing:1.5px; text-transform:uppercase;
+  padding:9px 14px; border-radius:5px;
+  cursor:pointer; border:none; white-space:nowrap;
+  color: var(--text-mid);
+  background: linear-gradient(to bottom, #fbfcfd 0%, #e4e9f0 52%, #ccd3dd 100%);
+  box-shadow:
+    0 4px 7px rgba(70,80,100,.26),
+    0 1px 2px rgba(70,80,100,.14),
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -4px 7px rgba(120,130,150,.34),
+    0 0 0 1px rgba(150,160,175,.45);
+  transition: all .08s;
+  position:relative; top:0;
+}
+.btn:hover {
+  background: linear-gradient(to bottom, #ffffff 0%, #eef2f7 52%, #d6dce6 100%);
+  box-shadow:
+    0 6px 11px rgba(70,80,100,.3),
+    0 1px 2px rgba(70,80,100,.14),
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 0 -4px 7px rgba(120,130,150,.34),
+    0 0 0 1px rgba(150,160,175,.45);
+}
+.btn:active {
+  top:2px;
+  background: linear-gradient(to bottom, #ccd3dd 0%, #d8dee7 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(90,100,120,.4),
+    inset 0 -1px 2px rgba(255,255,255,.5),
+    0 0 0 1px rgba(150,160,175,.45);
+}
+/* Varianti */
+.btn.acid {
+  color: var(--acid-deep);
+  background: var(--acid-btn-t);
+  box-shadow: var(--acid-btn-s);
+}
+.btn.acid:hover { filter:brightness(1.05); }
+.btn.btn-red {
+  color:#770000;
+  background:linear-gradient(to bottom,#ffeeee,#ffcccc,#ffbbbb);
+  box-shadow:0 3px 6px rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(180,0,0,.15),0 0 0 1px rgba(0,0,0,.08);
+}
+.btn.btn-blue {
+  color:#003366;
+  background:linear-gradient(to bottom,#eef4ff,#cce0ff,#bbddff);
+  box-shadow:0 3px 6px rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(0,0,100,.15),0 0 0 1px rgba(0,0,0,.08);
+}
+.btn.sm { padding:6px 10px; font-size:8px; }
+.btn.lg { padding:12px 20px; font-size:10px; }
+
+/* ═══════════════════════════════════════════════
+   LCD DISPLAY
+═══════════════════════════════════════════════ */
+.lcd-wrap {
+  background: #1a1a18;
+  border-radius:5px; padding:4px;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,.8),
+    inset 0 0 0 1px rgba(0,0,0,.5),
+    0 1px 0 rgba(255,255,255,.3);
+}
+.lcd {
+  background: var(--lcd-bg);
+  border-radius:3px; padding:11px 13px;
+  box-shadow:
+    inset 0 0 30px rgba(0,0,0,.5),
+    inset 0 0 8px rgba(0,30,0,.4);
+  position:relative; overflow:hidden;
+}
+/* scanlines */
+.lcd::after {
+  content:''; position:absolute; inset:0;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0px, rgba(0,0,0,.10) 1px, transparent 1px, transparent 3px),
+    radial-gradient(rgba(0,0,0,.30) 0.8px, transparent 1.2px);
+  background-size: auto, 3px 3px;
+  pointer-events:none;
+}
+.lcd-l1 { font-size:12px;font-weight:600;color:var(--lcd-green);letter-spacing:1px;margin-bottom:5px;text-shadow:0 0 8px var(--acid-glow); }
+.lcd-l  { font-size:10px;color:#448800;margin-bottom:2px;letter-spacing:.5px; }
+.lcd-steps { display:flex;gap:3px;margin-top:10px; }
+.lcd-step  { flex:1;height:7px;border-radius:1px;background:var(--lcd-dim);transition:all .08s; }
+.lcd-step.on   { background:var(--lcd-green);box-shadow:0 0 3px var(--acid-glow); }
+.lcd-step.play { background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,.8); }
+
+/* ═══════════════════════════════════════════════
+   STEP BUTTON
+═══════════════════════════════════════════════ */
+.steps-grid { display:grid;grid-template-columns:repeat(16,1fr);gap:5px; }
+.step {
+  aspect-ratio:1; border-radius:4px; cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:linear-gradient(to bottom,#f4f4f0,#e4e4e0,#d8d8d4);
+  box-shadow:
+    0 3px 6px rgba(0,0,0,.18),
+    0 1px 2px rgba(0,0,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(0,0,0,.1),
+    0 0 0 1px rgba(0,0,0,.08);
+  transition:all .08s; padding:4px 2px;
+  position:relative; top:0;
+}
+.step:hover { background:linear-gradient(to bottom,#ffffff,#f0f0ec,#e4e4e0); top:-1px; }
+.step:active { top:1px; box-shadow:0 1px 3px rgba(0,0,0,.15),inset 0 1px 3px rgba(0,0,0,.1); }
+.step.on {
+  background:linear-gradient(to bottom,#ccff55,#99ee00,#77cc00);
+  box-shadow:
+    0 3px 8px rgba(0,0,0,.2),
+    0 0 12px rgba(136,255,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.6),
+    inset 0 -1px 0 rgba(0,60,0,.2),
+    0 0 0 1px rgba(0,0,0,.08);
+}
+.step.playing {
+  background:linear-gradient(to bottom,#ffffff,#f8f8f4);
+  box-shadow:0 3px 10px rgba(0,0,0,.2),0 0 16px rgba(255,255,255,.5),inset 0 1px 0 white;
+}
+.step-num  { font-size:6px; color:rgba(0,0,0,.3); }
+.step.on .step-num   { color:var(--acid-deep); }
+.step-led {
+  width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle at 40% 30%,#cccccc,#888888);
+  box-shadow:inset 0 1px 0 rgba(0,0,0,.2);
+}
+.step.on .step-led   { background:radial-gradient(circle at 35% 25%,#eeffaa,var(--acid));box-shadow:0 0 5px var(--acid-glow); }
+.step.playing .step-led { background:radial-gradient(circle at 35% 25%,#ffffff,#dddddd);box-shadow:0 0 6px rgba(255,255,255,.8); }
+.step-note { font-size:6px;color:rgba(0,0,0,.3); }
+.step.on .step-note  { color:var(--acid-deep);font-weight:600; }
+
+/* step sub */
+.step-sub { display:grid;grid-template-columns:repeat(16,1fr);gap:5px;margin-top:6px; }
+.step-sub-col { display:flex;flex-direction:column;gap:3px;align-items:center; }
+.sub {
+  width:100%;font-family:var(--mono);font-size:6px;letter-spacing:.5px;
+  padding:3px 2px;border-radius:2px;cursor:pointer;text-align:center;
+  background:linear-gradient(to bottom,#f0f0ec,#e0e0dc);
+  border:1px solid rgba(0,0,0,.1);color:var(--text-dim);
+  box-shadow:0 1px 2px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.7);
+}
+.sub.acc { background:linear-gradient(to bottom,#ddffaa,#aaee55);border-color:var(--acid-dark);color:var(--acid-deep); }
+.sub.sld { background:linear-gradient(to bottom,#ccddff,#aabbee);border-color:#4477bb;color:#002266; }
+
+/* ═══════════════════════════════════════════════
+   WAVEFORM SELECTOR
+═══════════════════════════════════════════════ */
+.wave-sel { display:flex;gap:5px; }
+.wave-btn {
+  flex:1;padding:10px;text-align:center;border-radius:5px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;
+  background:linear-gradient(to bottom,#f4f4f0,#e4e4e0,#d8d8d4);
+  border:1px solid rgba(0,0,0,.1);color:var(--text-dim);
+  box-shadow:0 3px 6px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85);
+  transition:all .1s;
+}
+.wave-btn.active {
+  background:var(--acid-btn-t);
+  border-color:var(--acid-dark);color:var(--acid-deep);font-weight:600;
+  box-shadow:var(--acid-btn-s);
+}
+
+/* ═══════════════════════════════════════════════
+   PRESET LIST
+═══════════════════════════════════════════════ */
+.preset-list { display:flex;flex-direction:column;gap:3px; }
+.preset-item {
+  display:flex;align-items:center;gap:10px;padding:9px 11px;
+  border-radius:4px;cursor:pointer;border:1px solid transparent;transition:all .1s;
+}
+.preset-item:hover {
+  background:linear-gradient(to bottom,#f4f4f0,#ebebе8);
+  border-color:rgba(0,0,0,.1);
+  box-shadow:0 2px 4px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8);
+}
+.preset-item.active {
+  background:linear-gradient(to right,#ccff77,#eeffc8);
+  border-color:var(--acid-dark);
+  box-shadow:0 2px 6px rgba(0,0,0,.1),0 0 10px var(--acid-bg),inset 0 1px 0 rgba(255,255,255,.7);
+}
+.p-num  { font-size:8px;color:var(--text-dim);min-width:18px; }
+.p-name { font-size:10px;color:var(--text-mid);flex:1; }
+.preset-item.active .p-name { color:var(--acid-deep);font-weight:600; }
+.p-tag  { font-size:7px;padding:2px 5px;border-radius:2px;background:rgba(0,0,0,.07);color:var(--text-dim);letter-spacing:1px; }
+
+/* ═══════════════════════════════════════════════
+   FX CHAIN
+═══════════════════════════════════════════════ */
+.fx-chain { display:flex;gap:5px;margin-top:12px; }
+.fx-chip {
+  flex:1;padding:10px 5px;text-align:center;border-radius:5px;cursor:pointer;
+  font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;
+  background:linear-gradient(to bottom,#f0f0ec,#e0e0dc,#d4d4d0);
+  border:1px solid rgba(0,0,0,.1);color:var(--text-dim);
+  box-shadow:0 3px 6px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.85);
+  transition:all .1s; position:relative; top:0;
+}
+.fx-chip:active { top:1px; }
+.fx-chip.on {
+  background:var(--acid-btn-t);
+  border-color:var(--acid-dark);color:var(--acid-deep);font-weight:600;
+  box-shadow:var(--acid-btn-s);
+}
+
+/* ═══════════════════════════════════════════════
+   SETTING ROW
+═══════════════════════════════════════════════ */
+.setting-row {
+  display:flex;align-items:center;padding:10px 0;
+  border-bottom:1px solid rgba(0,0,0,.07);
+}
+.setting-row:last-child { border-bottom:none; }
+.s-lbl { font-size:9px;color:var(--text-dim);flex:1;letter-spacing:1px; }
+.s-val {
+  font-size:11px;font-weight:600;
+  color:var(--acid-dark);
+  text-shadow:0 0 6px rgba(136,255,0,.2);
+}
+
+/* ═══════════════════════════════════════════════
+   ABOUT BADGE
+═══════════════════════════════════════════════ */
+.about-badge {
+  background:linear-gradient(135deg,#ddffaa,#ccff77,#eeffcc);
+  border:1px solid var(--acid-dark);border-radius:5px;padding:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,.12),0 0 16px var(--acid-bg),inset 0 1px 0 rgba(255,255,255,.6);
+  margin-bottom:12px;
+}
+.about-title { font-size:15px;font-weight:600;color:var(--acid-deep);letter-spacing:3px;margin-bottom:8px; }
+.about-body  { font-size:9px;color:var(--acid-deep);line-height:1.9;letter-spacing:.5px; }
+
+/* ═══════════════════════════════════════════════
+   LAYOUT GRIDS
+═══════════════════════════════════════════════ */
+.grid-3 { display:grid;grid-template-columns:280px 1fr 200px;gap:12px; }
+.grid-3c{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px; }
+.grid-2 { display:grid;grid-template-columns:320px 1fr;gap:12px; }
+.grid-seq{display:grid;grid-template-columns:280px 1fr 240px;gap:12px; }
+.col    { display:flex;flex-direction:column;gap:12px; }
+.row    { display:flex;gap:6px;flex-wrap:wrap;align-items:center; }
+.sep    { width:1px;height:20px;background:rgba(0,0,0,.12);flex-shrink:0;margin:0 4px; }
+.gap4   { gap:4px; }
+.mb8    { margin-bottom:8px; }
+.mb12   { margin-bottom:12px; }
+
+/* Transport keys — stato fisico puro, niente colore */
+.transport-key .keycap-base {
+  transition: box-shadow .06s, transform .06s;
+}
+/* RILASCIATO — tasto alto, ombra profonda */
+.transport-key .keycap-base {
+  box-shadow:
+    0 5px 0 #888884,
+    0 6px 8px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.5);
+}
+/* PREMUTO — tasto basso, ombra compressa, inset */
+.transport-key.pressed .keycap-base {
+  box-shadow:
+    0 1px 0 #888884,
+    0 2px 4px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.3);
+  transform: translateY(3px);
+}
+.transport-key.pressed .keycap-top {
+  background: linear-gradient(160deg, #e4e4e0 0%, #d8d8d4 40%, #ccccca 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,.15),
+    inset 0 1px 0 rgba(255,255,255,.4);
+}
+.transport-key .transport-icon { color: var(--text-mid); }
+.transport-key.pressed .transport-icon { color: var(--text); }
+::-webkit-scrollbar-track{background:rgba(0,0,0,.05)}
+::-webkit-scrollbar-thumb{background:var(--panel-shad);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   KEYCAP — tastierino skeuomorfico
+═══════════════════════════════════════════════ */
+.keycap {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.keycap-base {
+  background: linear-gradient(to bottom, #b8b8b4, #c8c8c4);
+  border-radius: 5px;
+  padding: 3px 3px 5px;
+  box-shadow:
+    0 4px 0 #888884,
+    0 5px 6px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.5);
+  transition: all .06s;
+}
+.keycap-top {
+  background: linear-gradient(160deg, #fafaf6 0%, #eeecea 40%, #dcdad6 100%);
+  border-radius: 3px;
+  padding: 9px 4px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(0,0,0,.08),
+    inset 1px 0 0 rgba(255,255,255,.6),
+    inset -1px 0 0 rgba(0,0,0,.05);
+  transition: all .06s;
+  position: relative; overflow: hidden;
+}
+.keycap-top::before {
+  content:''; position:absolute; top:3px; left:3px;
+  width:14px; height:7px; border-radius:3px;
+  background: radial-gradient(ellipse, rgba(255,255,255,.6), rgba(255,255,255,0));
+  pointer-events:none;
+}
+.keycap-num { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text); line-height:1; text-shadow:0 1px 0 rgba(255,255,255,.8); }
+.keycap-lbl { font-family:var(--mono); font-size:6px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
+.keycap.active .keycap-base {
+  background: linear-gradient(to bottom, #88cc00, #66aa00);
+  box-shadow: 0 2px 0 #3a6600, 0 3px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.keycap.active .keycap-top {
+  background: linear-gradient(160deg, #aaff22 0%, #88dd00 50%, #66bb00 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,60,0,.2), 0 0 8px rgba(136,255,0,.25);
+}
+.keycap.active .keycap-num { color: #1a4400; text-shadow: 0 1px 0 rgba(255,255,255,.3); }
+.keycap.active .keycap-lbl { color: #2d5500; }
+.keycap:hover:not(.active) .keycap-top {
+  background: linear-gradient(160deg, #ffffff 0%, #f4f4f0 40%, #e4e4e0 100%);
+}
+.keycap:active .keycap-base { box-shadow: 0 1px 0 #888884, 0 2px 3px rgba(0,0,0,.3); transform: translateY(2px); }
+.keycap:active .keycap-top { box-shadow: inset 0 1px 3px rgba(0,0,0,.12); }
+═══════════════════════════════════════════════ */
+.keycap {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* base (housing incassato) */
+.keycap-base {
+  background: linear-gradient(to bottom, #b8b8b4, #c8c8c4);
+  border-radius: 5px;
+  padding: 3px 3px 5px;
+  box-shadow:
+    0 4px 0 #888884,
+    0 5px 6px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.5);
+}
+/* superficie tasto */
+.keycap-top {
+  background: linear-gradient(160deg, #fafaf6 0%, #eeecea 40%, #dcdad6 100%);
+  border-radius: 3px;
+  padding: 8px 4px 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(0,0,0,.08),
+    inset 1px 0 0 rgba(255,255,255,.6),
+    inset -1px 0 0 rgba(0,0,0,.05);
+  transition: all .06s;
+  position: relative;
+  overflow: hidden;
+}
+/* highlight angolo */
+.keycap-top::before {
+  content:'';
+  position:absolute; top:3px; left:3px;
+  width:14px; height:7px; border-radius:3px;
+  background: radial-gradient(ellipse, rgba(255,255,255,.6), rgba(255,255,255,0));
+  pointer-events:none;
+}
+/* numero grande */
+.keycap-num {
+  font-family: var(--mono);
+  font-size: 14px; font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+/* label piccola sotto */
+.keycap-lbl {
+  font-family: var(--mono);
+  font-size: 7px; font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+/* stato ACTIVE — pressed + acid */
+.keycap.active .keycap-base {
+  box-shadow:
+    0 2px 0 #4a7a00,
+    0 3px 4px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.3);
+  background: linear-gradient(to bottom, #88cc00, #66aa00);
+}
+.keycap.active .keycap-top {
+  background: linear-gradient(160deg, #aaff22 0%, #88dd00 50%, #66bb00 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,60,0,.15),
+    0 0 8px rgba(136,255,0,.3);
+}
+.keycap.active .keycap-num { color: #1a4400; text-shadow: 0 1px 0 rgba(255,255,255,.4); }
+.keycap.active .keycap-lbl { color: #2a5500; }
+/* hover */
+.keycap:hover .keycap-top {
+  background: linear-gradient(160deg, #ffffff 0%, #f4f4f0 40%, #e4e4e0 100%);
+}
+/* press */
+.keycap:active .keycap-base {
+  box-shadow: 0 1px 0 #888884, 0 2px 3px rgba(0,0,0,.3);
+  transform: translateY(2px);
+}
+.keycap:active .keycap-top {
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+</style>
+</head>
+<body>
+
+<div class="chassis">
+
+  <!-- ════════════════════ NAMEPLATE / NAV ════════════════════ -->
+  <div class="nameplate">
+    <div class="logo-text">ACIDLAB</div>
+    <div class="logo-sub">BASS SYNTHESIZER</div>
+    <div class="nav-tabs">
+      <button class="tab active" onclick="nav('synth',this)"><span class="tab-n">01</span>SYNTH</button>
+      <button class="tab" onclick="nav('seq',this)"><span class="tab-n">02</span>SEQUENCER</button>
+      <button class="tab" onclick="nav('fx',this)"><span class="tab-n">03</span>FX</button>
+      <button class="tab" onclick="nav('preset',this)"><span class="tab-n">04</span>PRESET</button>
+      <button class="tab" onclick="nav('settings',this)"><span class="tab-n">05</span>SETTINGS</button>
+    </div>
+    <div class="status-area" style="margin-left:auto;">
+      <div class="led-run"></div>
+      <span>ACTIVE · BPM <span id="bpm-hdr">125</span></span>
+    </div>
+  </div>
+
+  <!-- ════════════════════ CONTENT ════════════════════ -->
+  <div class="content">
+
+    <!-- ══════════════ 01 SYNTH ══════════════ -->
+    <div class="page active" id="page-synth">
+      <div class="grid-3">
+
+        <!-- COL 1: sinistra -->
+        <div class="col">
+
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Transport</span></div>
+            <div class="card-body" style="padding:12px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="keycap transport-key" id="play-key" onclick="togglePlay()" style="flex:1;">
+                  <div class="keycap-base">
+                    <div class="keycap-top" style="padding:16px 4px 14px;flex-direction:row;gap:8px;justify-content:center;">
+                      <span class="transport-icon" style="font-size:12px;">▶</span>
+                      <span class="keycap-num" style="font-size:13px;letter-spacing:2px;">PLAY</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="keycap transport-key pressed" id="stop-key" onclick="doStop()" style="flex:1;">
+                  <div class="keycap-base">
+                    <div class="keycap-top" style="padding:16px 4px 14px;flex-direction:row;gap:8px;justify-content:center;">
+                      <span class="transport-icon" style="font-size:11px;">■</span>
+                      <span class="keycap-num" style="font-size:13px;letter-spacing:2px;">STOP</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+                  <div style="font-family:var(--mono);font-size:7px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;">MIDI</div>
+                  <div id="midi-switch" onclick="toggleMidi(this)" style="width:44px;height:24px;border-radius:12px;background:linear-gradient(to bottom,#b8b8b4,#c8c8c4);box-shadow:inset 0 2px 5px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1),0 1px 0 rgba(255,255,255,.6);position:relative;cursor:pointer;transition:background .2s;border:1px solid rgba(0,0,0,.15);">
+                    <div id="midi-thumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fafaf6,#d8d8d4);box-shadow:0 2px 5px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.9);transition:left .15s cubic-bezier(.4,0,.2,1);"></div>
+                  </div>
+                  <div id="midi-lbl" style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1px;">OFF</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Waveform</span></div>
+            <div class="card-body">
+              <div class="wave-sel">
+                <div class="wave-btn active" onclick="setWave(this)">SAW</div>
+                <div class="wave-btn" onclick="setWave(this)">SQR</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="flex:1;">
+            <div class="card-hdr"><span class="card-hdr-txt">Pattern Select</span></div>
+            <div class="card-body" style="padding:12px 10px;">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;" id="pat-btns"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COL 2: centro — VCF + display + VCA -->
+        <div class="col">
+
+          <div class="card" style="flex:1;">
+            <div class="card-hdr"><span class="card-hdr-txt">VCF — Filter</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:16px;">
+
+              <div class="knobs-row" style="justify-content:space-around;">
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Cutoff</div><div class="knob-val">800Hz</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Resonance</div><div class="knob-val">0.50</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Env Mod</div><div class="knob-val">0.70</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Decay</div><div class="knob-val">0.30</div>
+                </div>
+              </div>
+
+              <div class="lcd-wrap" style="flex:1;">
+                <div class="lcd" style="padding:18px 20px;display:flex;flex-direction:column;gap:0;height:100%;box-sizing:border-box;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid #162808;">
+                    <div style="font-size:15px;font-weight:600;color:var(--lcd-green);letter-spacing:3px;text-shadow:0 0 12px var(--acid-glow);">ACIDLAB</div>
+                    <div style="display:flex;gap:16px;">
+                      <span style="font-size:10px;color:#44aa00;">PAT <span style="color:var(--lcd-green);font-weight:600;">01</span></span>
+                      <span style="font-size:10px;color:#44aa00;">BPM <span id="bpm-lcd" style="color:var(--lcd-green);font-weight:600;">125</span></span>
+                      <span style="font-size:10px;color:#44aa00;">WAVE <span style="color:var(--lcd-green);font-weight:600;">SAW</span></span>
+                    </div>
+                    <div id="play-ind" style="width:9px;height:9px;border-radius:50%;background:#0f2006;transition:all .15s;"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;">
+                    <div>
+                      <div style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;margin-bottom:4px;">CUTOFF</div>
+                      <div style="font-size:18px;font-weight:600;color:var(--lcd-green);line-height:1;text-shadow:0 0 10px var(--acid-glow);margin-bottom:6px;">800<span style="font-size:10px;color:#44aa00;font-weight:400;">Hz</span></div>
+                      <div style="height:3px;background:#0a1804;border-radius:2px;overflow:hidden;"><div style="width:65%;height:100%;background:var(--lcd-green);border-radius:2px;"></div></div>
+                    </div>
+                    <div>
+                      <div style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;margin-bottom:4px;">RESO</div>
+                      <div style="font-size:18px;font-weight:600;color:var(--lcd-green);line-height:1;text-shadow:0 0 10px var(--acid-glow);margin-bottom:6px;">0.50</div>
+                      <div style="height:3px;background:#0a1804;border-radius:2px;overflow:hidden;"><div style="width:50%;height:100%;background:var(--lcd-green);border-radius:2px;"></div></div>
+                    </div>
+                    <div>
+                      <div style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;margin-bottom:4px;">ENV MOD</div>
+                      <div style="font-size:18px;font-weight:600;color:var(--lcd-green);line-height:1;text-shadow:0 0 10px var(--acid-glow);margin-bottom:6px;">0.70</div>
+                      <div style="height:3px;background:#0a1804;border-radius:2px;overflow:hidden;"><div style="width:70%;height:100%;background:var(--lcd-green);border-radius:2px;"></div></div>
+                    </div>
+                    <div>
+                      <div style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;margin-bottom:4px;">DECAY</div>
+                      <div style="font-size:18px;font-weight:600;color:var(--lcd-green);line-height:1;text-shadow:0 0 10px var(--acid-glow);margin-bottom:6px;">0.30</div>
+                      <div style="height:3px;background:#0a1804;border-radius:2px;overflow:hidden;"><div style="width:30%;height:100%;background:var(--lcd-green);border-radius:2px;"></div></div>
+                    </div>
+                  </div>
+                  <div style="height:1px;background:#162808;margin-bottom:12px;"></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;">SEQUENCER</span>
+                    <span style="font-size:8px;color:#44aa00;">RES <span style="color:var(--lcd-green);font-weight:600;">1/16</span></span>
+                    <span style="font-size:8px;color:#44aa00;">PRESET <span style="color:var(--lcd-green);font-weight:600;">Classic Acid</span></span>
+                  </div>
+                  <div class="lcd-steps" id="lcd-s" style="gap:4px;"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">VCA — Amplifier</span></div>
+            <div class="card-body">
+              <div class="knobs-row" style="justify-content:space-around;">
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Volume</div><div class="knob-val">0.80</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Distort</div><div class="knob-val">0.00</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Accent</div><div class="knob-val">0.75</div>
+                </div>
+                <div class="knob-wrap">
+                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
+                  <div class="knob-lbl">Tuning</div><div class="knob-val">0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COL 3: destra -->
+        <div class="col">
+
+          <div class="card">
+            <div class="card-hdr blue"><span class="card-hdr-txt">Step Resolution</span></div>
+            <div class="card-body col gap4">
+              <button class="btn">1/4 Note</button>
+              <button class="btn">1/8 Note</button>
+              <button class="btn acid">1/16 Note</button>
+            </div>
+          </div>
+
+          <div class="card" style="flex:1;">
+            <div class="card-hdr"><span class="card-hdr-txt">Output Level</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:18px 14px;">
+              <div class="knob-wrap" style="flex:none;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">0</span>
+                  <div class="knob" style="width:80px;height:80px;">
+                    <div class="knob-hl" style="width:28px;height:15px;top:12px;left:12px;"></div>
+                    <div class="knob-dot" style="width:9px;height:9px;margin-left:-4.5px;"></div>
+                  </div>
+                  <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">10</span>
+                </div>
+                <div class="knob-lbl">Volume</div>
+                <div class="knob-val">0.80</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;">
+                <div style="font-family:var(--mono);font-size:7px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;">Signal</div>
+                <div style="display:flex;gap:5px;align-items:flex-end;" id="led-meter"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════ 02 SEQUENCER ══════════════ -->
+    <div class="page" id="page-seq">
+      <div class="col">
+
+        <!-- TOP BAR: controls -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Sequencer Controls</span></div>
+          <div class="card-body" style="padding:10px 14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="keycap transport-key" id="play-key2" onclick="togglePlay2()" style="min-width:90px;">
+                <div class="keycap-base">
+                  <div class="keycap-top" style="padding:12px 8px;flex-direction:row;gap:7px;justify-content:center;">
+                    <span style="font-size:11px;color:var(--text-mid);">▶</span>
+                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">PLAY</span>
+                  </div>
+                </div>
+              </div>
+              <div class="keycap transport-key pressed" id="stop-key2" onclick="doStop2()" style="min-width:90px;">
+                <div class="keycap-base">
+                  <div class="keycap-top" style="padding:12px 8px;flex-direction:row;gap:7px;justify-content:center;">
+                    <span style="font-size:10px;color:var(--text-mid);">■</span>
+                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">STOP</span>
+                  </div>
+                </div>
+              </div>
+              <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
+              <button class="btn sm">LENGTH</button>
+              <button class="btn sm">SHUFFLE</button>
+              <button class="btn sm">RANDOM</button>
+              <button class="btn sm btn-red">CLEAR</button>
+              <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
+              <button class="btn sm">1/4</button>
+              <button class="btn sm">1/8</button>
+              <button class="btn sm acid">1/16</button>
+              <div style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text-dim);">
+                STEP <span id="slcd" style="color:var(--acid-dark);font-weight:600;">01</span>/16 &nbsp;·&nbsp; PAT <span style="color:var(--acid-dark);font-weight:600;">01</span> &nbsp;·&nbsp; BPM <span id="bpm-lcd2" style="color:var(--acid-dark);font-weight:600;">125</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIANO ROLL LCD -->
+        <div class="card" style="flex:1;">
+          <div class="card-hdr"><span class="card-hdr-txt">Piano Roll — Pattern 01</span></div>
+          <div class="card-body" style="padding:0;overflow:hidden;border-radius:0 0 8px 8px;">
+
+            <!-- Wrapper LCD touchscreen -->
+            <div style="
+              background:#111111;
+              border-top:2px solid #000000;
+              box-shadow:inset 0 2px 12px rgba(0,0,0,.8);
+              display:flex;
+              flex-direction:column;
+              min-height:300px;
+              position:relative;
+              overflow:hidden;
+            ">
+              <!-- Scanlines overlay -->
+              <div style="
+                position:absolute;inset:0;pointer-events:none;z-index:10;
+                background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0px,rgba(0,0,0,.04) 1px,transparent 1px,transparent 4px);
+              "></div>
+
+              <!-- Schermo LCD -->
+              <div style="display:flex;flex:1;overflow:hidden;">
+
+                <!-- Tastiera piano (sinistra) -->
+                <div id="piano-keys" style="
+                  width:52px;flex-shrink:0;
+                  background:#060c02;
+                  border-right:1px solid #0f1e06;
+                  display:flex;flex-direction:column;
+                  overflow:hidden;
+                "></div>
+
+                <!-- Grid piano roll -->
+                <div style="flex:1;overflow:hidden;position:relative;">
+                  <canvas id="piano-roll-canvas" style="display:block;width:100%;height:100%;"></canvas>
+                </div>
+
+              </div>
+
+              <!-- Bottom bar: slide / accent / info -->
+              <div style="
+                height:32px;flex-shrink:0;
+                background:#0d0d0d;
+                border-top:1px solid #222222;
+                display:flex;align-items:center;
+                padding:0 12px;gap:16px;
+              ">
+                <span style="font-family:var(--mono);font-size:8px;color:#444444;letter-spacing:1.5px;">SLIDE</span>
+                <div id="slide-row" style="display:flex;gap:3px;flex:1;"></div>
+                <span style="font-family:var(--mono);font-size:8px;color:#444444;letter-spacing:1.5px;">ACCENT</span>
+                <div id="accent-row" style="display:flex;gap:3px;width:200px;"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════ 03 FX ══════════════ -->
+    <div class="page" id="page-fx">
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:12px;">
+
+        <!-- SINISTRA: 4 knob card -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;">
+
+          <!-- DELAY -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Delay</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
+              <div id="knob-wrap-delay" style="width:110px;height:110px;"></div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Delay</div>
+                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-delay">45</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">375 ms · 1/8</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- REVERB -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Reverb</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
+              <div id="knob-wrap-reverb" style="width:110px;height:110px;"></div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Reverb</div>
+                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-reverb">50</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Room · Stereo</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DISTORTION -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Distortion</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
+              <div id="knob-wrap-dist" style="width:110px;height:110px;"></div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Distortion</div>
+                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-dist">0</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Tanh · DC Block</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHORUS -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-hdr-txt">Chorus</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
+              <div id="knob-wrap-chorus" style="width:110px;height:110px;"></div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Chorus</div>
+                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-chorus">0</div>
+                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Depth · Rate</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- DESTRA: display overview -->
+        <div class="col">
+          <div class="card" style="flex:1;">
+            <div class="card-hdr"><span class="card-hdr-txt">FX Overview</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:0;padding:20px 18px;">
+              <canvas id="fx-canvas" width="244" height="180" style="width:100%;border-radius:6px;background:#111;display:block;margin-bottom:16px;
+                box-shadow:inset 0 2px 8px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.3);"></canvas>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('delay',this)">
+                  <div style="width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);flex-shrink:0;" class="fx-led"></div>
+                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-mid);flex:1;text-transform:uppercase;">Delay</span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--acid-dark);font-weight:600;" id="pct-delay">45%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('reverb',this)">
+                  <div style="width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);flex-shrink:0;" class="fx-led"></div>
+                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-mid);flex:1;text-transform:uppercase;">Reverb</span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--acid-dark);font-weight:600;" id="pct-reverb">50%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('dist',this)">
+                  <div style="width:7px;height:7px;border-radius:50%;background:var(--inset);flex-shrink:0;" class="fx-led"></div>
+                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-dim);flex:1;text-transform:uppercase;">Distortion</span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);" id="pct-dist">0%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('chorus',this)">
+                  <div style="width:7px;height:7px;border-radius:50%;background:var(--inset);flex-shrink:0;" class="fx-led"></div>
+                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-dim);flex:1;text-transform:uppercase;">Chorus</span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);" id="pct-chorus">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════ 04 PRESET ══════════════ -->
+    <div class="page" id="page-preset">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 240px;gap:12px;height:100%;">
+
+        <!-- [1] FACTORY PATTERN PRESET -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Factory Pattern Preset</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+            <div style="position:relative;">
+              <select id="factory-select" onchange="onFactorySelect(this)" style="
+                width:100%;padding:11px 36px 11px 12px;
+                font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1px;
+                color:var(--text);
+                background:linear-gradient(to bottom,#fafaf6,#e8e8e4,#d8d8d4);
+                border:1px solid var(--panel-shad);border-radius:5px;
+                box-shadow:0 2px 5px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.08);
+                appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
+                <option value="0">01 — Classic Acid</option>
+                <option value="1">02 — Deep Squelch</option>
+                <option value="2">03 — Funky Groove</option>
+                <option value="3">04 — Dub Delay</option>
+                <option value="4">05 — Space Acid</option>
+                <option value="5">06 — Dark Techno</option>
+                <option value="6">07 — Rave Acid</option>
+                <option value="7">08 — Square Pulse</option>
+              </select>
+              <div style="pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);">
+                <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+            <!-- 4 celle parametri -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+              <div style="background:var(--surface);border-radius:5px;padding:10px 12px;border:1px solid var(--border);box-shadow:inset 0 1px 3px rgba(0,0,0,.06);">
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;">TEMPO</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);" id="fp-tempo">130 BPM</div>
+              </div>
+              <div style="background:var(--surface);border-radius:5px;padding:10px 12px;border:1px solid var(--border);box-shadow:inset 0 1px 3px rgba(0,0,0,.06);">
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;">WAVEFORM</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);" id="fp-wave">SAW</div>
+              </div>
+              <div style="background:var(--surface);border-radius:5px;padding:10px 12px;border:1px solid var(--border);box-shadow:inset 0 1px 3px rgba(0,0,0,.06);">
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;">CUTOFF</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--acid-dark);" id="fp-cut">600Hz</div>
+              </div>
+              <div style="background:var(--surface);border-radius:5px;padding:10px 12px;border:1px solid var(--border);box-shadow:inset 0 1px 3px rgba(0,0,0,.06);">
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:4px;">RESONANCE</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--acid-dark);" id="fp-res">0.75</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- [2] SYNTH PRESET -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Synth Preset</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+            <div style="position:relative;">
+              <select id="synth-select" onchange="onSynthSelect(this)" style="
+                width:100%;padding:11px 36px 11px 12px;
+                font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1px;
+                color:var(--text);
+                background:linear-gradient(to bottom,#fafaf6,#e8e8e4,#d8d8d4);
+                border:1px solid var(--panel-shad);border-radius:5px;
+                box-shadow:0 2px 5px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.08);
+                appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
+                <option value="0">01 — Acid Saw</option>
+                <option value="1">02 — TB Squelch</option>
+                <option value="2">03 — Deep Sub</option>
+                <option value="3">04 — Jungle Bass</option>
+                <option value="4">05 — Ambient Cloud</option>
+                <option value="5">06 — Echo Acid</option>
+                <option value="6">07 — Square Stomp</option>
+                <option value="7">08 — Overdrive</option>
+                <option value="8">09 — Wobble Bass</option>
+                <option value="9">10 — Warm Pad</option>
+                <option value="10">11 — Scream</option>
+                <option value="11">12 — Hybrid FX</option>
+              </select>
+              <div style="pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);">
+                <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+            <!-- Barre parametri -->
+            <div style="display:flex;flex-direction:column;gap:8px;" id="synth-bars"></div>
+
+          </div>
+        </div>
+
+        <!-- [3] ACTIONS — solo PLAY/STOP + status -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Actions</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+
+            <!-- Status preset caricato -->
+            <div style="background:var(--surface);border-radius:5px;border:1px solid var(--border);
+              padding:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,.07);">
+              <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:6px;">SELECTED</div>
+              <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--acid-dark);margin-bottom:3px;" id="loaded-name">Classic Acid</div>
+              <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);" id="loaded-type">Factory Pattern</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:10px;">
+                <div style="width:6px;height:6px;border-radius:50%;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);"></div>
+                <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Ready</span>
+              </div>
+            </div>
+
+            <!-- LOAD button -->
+            <button class="btn acid" onclick="loadPreset()" style="width:100%;padding:13px;font-size:10px;">▶ LOAD PRESET</button>
+
+            <div style="height:1px;background:var(--panel-shad);"></div>
+
+            <!-- PLAY / STOP — keycap fisici -->
+            <div style="display:flex;gap:8px;">
+              <div class="keycap transport-key" id="play-key3" onclick="togglePlay()" style="flex:1;">
+                <div class="keycap-base">
+                  <div class="keycap-top" style="padding:14px 4px;flex-direction:row;gap:6px;justify-content:center;">
+                    <span style="font-size:11px;color:var(--text-mid);">▶</span>
+                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">PLAY</span>
+                  </div>
+                </div>
+              </div>
+              <div class="keycap transport-key pressed" id="stop-key3" onclick="doStop()" style="flex:1;">
+                <div class="keycap-base">
+                  <div class="keycap-top" style="padding:14px 4px;flex-direction:row;gap:6px;justify-content:center;">
+                    <span style="font-size:10px;color:var(--text-mid);">■</span>
+                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">STOP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════ 05 SETTINGS ══════════════ -->
+    <div class="page" id="page-settings">
+      <div style="display:grid;grid-template-columns:180px 200px 1fr;gap:12px;align-items:start;">
+
+        <!-- BPM — compatto -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Tempo</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;">
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <div style="font-family:var(--mono);font-size:36px;font-weight:600;color:var(--text);line-height:1;" id="bpm-display">125</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;">BPM</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <div class="keycap" onclick="changeBPM(-bpmStep)" style="flex:1;">
+                <div class="keycap-base"><div class="keycap-top" style="padding:10px 4px;justify-content:center;">
+                  <span class="keycap-num" style="font-size:16px;line-height:1;">−</span>
+                </div></div>
+              </div>
+              <div class="keycap" onclick="changeBPM(bpmStep)" style="flex:1;">
+                <div class="keycap-base"><div class="keycap-top" style="padding:10px 4px;justify-content:center;">
+                  <span class="keycap-num" style="font-size:16px;line-height:1;">+</span>
+                </div></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:5px;">
+              <button class="btn sm acid" id="bs1"  onclick="setBpmStep(1)"  style="flex:1;padding:5px;">±1</button>
+              <button class="btn sm"      id="bs5"  onclick="setBpmStep(5)"  style="flex:1;padding:5px;">±5</button>
+              <button class="btn sm"      id="bs10" onclick="setBpmStep(10)" style="flex:1;padding:5px;">±10</button>
+            </div>
+            <div class="keycap" id="tap-btn" onclick="tapTempo()">
+              <div class="keycap-base"><div class="keycap-top" style="padding:8px 4px;justify-content:center;">
+                <span class="keycap-num" style="font-size:9px;letter-spacing:2px;">TAP</span>
+              </div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODE — compatto -->
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Mode</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;">
+            <div id="mode-filter" onclick="setMode('filter')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:linear-gradient(to right,#ddffaa,#eeffcc);border:1.5px solid var(--acid-dark);transition:all .1s;">
+              <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);"></div>
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--acid-deep);letter-spacing:1px;">FILTER</div>
+                <div style="font-family:var(--mono);font-size:7px;color:var(--acid-dark);margin-top:1px;">VCF active</div>
+              </div>
+            </div>
+            <div id="mode-note" onclick="setMode('note')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:all .1s;">
+              <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--inset);"></div>
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">NOTE</div>
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">VCF bypassed</div>
+              </div>
+            </div>
+            <div id="mode-midi" onclick="setMode('midi')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:all .1s;">
+              <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--inset);"></div>
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">MIDI IN</div>
+                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">Seq bypassed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SPAZIO ILLUSTRAZIONE -->
+        <div style="
+          background:var(--surface);
+          border:1px dashed var(--border);
+          border-radius:8px;
+          display:flex;align-items:center;justify-content:center;
+          min-height:220px;
+          box-shadow:inset 0 2px 8px rgba(0,0,0,.04);
+        ">
+          <div style="text-align:center;">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;opacity:.5;">ILLUSTRATION</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /chassis -->
+
+<script>
+// ── NAV
+function nav(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── STATE
+const stepOn=new Set([0,3,5,8,11,14]);
+const notes=['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5'];
+let curStep=0,playing=false,iv=null;
+
+// ── LCD STEPS
+function buildLCD(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML='';
+  for(let i=0;i<16;i++){
+    const d=document.createElement('div');
+    d.className='lcd-step'+(stepOn.has(i)?' on':'')+(i===curStep&&playing?' play':'');
+    el.appendChild(d);
+  }
+}
+buildLCD('lcd-s'); buildLCD('lcd-s2');
+
+// ── STEPS
+function buildSteps(){
+  const g=document.getElementById('steps-grid');
+  const s=document.getElementById('step-sub');
+  if(!g||!s) return;
+  g.innerHTML=''; s.innerHTML='';
+  for(let i=0;i<16;i++){
+    const on=stepOn.has(i),pl=i===curStep&&playing;
+    const b=document.createElement('div');
+    b.className='step'+(on?' on':'')+(pl?' playing':'');
+    b.innerHTML=`<div class="step-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="step-led"></div>
+      <div class="step-note">${on?notes[i]:'—'}</div>`;
+    b.onclick=()=>{on?stepOn.delete(i):stepOn.add(i);buildSteps();buildLCD('lcd-s');buildLCD('lcd-s2');};
+    g.appendChild(b);
+    const sc=document.createElement('div'); sc.className='step-sub-col';
+    sc.innerHTML=`<div class="sub${on&&i%3===0?' acc':''}" >ACC</div>
+      <div class="sub${on&&i%4===0?' sld':''}">SLD</div>`;
+    s.appendChild(sc);
+  }
+}
+buildSteps();
+
+function updatePlayInd() {
+  const ind = document.getElementById('play-ind');
+  if(ind) {
+    ind.style.background = playing ? 'var(--lcd-green)' : '#0f2006';
+    ind.style.boxShadow  = playing ? '0 0 8px var(--acid-glow)' : 'none';
+  }
+  // tutti i transport keycap sincronizzati
+  ['play-key','play-key3'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('pressed', playing);
+  });
+  ['stop-key','stop-key3'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('pressed', !playing);
+  });
+}
+
+function togglePlay(){
+  playing = !playing;
+  updatePlayInd();
+  if(playing){
+    iv=setInterval(()=>{
+      curStep=(curStep+1)%16;
+      buildSteps(); buildLCD('lcd-s'); buildLCD('lcd-s2');
+      const sl=document.getElementById('slcd');
+      if(sl) sl.textContent=String(curStep+1).padStart(2,'0');
+    },460);
+  } else {
+    clearInterval(iv); curStep=0;
+    buildSteps(); buildLCD('lcd-s'); buildLCD('lcd-s2');
+  }
+}
+
+function doStop(){
+  if(playing) togglePlay();
+}
+
+let midiOn = false;
+function toggleMidi(el){
+  midiOn = !midiOn;
+  const thumb = document.getElementById('midi-thumb');
+  const lbl   = document.getElementById('midi-lbl');
+  if(midiOn){
+    el.style.background = 'linear-gradient(to bottom,#66bb00,#88dd00)';
+    el.style.boxShadow  = 'inset 0 2px 5px rgba(0,0,0,.25),0 0 8px rgba(136,255,0,.3),0 1px 0 rgba(255,255,255,.4)';
+    thumb.style.left    = '23px';
+    thumb.style.background = 'radial-gradient(circle at 38% 32%,#eeffaa,#aaddoo)';
+    lbl.textContent = 'ON';
+    lbl.style.color = 'var(--acid-dark)';
+  } else {
+    el.style.background = 'linear-gradient(to bottom,#b8b8b4,#c8c8c4)';
+    el.style.boxShadow  = 'inset 0 2px 5px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1),0 1px 0 rgba(255,255,255,.6)';
+    thumb.style.left    = '3px';
+    thumb.style.background = 'radial-gradient(circle at 38% 32%,#fafaf6,#d8d8d4)';
+    lbl.textContent = 'OFF';
+    lbl.style.color = 'var(--text-dim)';
+  }
+}
+
+// init stato stop attivo
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sk = document.getElementById('stop-key');
+  if(sk) sk.classList.add('active');
+});
+
+// ── WAVE / PAT
+function buildKeycaps() {
+  const grid = document.getElementById('pat-btns');
+  if(!grid) return;
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  grid.style.gap = '7px';
+
+  for(let i = 0; i < 9; i++) {
+    const key = document.createElement('div');
+    key.className = 'keycap' + (i === 0 ? ' active' : '');
+    key.innerHTML = `
+      <div class="keycap-base">
+        <div class="keycap-top" style="padding:22px 4px 20px;">
+          <div class="keycap-num" style="font-size:20px;">${i + 1}</div>
+        </div>
+      </div>
+    `;
+    key.onclick = () => {
+      grid.querySelectorAll('.keycap').forEach(k => k.classList.remove('active'));
+      key.classList.add('active');
+    };
+    grid.appendChild(key);
+  }
+}
+buildKeycaps();
+
+// ── PIANO ROLL ────────────────────────────────────────────────────────────────
+(function(){
+  const STEPS=16, ROWS=24, NOTE_H=18;
+  const ALL_NOTES=[];
+  for(let oct=4;oct>=3;oct--){
+    ['B','A#','A','G#','G','F#','F','E','D#','D','C#','C'].forEach(n=>{
+      ALL_NOTES.push({name:n,oct,isBlack:n.includes('#')});
+    });
+  }
+  const notes=new Set(['0:20','2:18','3:20','5:16','6:20','8:18','9:16','11:20','12:18','14:16','15:20']);
+  const slideData=Array(STEPS).fill(false);
+  const accentData=Array(STEPS).fill(false);
+  [2,5,10].forEach(i=>slideData[i]=true);
+  [0,3,8,12].forEach(i=>accentData[i]=true);
+
+  // Tastiera piano
+  const pianoEl=document.getElementById('piano-keys');
+  if(pianoEl){
+    pianoEl.innerHTML='';
+    ALL_NOTES.forEach(({name,oct,isBlack})=>{
+      const k=document.createElement('div');
+      k.style.cssText=`height:${NOTE_H}px;flex:none;display:flex;align-items:center;
+        justify-content:flex-end;padding-right:6px;box-sizing:border-box;
+        background:${isBlack?'#111111':'#f0f0ec'};
+        border-bottom:1px solid ${isBlack?'#000000':'#c8c8c4'};`;
+      if(!isBlack) k.innerHTML=`<span style="font-family:monospace;font-size:6px;color:#aaa;">${name}${oct}</span>`;
+      pianoEl.appendChild(k);
+    });
+  }
+
+  // Slide / Accent rows
+  function buildRows(){
+    ['slide-row','accent-row'].forEach((id,ri)=>{
+      const el=document.getElementById(id); if(!el) return;
+      el.innerHTML='';
+      const data=ri===0?slideData:accentData;
+      for(let i=0;i<STEPS;i++){
+        const c=document.createElement('div');
+        c.style.cssText=`flex:1;height:14px;border-radius:2px;cursor:pointer;
+          background:${data[i]?'#88ff00':'#1e1e1e'};
+          border:1px solid ${data[i]?'rgba(136,255,0,.6)':'#333'};
+          box-shadow:${data[i]?'0 0 5px rgba(136,255,0,.35)':'none'};transition:all .08s;`;
+        c.onclick=()=>{data[i]=!data[i];buildRows();};
+        el.appendChild(c);
+      }
+    });
+  }
+  buildRows();
+
+  // Canvas draw
+  function draw(){
+    const canvas=document.getElementById('piano-roll-canvas');
+    if(!canvas) return;
+    const parent=canvas.parentElement;
+    const W=parent.offsetWidth||600;
+    const H=ROWS*NOTE_H;
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(W*dpr);
+    canvas.height=Math.round(H*dpr);
+    canvas.style.width=W+'px';
+    canvas.style.height=H+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const cW=W/STEPS, cH=NOTE_H;
+
+    // Sfondo righe
+    ALL_NOTES.forEach(({isBlack},r)=>{
+      ctx.fillStyle=isBlack?'#1c1c1c':'#2c2c2c';
+      ctx.fillRect(0,r*cH,W,cH);
+    });
+    // Linee orizzontali
+    for(let r=0;r<=ROWS;r++){
+      ctx.strokeStyle=r%12===0?'rgba(255,255,255,.18)':'rgba(255,255,255,.05)';
+      ctx.lineWidth=r%12===0?1:.4;
+      ctx.beginPath();ctx.moveTo(0,r*cH);ctx.lineTo(W,r*cH);ctx.stroke();
+    }
+    // Linee verticali 1/16
+    for(let s=0;s<=STEPS;s++){
+      const beat=s%4===0;
+      ctx.strokeStyle=beat?'rgba(255,255,255,.22)':'rgba(255,255,255,.06)';
+      ctx.lineWidth=beat?1.2:.4;
+      ctx.beginPath();ctx.moveTo(s*cW,0);ctx.lineTo(s*cW,H);ctx.stroke();
+    }
+    // Numeri step
+    ctx.textAlign='center';
+    for(let s=0;s<STEPS;s++){
+      const beat=s%4===0;
+      ctx.fillStyle=beat?'rgba(255,255,255,.6)':'rgba(255,255,255,.22)';
+      ctx.font=(beat?'700':'400')+' 9px monospace';
+      ctx.fillText(s+1,s*cW+cW/2,12);
+    }
+    // Note
+    notes.forEach(key=>{
+      const[s,r]=key.split(':').map(Number);
+      if(s<0||s>=STEPS||r<0||r>=ROWS) return;
+      const x=s*cW+1.5,y=r*cH+1.5,w=cW-3,h=cH-3;
+      const g=ctx.createLinearGradient(x,y,x,y+h);
+      g.addColorStop(0,'#ccff55');g.addColorStop(.5,'#88ff00');g.addColorStop(1,'#55aa00');
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(x,y,w,h,2);else ctx.rect(x,y,w,h);
+      ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.3)';
+      ctx.beginPath();
+      if(ctx.roundRect)ctx.roundRect(x+1,y+1,w-2,Math.min(h*.4,5),1);else ctx.rect(x+1,y+1,w-2,Math.min(h*.4,5));
+      ctx.fill();
+    });
+    // Playhead
+    if(window.playing2){
+      const px=window._prStep*cW;
+      ctx.fillStyle='rgba(255,255,255,.07)';
+      ctx.fillRect(px,0,cW,H);
+      ctx.strokeStyle='rgba(255,255,255,.85)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+
+  // Click per piazzare note
+  const canvas=document.getElementById('piano-roll-canvas');
+  if(canvas){
+    canvas.style.cursor='crosshair';
+    canvas.addEventListener('mousedown',e=>{
+      if(window.__JUCE__) return;   // nel plugin comanda il gestore del bridge (sequencer reale)
+      const rect=canvas.getBoundingClientRect();
+      const W=rect.width,cW=W/STEPS;
+      const s=Math.floor((e.clientX-rect.left)/cW);
+      const r=Math.floor((e.clientY-rect.top)/NOTE_H);
+      if(s>=0&&s<STEPS&&r>=0&&r<ROWS){
+        const k=`${s}:${r}`;
+        notes.has(k)?notes.delete(k):notes.add(k);
+        draw();
+      }
+    });
+  }
+
+  window.playing2=false;
+  window._prStep=0;
+  window._drawPR=draw;
+  setTimeout(draw,80);
+  window.addEventListener('resize',draw);
+})();
+
+// ── TRANSPORT SEQUENCER ───────────────────────────────────────────────────────
+let iv2=null;
+function togglePlay2(){
+  window.playing2=!window.playing2;
+  const pk=document.getElementById('play-key2');
+  const sk=document.getElementById('stop-key2');
+  if(pk) pk.classList.toggle('pressed',window.playing2);
+  if(sk) sk.classList.toggle('pressed',!window.playing2);
+  if(window.playing2){
+    iv2=setInterval(()=>{
+      window._prStep=(window._prStep+1)%16;
+      window._drawPR();
+      const sl=document.getElementById('slcd');
+      if(sl) sl.textContent=String(window._prStep+1).padStart(2,'0');
+    },460);
+  } else {
+    clearInterval(iv2);window._prStep=0;window._drawPR();
+  }
+}
+function doStop2(){if(window.playing2)togglePlay2();}
+// ── FX PAGE ───────────────────────────────────────────────────────────────────
+const fxVals = { delay:45, reverb:50, dist:0, chorus:0 };
+const fxOn   = { delay:true, reverb:true, dist:false, chorus:false };
+
+// Disegna knob via canvas — niente position:absolute instabile
+// ── Sprite-knob helper (shared with JUCE bridge overlay) ──────────────────
+function setKnobFrame(el, norm){
+  if(!el) return;
+  const n = Math.max(0, Math.min(1, norm));
+  // Knob a 2 layer: ruota il dot (dentro .knob-ind) attorno al centro.
+  // Sweep -135°..+135° (270°). Il corpo .knob e la luce .knob-hl restano fissi.
+  let ind = el.querySelector('.knob-ind');
+  if(!ind){
+    ind = document.createElement('div');
+    ind.className = 'knob-ind';
+    let dot = el.querySelector('.knob-dot');
+    if(!dot){ dot = document.createElement('div'); dot.className = 'knob-dot'; }
+    ind.appendChild(dot);            // sposta il dot esistente nel wrapper ruotante
+    el.appendChild(ind);
+  }
+  ind.style.transform = `rotate(${(-135 + n * 270).toFixed(2)}deg)`;
+  el.dataset.knobNorm = n;
+}
+window.setKnobFrame = setKnobFrame;
+
+// Convert the SYNTH .knob divs into sprite knobs. In standalone preview there
+// are no live values, so seed sensible defaults; in the plugin the JUCE overlay
+// drives each knob to its real parameter value.
+function mountSpriteKnobs(){
+  document.querySelectorAll('.knob').forEach(k=>k.classList.add('sprite-knob'));
+  if(typeof window.__JUCE__ === 'undefined'){
+    document.querySelectorAll('.knob-wrap').forEach(w=>{
+      const k=w.querySelector('.knob');
+      if(k) setKnobFrame(k, 0.5);
+    });
+  }
+}
+window.mountSpriteKnobs = mountSpriteKnobs;
+
+function drawFXKnob(id) {
+  // Sprite-knob: map fxVals (0..100) -> frame (0..60) -> background-position-y.
+  const el = document.getElementById('knob-canvas-'+id);
+  if(!el) return;
+  if(window.setKnobFrame) window.setKnobFrame(el, (fxVals[id]||0)/100);
+}
+
+function updateFX(id){
+  drawFXKnob(id);
+  const valEl=document.getElementById('val-'+id);
+  if(valEl) valEl.textContent=fxVals[id];
+  const pctEl=document.getElementById('pct-'+id);
+  if(pctEl) pctEl.textContent=fxVals[id]+'%';
+  drawFXCanvas();
+}
+
+// Sostituisco i wrapper knob con canvas
+function initFXKnobs(){
+  ['delay','reverb','dist','chorus'].forEach(id=>{
+    const wrap=document.getElementById('knob-wrap-'+id);
+    if(!wrap) return;
+    wrap.innerHTML='';
+    const SIZE=110;
+    const k=document.createElement('div');
+    k.id='knob-canvas-'+id;
+    k.className='knob sprite-knob fx-sprite-knob';
+    k.style.cssText=`width:${SIZE}px;height:${SIZE}px;`;
+    k.addEventListener('mousedown',e=>{ fxDragging=id; fxDragY=e.clientY; fxDragStart=fxVals[id]; e.preventDefault(); });
+    wrap.appendChild(k);
+    drawFXKnob(id);
+  });
+}
+
+// Knob drag
+let fxDragging=null, fxDragY=0, fxDragStart=0;
+document.addEventListener('mousemove',e=>{
+  if(!fxDragging) return;
+  const delta=fxDragY-e.clientY;
+  fxVals[fxDragging]=Math.max(0,Math.min(100,fxDragStart+Math.round(delta*.6)));
+  updateFX(fxDragging);
+});
+document.addEventListener('mouseup',()=>{ fxDragging=null; });
+
+// Canvas FX overview
+function drawFXCanvas(){
+  const canvas=document.getElementById('fx-canvas');
+  if(!canvas) return;
+  const W=canvas.width, H=canvas.height;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,W,H);
+
+  const fxList=[
+    {id:'delay', label:'DLY'},
+    {id:'reverb',label:'RVB'},
+    {id:'dist',  label:'DST'},
+    {id:'chorus',label:'CHR'},
+  ];
+  const barW=Math.floor((W-40)/fxList.length)-8;
+  const maxH=H-50;
+
+  fxList.forEach(({id,label},i)=>{
+    const x=20+i*(barW+8);
+    const pct=fxVals[id]/100;
+    const on=fxOn[id];
+    const barH=Math.round(maxH*pct);
+    const barY=H-30-barH;
+
+    // track
+    ctx.fillStyle='#1e1e1e';
+    ctx.beginPath(); ctx.roundRect(x,H-30-maxH,barW,maxH,3); ctx.fill();
+
+    if(barH>0){
+      // barra — sempre verde se on, grigia se off
+      const g=ctx.createLinearGradient(x,barY,x,barY+barH);
+      if(on){ g.addColorStop(0,'#ccff55'); g.addColorStop(.5,'#88ff00'); g.addColorStop(1,'#44aa00'); }
+      else  { g.addColorStop(0,'#4a4a4a'); g.addColorStop(1,'#2a2a2a'); }
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.roundRect(x,barY,barW,barH,3); ctx.fill();
+      // glow top se on
+      if(on){
+        ctx.fillStyle='rgba(136,255,0,.2)';
+        ctx.beginPath(); ctx.roundRect(x,barY,barW,Math.min(barH,6),3); ctx.fill();
+      }
+    }
+
+    // valore — sempre leggibile
+    ctx.textAlign='center';
+    ctx.fillStyle=on?'rgba(255,255,255,.85)':'rgba(255,255,255,.3)';
+    ctx.font='bold 11px monospace';
+    const valY = barH>12 ? barY+14 : barY-5;
+    ctx.fillText(fxVals[id]+'%', x+barW/2, valY);
+
+    // label fissa in fondo
+    ctx.fillStyle=on?'rgba(255,255,255,.55)':'rgba(255,255,255,.2)';
+    ctx.font='9px monospace';
+    ctx.fillText(label, x+barW/2, H-14);
+  });
+}
+
+function toggleFX(id, row){
+  fxOn[id]=!fxOn[id];
+  const led=row.querySelector('.fx-led');
+  const spans=row.querySelectorAll('span');
+  if(fxOn[id]){
+    if(led){ led.style.background='var(--acid)'; led.style.boxShadow='0 0 5px var(--acid-glow)'; }
+    if(spans[0]){ spans[0].style.color='var(--text-mid)'; }
+    if(spans[1]){ spans[1].style.color='var(--acid-dark)'; spans[1].style.fontWeight='600'; }
+  } else {
+    if(led){ led.style.background='var(--inset)'; led.style.boxShadow='none'; }
+    if(spans[0]){ spans[0].style.color='var(--text-dim)'; }
+    if(spans[1]){ spans[1].style.color='var(--text-dim)'; spans[1].style.fontWeight='400'; }
+  }
+  drawFXCanvas();
+}
+
+setTimeout(()=>{ mountSpriteKnobs(); initFXKnobs(); drawFXCanvas(); },150);
+
+function setWave(el){document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setPat(el){document.querySelectorAll('#pat-btns .btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+
+// Init preset page
+setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
+
+// ── PRESET PAGE ───────────────────────────────────────────────────────────────
+const FACTORY_DATA = [
+  {name:'Classic Acid', tempo:130, wave:'SAW', cut:'600Hz', res:0.75, env:0.70, dec:0.20},
+  {name:'Deep Squelch', tempo:128, wave:'SAW', cut:'300Hz', res:0.90, env:0.85, dec:0.40},
+  {name:'Funky Groove', tempo:120, wave:'SAW', cut:'800Hz', res:0.55, env:0.55, dec:0.18},
+  {name:'Dub Delay',    tempo:100, wave:'SAW', cut:'700Hz', res:0.60, env:0.50, dec:0.60},
+  {name:'Space Acid',   tempo:90,  wave:'SAW', cut:'500Hz', res:0.65, env:0.80, dec:0.80},
+  {name:'Dark Techno',  tempo:138, wave:'SAW', cut:'250Hz', res:0.70, env:0.60, dec:0.30},
+  {name:'Rave Acid',    tempo:140, wave:'SAW', cut:'900Hz', res:0.80, env:0.75, dec:0.12},
+  {name:'Square Pulse', tempo:120, wave:'SQR', cut:'600Hz', res:0.50, env:0.45, dec:0.25},
+];
+const SYNTH_DATA = [
+  {name:'Acid Saw',     cut:0.65,res:0.75,env:0.70,dec:0.20,acc:0.75},
+  {name:'TB Squelch',   cut:0.25,res:0.95,env:0.90,dec:0.40,acc:0.85},
+  {name:'Deep Sub',     cut:0.12,res:0.18,env:0.20,dec:0.80,acc:0.60},
+  {name:'Jungle Bass',  cut:0.90,res:0.50,env:0.50,dec:0.15,acc:0.70},
+  {name:'Ambient Cloud',cut:0.35,res:0.40,env:0.50,dec:1.00,acc:0.55},
+  {name:'Echo Acid',    cut:0.70,res:0.65,env:0.65,dec:0.25,acc:0.70},
+  {name:'Square Stomp', cut:0.55,res:0.62,env:0.60,dec:0.18,acc:0.75},
+  {name:'Overdrive',    cut:0.80,res:0.40,env:0.45,dec:0.20,acc:0.70},
+  {name:'Wobble Bass',  cut:0.28,res:0.82,env:0.85,dec:0.90,acc:0.75},
+  {name:'Warm Pad',     cut:0.16,res:0.14,env:0.30,dec:1.00,acc:0.50},
+  {name:'Scream',       cut:0.52,res:0.98,env:0.65,dec:0.15,acc:0.85},
+  {name:'Hybrid FX',    cut:0.50,res:0.60,env:0.55,dec:0.35,acc:0.70},
+];
+
+function onFactorySelect(sel){
+  const d=FACTORY_DATA[sel.value]||FACTORY_DATA[0];
+  const t=document.getElementById('fp-tempo'); if(t) t.textContent=d.tempo+' BPM';
+  const w=document.getElementById('fp-wave');  if(w) w.textContent=d.wave;
+  const c=document.getElementById('fp-cut');   if(c) c.textContent=d.cut;
+  const r=document.getElementById('fp-res');   if(r) r.textContent=d.res.toFixed(2);
+  const ln=document.getElementById('loaded-name'); if(ln) ln.textContent=d.name;
+  const lt=document.getElementById('loaded-type'); if(lt) lt.textContent='Factory Pattern · '+d.tempo+' BPM';
+}
+
+function onSynthSelect(sel){
+  buildSynthBars(SYNTH_DATA[sel.value]||SYNTH_DATA[0]);
+}
+
+function buildSynthBars(d){
+  const el=document.getElementById('synth-bars'); if(!el) return;
+  el.innerHTML='';
+  const params=[
+    {l:'CUTOFF', v:d.cut},
+    {l:'RESO',   v:d.res},
+    {l:'ENV',    v:d.env},
+    {l:'DECAY',  v:d.dec},
+    {l:'ACCENT', v:d.acc},
+  ];
+  params.forEach(({l,v})=>{
+    const pct=Math.round(v*100);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;';
+    row.innerHTML=`
+      <span style="font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1px;min-width:44px;">${l}</span>
+      <div style="flex:1;height:5px;background:var(--inset);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(to right,#66bb00,#88ff00);border-radius:3px;
+          box-shadow:${pct>60?'0 0 4px rgba(136,255,0,.4)':'none'};transition:width .2s;"></div>
+      </div>
+      <span style="font-family:var(--mono);font-size:8px;font-weight:600;color:var(--acid-dark);min-width:28px;text-align:right;">${pct}%</span>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function loadPreset(){
+  // carica sia factory che synth in base a quale è selezionato
+  const fs=document.getElementById('factory-select');
+  const ss=document.getElementById('synth-select');
+  const fd=FACTORY_DATA[fs?fs.value:0]||FACTORY_DATA[0];
+  const ln=document.getElementById('loaded-name'); if(ln) ln.textContent=fd.name;
+  const lt=document.getElementById('loaded-type'); if(lt) lt.textContent='Factory Pattern · '+fd.tempo+' BPM';
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+let bpm=125, bpmStep=1, tapTimes=[];
+
+function changeBPM(d){
+  bpm=Math.max(40,Math.min(220,bpm+d));
+  const el=document.getElementById('bpm-display');
+  if(el) el.textContent=bpm;
+}
+function setBpmStep(s){
+  bpmStep=s;
+  [1,5,10].forEach(v=>{
+    const b=document.getElementById('bs'+v);
+    if(b) b.className=v===s?'btn sm acid':'btn sm';
+  });
+}
+function tapTempo(){
+  const now=Date.now(); tapTimes.push(now);
+  if(tapTimes.length>4) tapTimes.shift();
+  if(tapTimes.length>=2){
+    const gaps=[]; for(let i=1;i<tapTimes.length;i++) gaps.push(tapTimes[i]-tapTimes[i-1]);
+    bpm=Math.round(60000/(gaps.reduce((a,b)=>a+b,0)/gaps.length));
+    bpm=Math.max(40,Math.min(220,bpm));
+    const el=document.getElementById('bpm-display'); if(el) el.textContent=bpm;
+  }
+  const tb=document.getElementById('tap-btn');
+  if(tb){tb.classList.add('active');setTimeout(()=>tb.classList.remove('active'),120);}
+}
+
+let currentMode='filter';
+function setMode(mode){
+  currentMode=mode;
+  ['filter','note','midi'].forEach(m=>{
+    const el=document.getElementById('mode-'+m); if(!el) return;
+    const dot=el.querySelector('div');
+    const isActive=m===mode;
+    if(isActive){
+      el.style.background='linear-gradient(to right,#ddffaa,#eeffcc)';
+      el.style.border='1.5px solid var(--acid-dark)';
+      el.style.boxShadow='0 2px 6px rgba(0,0,0,.08),0 0 10px rgba(136,255,0,.08)';
+      if(dot){dot.style.background='var(--acid)';dot.style.boxShadow='0 0 6px var(--acid-glow)';}
+      el.querySelectorAll('div div')[0].style.color='var(--acid-deep)';
+      el.querySelectorAll('div div')[1].style.color='var(--acid-dark)';
+    } else {
+      el.style.background='var(--surface)';
+      el.style.border='1px solid var(--border)';
+      el.style.boxShadow='none';
+      if(dot){dot.style.background='var(--inset)';dot.style.boxShadow='none';}
+      el.querySelectorAll('div div')[0].style.color='var(--text-mid)';
+      el.querySelectorAll('div div')[1].style.color='var(--text-dim)';
+    }
+  });
+}
+
+// ── LED METER FISICO ──────────────────────────────────────────────────────────
+(function(){
+  const container = document.getElementById('led-meter');
+  if(!container) return;
+
+  // Configurazione 8 LED: colore e soglia
+  const leds = [
+    { color:'#33aa00', glow:'rgba(50,170,0,.6)',  threshold:0.12 },
+    { color:'#44cc00', glow:'rgba(68,204,0,.6)',  threshold:0.25 },
+    { color:'#66dd00', glow:'rgba(102,221,0,.6)', threshold:0.38 },
+    { color:'#88ff00', glow:'rgba(136,255,0,.7)', threshold:0.50 },
+    { color:'#aaff22', glow:'rgba(170,255,34,.7)',threshold:0.62 },
+    { color:'#ddcc00', glow:'rgba(220,200,0,.6)', threshold:0.72 },
+    { color:'#ff8800', glow:'rgba(255,136,0,.6)', threshold:0.84 },
+    { color:'#ff2200', glow:'rgba(255,34,0,.7)',  threshold:0.94 },
+  ];
+
+  // Costruisce i LED fisici
+  const ledEls = leds.map((cfg, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+    `;
+    // housing metallico
+    const housing = document.createElement('div');
+    housing.style.cssText = `
+      width:12px;height:12px;border-radius:50%;
+      background:linear-gradient(135deg,#d0d0cc,#a8a8a4);
+      box-shadow:0 2px 4px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.6);
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+    `;
+    // dome LED
+    const dome = document.createElement('div');
+    dome.style.cssText = `
+      width:7px;height:7px;border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.3),${cfg.color}55);
+      box-shadow:inset 0 1px 2px rgba(0,0,0,.4);
+      transition:all .06s;
+    `;
+    housing.appendChild(dome);
+    wrap.appendChild(housing);
+    container.appendChild(wrap);
+    return { dome, cfg };
+  });
+
+  // Animazione
+  let level = 0.72;
+  setInterval(()=>{
+    if(!playing) {
+      level = Math.max(0, level - 0.08);
+    } else {
+      const target = 0.4 + Math.random() * 0.55;
+      level = level * 0.7 + target * 0.3;
+    }
+    ledEls.forEach(({ dome, cfg }) => {
+      const on = level >= cfg.threshold;
+      dome.style.background = on
+        ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), ${cfg.color})`
+        : `radial-gradient(circle at 35% 30%, rgba(255,255,255,.15), ${cfg.color}44)`;
+      dome.style.boxShadow = on
+        ? `0 0 6px ${cfg.glow}, 0 0 3px ${cfg.glow}, inset 0 1px 0 rgba(255,255,255,.4)`
+        : `inset 0 1px 2px rgba(0,0,0,.4)`;
+    });
+  }, 80);
+})();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  JUCE 8 WebView bridge — overlays on top of the sketch JS
+//  Runs after DOM+sketch JS are both ready (deferred via DOMContentLoaded)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if(typeof window.__JUCE__ === 'undefined') return; // standalone browser: no-op
+
+  // ── Minimal JUCE helper wrappers ─────────────────────────────────────────
+  class ListenerList {
+    constructor(){ this._l=new Map(); this._id=0; }
+    add(fn){ const id=this._id++; this._l.set(id,fn); return id; }
+    remove(id){ this._l.delete(id); }
+    fire(data){ this._l.forEach(fn=>fn(data)); }
+  }
+  class SliderState {
+    constructor(name){
+      this.name=name; this._id='__juce__slider'+name;
+      this.scaledValue=0;
+      this.properties={start:0,end:1,skew:1,name:'',label:'',numSteps:100,interval:0,parameterIndex:-1};
+      this.valueChangedEvent=new ListenerList();
+      this.propertiesChangedEvent=new ListenerList();
+      window.__JUCE__.backend.addEventListener(this._id,ev=>this._onEvent(ev));
+      window.__JUCE__.backend.emitEvent(this._id,{eventType:'requestInitialUpdate'});
+    }
+    _onEvent(ev){
+      if(ev.eventType==='valueChanged'){this.scaledValue=ev.value;this.valueChangedEvent.fire();}
+      if(ev.eventType==='propertiesChanged'){const{eventType,...r}=ev;this.properties=r;this.propertiesChangedEvent.fire();}
+    }
+    getNormalisedValue(){
+      const{start,end,skew}=this.properties;
+      if(end===start)return 0;
+      return Math.pow((this.scaledValue-start)/(end-start),skew);
+    }
+    setNormalisedValue(v){
+      const{start,end,skew}=this.properties;
+      this.scaledValue=Math.pow(Math.max(0,Math.min(1,v)),1/skew)*(end-start)+start;
+      window.__JUCE__.backend.emitEvent(this._id,{eventType:'valueChanged',value:this.scaledValue});
+    }
+    getScaledValue(){return this.scaledValue;}
+    sliderDragStarted(){window.__JUCE__.backend.emitEvent(this._id,{eventType:'sliderDragStarted'});}
+    sliderDragEnded()  {window.__JUCE__.backend.emitEvent(this._id,{eventType:'sliderDragEnded'});}
+  }
+  class ToggleState {
+    constructor(name){
+      this.name=name; this._id='__juce__toggle'+name;
+      this.value=false; this.valueChangedEvent=new ListenerList();
+      window.__JUCE__.backend.addEventListener(this._id,ev=>this._onEvent(ev));
+      window.__JUCE__.backend.emitEvent(this._id,{eventType:'requestInitialUpdate'});
+    }
+    _onEvent(ev){if(ev.eventType==='valueChanged'){this.value=!!ev.value;this.valueChangedEvent.fire();}}
+    getValue(){return this.value;}
+    setValue(v){this.value=!!v;window.__JUCE__.backend.emitEvent(this._id,{eventType:'valueChanged',value:this.value});}
+  }
+  let _pid=0; const _pending=new Map();
+  window.__JUCE__.backend.addEventListener('__juce__complete',({promiseId,result})=>{
+    if(_pending.has(promiseId)){_pending.get(promiseId)(result);_pending.delete(promiseId);}
+  });
+  function getNativeFunction(name){
+    return function(...args){
+      return new Promise(resolve=>{
+        const id=_pid++;
+        _pending.set(id,resolve);
+        window.__JUCE__.backend.emitEvent('__juce__invoke',{name,params:args,resultId:id});
+      });
+    };
+  }
+  const _sc={},_tc={};
+  function S(n){if(!_sc[n])_sc[n]=new SliderState(n);return _sc[n];}
+  function T(n){if(!_tc[n])_tc[n]=new ToggleState(n);return _tc[n];}
+
+  // ── Native function handles ───────────────────────────────────────────────
+  const fnSelectPattern  =getNativeFunction('selectPattern');
+  const fnToggleStep     =getNativeFunction('toggleStep');
+  const fnSetStepNote    =getNativeFunction('setStepNote');
+  const fnSetAccent      =getNativeFunction('setStepAccent');
+  const fnSetSlide       =getNativeFunction('setStepSlide');
+  const fnSetResolution  =getNativeFunction('setResolution');
+  const fnLoadPreset     =getNativeFunction('loadPreset');
+  const fnLoadSynthPreset=getNativeFunction('loadSynthPreset');
+  const fnSetMidiMode    =getNativeFunction('setMidiMode');
+
+  // ── Step data mirror (updated from stateUpdate) ───────────────────────────
+  const stepData = Array.from({length:16},(_,i)=>({
+    gate:  [0,3,5,8,11,14].includes(i),
+    note:  [45,48,45,43,45,40,43,45,50,45,48,45,43,41,40,38][i],
+    accent:[0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0][i]===1,
+    slide: [0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0][i]===1,
+  }));
+  let juceCurrentStep=0, jucePattern=0;
+
+  // ── Knob drag helper ──────────────────────────────────────────────────────
+  const knobNorm={};  // cache of current normalised value per knob element
+  function setKnobAngle(knobEl,v){
+    if(!knobEl)return;
+    // Sprite-knob path (shared helper from the sketch); fall back to CSS rotate.
+    if(window.setKnobFrame){ window.setKnobFrame(knobEl,v); }
+    else { knobEl.style.transform=`rotate(${-140+v*280}deg)`; }
+  }
+  function makeDraggable(knobEl, onNorm){
+    let sy=0,sv=0,drag=false;
+    knobEl.style.cursor='ns-resize';
+    knobEl.addEventListener('mousedown',e=>{
+      drag=true; sy=e.clientY; sv=knobNorm[knobEl]||0; e.preventDefault();
+    });
+    knobEl.addEventListener('touchstart',e=>{
+      drag=true; sy=e.touches[0].clientY; sv=knobNorm[knobEl]||0; e.preventDefault();
+    },{passive:false});
+    const move=cy=>{
+      if(!drag)return;
+      const v=Math.max(0,Math.min(1,sv+(sy-cy)/160));
+      knobNorm[knobEl]=v; setKnobAngle(knobEl,v); onNorm(v);
+    };
+    document.addEventListener('mousemove',e=>{if(drag)move(e.clientY);});
+    document.addEventListener('touchmove',e=>{if(drag)move(e.touches[0].clientY);},{passive:true});
+    document.addEventListener('mouseup',()=>{drag=false;});
+    document.addEventListener('touchend',()=>{drag=false;});
+  }
+
+  // ── Wire synth knobs ──────────────────────────────────────────────────────
+  // Map: knob-label text → [paramId, formatFn, valSuffix]
+  const KNOB_MAP = {
+    'Cutoff':    ['cutoff',    v=>Math.round(v)+'Hz',  null],
+    'Resonance': ['resonance', v=>v.toFixed(2),        null],
+    'Env Mod':   ['envMod',    v=>v.toFixed(2),        null],
+    'Decay':     ['decay',     v=>v.toFixed(2)+'s',    null],
+    'Volume':    ['volume',    v=>v.toFixed(2),        null],
+    'Distort':   ['distortion',v=>v.toFixed(2),        null],
+    'Accent':    ['accent',    v=>v.toFixed(2),        null],
+    'Tuning':    ['tuning',    v=>v.toFixed(2),        null],
+  };
+
+  document.querySelectorAll('.knob-wrap').forEach(wrap=>{
+    const lbl = wrap.querySelector('.knob-lbl');
+    const valEl = wrap.querySelector('.knob-val');
+    const knob = wrap.querySelector('.knob');
+    if(!lbl||!knob) return;
+    knob.classList.add('sprite-knob');   // render via spritesheet, not CSS gradient
+    const key = lbl.textContent.trim();
+    const entry = KNOB_MAP[key];
+    if(!entry) return;
+    const [param, fmt] = entry;
+    const state = S(param);
+
+    // JUCE → visual  (sprite frame uses the normalised 0..1 value; the label
+    // shows the real scaled value — Hz, seconds, semitones, …)
+    state.valueChangedEvent.add(()=>{
+      const nv=state.getNormalisedValue();
+      knobNorm[knob]=nv; setKnobAngle(knob,nv);
+      if(valEl) valEl.textContent=fmt(state.getScaledValue());
+    });
+    // Drag → JUCE
+    makeDraggable(knob, nv=>{
+      state.sliderDragStarted();
+      state.setNormalisedValue(nv);
+      state.sliderDragEnded();
+      if(valEl) valEl.textContent=fmt(state.getScaledValue());
+    });
+    // Init visual
+    const nv0=state.getNormalisedValue();
+    knobNorm[knob]=nv0; setKnobAngle(knob,nv0);
+    if(valEl) valEl.textContent=fmt(state.getScaledValue());
+  });
+
+  // ── Play / Stop ──────────────────────────────────────────────────────────
+  const playState = T('play');
+  playState.valueChangedEvent.add(()=>{
+    playing = playState.getValue();
+    updatePlayInd();
+    if(!playing){clearInterval(iv);curStep=0;buildSteps();buildLCD('lcd-s');buildLCD('lcd-s2');}
+  });
+  window.togglePlay = function(){
+    playing=!playing;
+    playState.setValue(playing);
+    updatePlayInd();
+    if(playing){
+      iv=setInterval(()=>{
+        curStep=(curStep+1)%16;
+        buildSteps();buildLCD('lcd-s');buildLCD('lcd-s2');
+        const sl=document.getElementById('slcd');
+        if(sl) sl.textContent=String(curStep+1).padStart(2,'0');
+      },stepMs());
+    } else {
+      clearInterval(iv);curStep=0;buildSteps();buildLCD('lcd-s');buildLCD('lcd-s2');
+    }
+  };
+  window.togglePlay2=window.togglePlay;
+  function stepMs(){
+    const bpmVal=S('tempo').getScaledValue()||120;
+    return Math.round(60000/bpmVal/4*4);
+  }
+
+  // ── Waveform ──────────────────────────────────────────────────────────────
+  const waveState = T('waveform');
+  waveState.valueChangedEvent.add(()=>{
+    const isSqr=waveState.getValue();
+    document.querySelectorAll('.wave-btn').forEach((b,i)=>{
+      b.classList.toggle('active',i===(isSqr?1:0));
+    });
+  });
+  window.setWave = function(el){
+    document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    waveState.setValue(el.textContent.trim()==='SQR');
+  };
+
+  // ── BPM / Tempo ───────────────────────────────────────────────────────────
+  const tempoState = S('tempo');
+  // APVTS "tempo" range is 60-200 BPM -> normalise over span 140 (was wrongly 160)
+  const BPM_MIN=60, BPM_MAX=200;
+  const bpmDisplays=()=>['bpm-display','bpm-hdr','bpm-lcd','bpm-lcd2']
+    .map(id=>document.getElementById(id)).filter(Boolean);
+  const showBpm=v=>bpmDisplays().forEach(el=>{ el.textContent=v; });
+  const pushBpm=()=>{
+    bpm=Math.max(BPM_MIN,Math.min(BPM_MAX,bpm));   // match param range, not 40-220
+    showBpm(bpm);
+    const n=(bpm-BPM_MIN)/(BPM_MAX-BPM_MIN);
+    tempoState.sliderDragStarted();tempoState.setNormalisedValue(n);tempoState.sliderDragEnded();
+  };
+  tempoState.valueChangedEvent.add(()=>{
+    bpm=Math.round(tempoState.getScaledValue());
+    showBpm(bpm);
+  });
+  const _origChangeBPM=window.changeBPM;
+  window.changeBPM = function(d){ _origChangeBPM&&_origChangeBPM(d); pushBpm(); };
+  const _origTapTempo=window.tapTempo;
+  window.tapTempo = function(){ _origTapTempo&&_origTapTempo(); pushBpm(); };
+
+  // ── MIDI mode ─────────────────────────────────────────────────────────────
+  const _origToggleMidi=window.toggleMidi;
+  window.toggleMidi = function(el){
+    _origToggleMidi&&_origToggleMidi(el);
+    fnSetMidiMode(midiOn);
+  };
+
+  // ── Pattern buttons ───────────────────────────────────────────────────────
+  const _origBuildKeycaps=window.buildKeycaps;
+  window.buildKeycaps = function(){
+    const grid=document.getElementById('pat-btns'); if(!grid) return;
+    grid.innerHTML='';
+    for(let i=0;i<8;i++){
+      const key=document.createElement('div');
+      key.className='keycap'+(i===jucePattern?' active':'');
+      key.innerHTML=`<div class="keycap-base"><div class="keycap-top" style="padding:22px 4px 20px;"><div class="keycap-num" style="font-size:20px;">${i+1}</div></div></div>`;
+      key.onclick=()=>{
+        jucePattern=i;
+        grid.querySelectorAll('.keycap').forEach((k,j)=>k.classList.toggle('active',j===i));
+        fnSelectPattern(i);
+      };
+      grid.appendChild(key);
+    }
+  };
+  window.buildKeycaps();
+
+  // ── Step resolution ───────────────────────────────────────────────────────
+  // Two button sets: SETTINGS ("1/4 Note"...) and SEQUENCER toolbar ("1/4"...).
+  // Wire both, and reflect the active resolution visually across both sets.
+  const RES_MAP={'1/4':1,'1/8':2,'1/16':4,'1/4 note':1,'1/8 note':2,'1/16 note':4};
+  const resKey=b=>b.textContent.trim().toLowerCase();
+  const resButtons=()=>[...document.querySelectorAll('button.btn')]
+    .filter(b=>RES_MAP[resKey(b)]!==undefined);
+  function setResolutionUI(res){
+    fnSetResolution(res);
+    resButtons().forEach(b=>b.classList.toggle('acid', RES_MAP[resKey(b)]===res));
+  }
+  resButtons().forEach(b=>b.addEventListener('click',()=>setResolutionUI(RES_MAP[resKey(b)])));
+
+  // ── Step grid (SEQUENCER tab) ─────────────────────────────────────────────
+  const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const midiToName=n=>noteNames[n%12]+(Math.floor(n/12)-1);
+
+  window.buildSteps = function(){
+    const g=document.getElementById('steps-grid');
+    const sub=document.getElementById('step-sub');
+    if(!g||!sub) return;
+    g.innerHTML=''; sub.innerHTML='';
+    for(let i=0;i<16;i++){
+      const s=stepData[i];
+      const pl=i===juceCurrentStep&&playing;
+      const b=document.createElement('div');
+      b.className='step'+(s.gate?' on':'')+(pl?' playing':'');
+      b.innerHTML=`<div class="step-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="step-led"></div>
+        <div class="step-note">${s.gate?midiToName(s.note):'—'}</div>`;
+      b.onclick=()=>{ s.gate=!s.gate; fnToggleStep(i); window.buildSteps(); buildLCD('lcd-s'); };
+      g.appendChild(b);
+      const sc=document.createElement('div'); sc.className='step-sub-col';
+      const acc=document.createElement('div');
+      acc.className='sub'+(s.accent?' acc':''); acc.textContent='ACC';
+      acc.onclick=e=>{e.stopPropagation();s.accent=!s.accent;fnSetAccent(i,s.accent);acc.className='sub'+(s.accent?' acc':'');};
+      const sld=document.createElement('div');
+      sld.className='sub'+(s.slide?' sld':''); sld.textContent='SLD';
+      sld.onclick=e=>{e.stopPropagation();s.slide=!s.slide;fnSetSlide(i,s.slide);sld.className='sub'+(s.slide?' sld':'');};
+      sc.appendChild(acc); sc.appendChild(sld); sub.appendChild(sc);
+    }
+  };
+
+  // ── Piano roll: override canvas click to use JUCE ─────────────────────────
+  const STEPS=16, ROWS=24, NOTE_H=18;
+  setTimeout(()=>{
+    const canvas=document.getElementById('piano-roll-canvas');
+    if(!canvas) return;
+    // Piano roll uses its own local `notes` Set — sync stepData ↔ notes
+    function syncNotesToCanvas(){
+      notes.clear();
+      const ALL_NOTES=[];
+      for(let oct=4;oct>=3;oct--){
+        ['B','A#','A','G#','G','F#','F','E','D#','D','C#','C'].forEach(n=>ALL_NOTES.push(n+oct));
+      }
+      stepData.forEach((s,si)=>{
+        if(!s.gate) return;
+        const noteName=midiToName(s.note); // e.g. "A3"
+        const row=ALL_NOTES.findIndex(n=>n===noteName);
+        if(row>=0) notes.add(`${si}:${row}`);
+      });
+      if(window._drawPR) window._drawPR();
+    }
+
+    // Patch mousedown: after existing handler, also call JUCE
+    canvas.addEventListener('mousedown', e=>{
+      const rect=canvas.getBoundingClientRect();
+      const W=rect.width, cW=W/STEPS;
+      const si=Math.floor((e.clientX-rect.left)/cW);
+      const row=Math.floor((e.clientY-rect.top)/NOTE_H);
+      if(si<0||si>=STEPS||row<0||row>=ROWS) return;
+      // midiNote from row: row 0=B4(71), row 23=C3(48)
+      const midiNote=71-row;
+      const s=stepData[si];
+      if(s.gate&&s.note===midiNote){ s.gate=false; fnToggleStep(si); }
+      else { s.note=midiNote; s.gate=true; fnSetStepNote(si,midiNote); }
+      window.buildSteps(); buildLCD('lcd-s');
+    });
+
+    // Initial sync
+    syncNotesToCanvas();
+    window._syncNotesToCanvas=syncNotesToCanvas;
+  }, 250);
+
+  // ── FX knobs → JUCE (patch after initFXKnobs runs at 150ms) ─────────────
+  setTimeout(()=>{
+    const FX_PARAMS={delay:'delayMix', reverb:'reverbMix', dist:'distortion'};
+    Object.entries(FX_PARAMS).forEach(([id,param])=>{
+      const state=S(param);
+      // JUCE → fxVals
+      state.valueChangedEvent.add(()=>{
+        fxVals[id]=Math.round(state.getNormalisedValue()*100);
+        updateFX(id);
+      });
+      // Patch canvas mousedown to also push to JUCE
+      const c=document.getElementById('knob-canvas-'+id);
+      if(!c) return;
+      c.addEventListener('mousedown',e=>{
+        state.sliderDragStarted();
+        const start=fxVals[id];
+        const startY=e.clientY;
+        const onMove=ev=>{
+          const nv=Math.max(0,Math.min(100,start+Math.round((startY-ev.clientY)*0.6)));
+          state.setNormalisedValue(nv/100);
+        };
+        const onUp=()=>{
+          state.sliderDragEnded();
+          document.removeEventListener('mousemove',onMove);
+          document.removeEventListener('mouseup',onUp);
+        };
+        document.addEventListener('mousemove',onMove);
+        document.addEventListener('mouseup',onUp);
+      },{capture:true});
+    });
+  },300);
+
+  // ── Preset loading ────────────────────────────────────────────────────────
+  const _origLoadPreset=window.loadPreset;
+  window.loadPreset = function(){
+    _origLoadPreset&&_origLoadPreset();
+    const fs=document.getElementById('factory-select');
+    const ss=document.getElementById('synth-select');
+    if(fs) fnLoadPreset(parseInt(fs.value));
+    if(ss) fnLoadSynthPreset(parseInt(ss.value));
+    setTimeout(()=>window.__JUCE__.backend.emitEvent('requestStateUpdate',{}),250);
+  };
+
+  // ── C++ → JS: stateUpdate event ──────────────────────────────────────────
+  window.__JUCE__.backend.addEventListener('stateUpdate',data=>{
+    if(data.step!==undefined)    juceCurrentStep=data.step;
+    if(data.playing!==undefined) playing=data.playing;
+    if(data.pattern!==undefined){
+      jucePattern=data.pattern;
+      document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>k.classList.toggle('active',i===jucePattern));
+    }
+    if(data.steps){
+      data.steps.forEach((s,i)=>{
+        stepData[i].gate=s.gate; stepData[i].note=s.note;
+        stepData[i].accent=s.accent; stepData[i].slide=s.slide;
+      });
+    }
+    curStep=juceCurrentStep;
+    window.buildSteps(); buildLCD('lcd-s'); buildLCD('lcd-s2');
+    updatePlayInd();
+    if(window._syncNotesToCanvas) window._syncNotesToCanvas();
+    // Guida la testina del piano roll con lo stato reale del sequencer
+    window._prStep = juceCurrentStep; window.playing2 = playing;
+    if(window._drawPR) window._drawPR();
+    const sl=document.getElementById('slcd');
+    if(sl) sl.textContent=String(curStep+1).padStart(2,'0');
+  });
+
+  // Request initial state
+  setTimeout(()=>window.__JUCE__.backend.emitEvent('requestStateUpdate',{}),400);
+
+})();
+</script>
+</body>
+</html>
