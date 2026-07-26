@@ -2149,7 +2149,7 @@ function setMode(mode){
     S(43,1,0,0,0),S(41,1,0,0,0),S(40,1,0,1,0),S(38,1,0,0,0)
   ];
   const DEFAULTS={cutoff:600,resonance:0.75,envMod:0.70,decay:0.20,accent:0.75,
-                  volume:0.80,distortion:0.0,tuning:0,waveform:0,tempo:160,resolution:4};
+                  volume:0.55,distortion:0.0,tuning:0,waveform:0,tempo:140,resolution:4};
 
   // ── Codice dell'AudioWorkletProcessor (porting fedele dei .cpp) ──
   const WORKLET_CODE = `
@@ -2163,8 +2163,8 @@ class TB303Processor extends AudioWorkletProcessor {
     this.baseCutoff=800; this.resonance=0.5; this.envMod=0.5; this.accentMod=0.5;
     this.nVal=0; this.nState=0; this.nAtt=Math.exp(-1/(0.003*sr)); this.nDec=Math.exp(-1/(0.3*sr));
     this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.003*sr)); this.aDec=Math.exp(-1/(0.2*sr));
-    this.volume=0.8; this.distortion=0.0; this.dX=0; this.dY=0;
-    this.pattern=[]; this.len=16; this.bpm=160; this.res=4;
+    this.volume=0.55; this.distortion=0.0; this.dX=0; this.dY=0;
+    this.pattern=[]; this.len=16; this.bpm=140; this.res=4;
     this.playing=false; this.step=0; this.counter=0; this.firstBeat=false;
     this.prevNote=36; this.prevSlide=false;
     this.port.onmessage=(e)=>this.onMsg(e.data);
@@ -2951,120 +2951,377 @@ registerProcessor('tb303-processor', TB303Processor);
 })();
 </script>
 
-<!-- ═══════════════ TEMA DARK + GUIDA A SLIDE (si alternano e illuminano i knob) ═══════════════ -->
+<!-- ══ CONTEXTUAL TOOLTIP GUIDE ══ -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
-body{
+
+body {
   background:
     radial-gradient(ellipse at 50% -12%, rgba(136,255,0,.10) 0%, rgba(136,255,0,0) 42%),
     radial-gradient(ellipse at 50% 20%, #1b2414 0%, #12150d 48%, #0a0c07 100%) !important;
 }
-.chassis{ box-shadow:0 30px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(140,224,12,.12), 0 0 60px rgba(136,255,0,.06) !important; }
+.chassis {
+  box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(140,224,12,.12), 0 0 60px rgba(136,255,0,.06) !important;
+}
 
-/* knob evidenziato dalla slide corrente */
-.knob.guide-glow{ box-shadow:0 0 0 3px rgba(136,255,0,.85), 0 0 30px rgba(136,255,0,.7) !important; animation:guidePulse 1.1s ease-in-out infinite; }
-@keyframes guidePulse{ 50%{ box-shadow:0 0 0 5px rgba(136,255,0,1), 0 0 40px rgba(136,255,0,.95) !important; } }
+/* ── Contextual tooltip card ── */
+#ctip {
+  position: fixed;
+  z-index: 9999;
+  width: 292px;
+  background: rgba(11,15,8,.97);
+  border: 1px solid rgba(136,255,0,.28);
+  border-radius: 12px;
+  padding: 13px 16px 14px;
+  box-shadow: 0 22px 64px rgba(0,0,0,.65), 0 0 32px rgba(136,255,0,.07);
+  font-family: 'IBM Plex Sans', 'IBM Plex Mono', sans-serif;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.ct-badge {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #0a1205;
+  background: #8ce00c;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+.ct-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #d0f0a0;
+  line-height: 1.25;
+  margin-bottom: 7px;
+}
+.ct-body {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #a8b898;
+}
+.ct-body b { color: #9bef1f; font-weight: 600; }
 
-/* toggle */
-#gToggle{ position:fixed; top:18px; right:18px; z-index:1300; font-family:'IBM Plex Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:1px;
-  color:#0e120a; background:linear-gradient(#aaff33,#7ecb1e); border:none; cursor:pointer; padding:10px 16px; border-radius:9px;
-  box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 18px rgba(136,255,0,.4),inset 0 1px 0 rgba(255,255,255,.5); transition:transform .2s; }
-#gToggle:hover{ transform:translateY(-1px); }
-
-/* carosello slide, in basso al centro */
-#gShow{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(150%); z-index:1250;
-  width:min(680px,92vw); background:linear-gradient(180deg,#171d10,#0d110a); border:1px solid #2d371e; border-radius:16px;
-  box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 40px rgba(136,255,0,.08); overflow:hidden;
-  transition:transform .6s cubic-bezier(.22,1,.36,1); opacity:.0; }
-#gShow.on{ transform:translateX(-50%) translateY(0); opacity:1; }
-.gs-top{ display:flex; align-items:center; gap:10px; padding:14px 18px 4px; }
-.gs-badge{ font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; color:#0e120a; background:#8ce00c; border-radius:5px; padding:3px 9px; }
-.gs-count{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6f7a5a; }
-.gs-x{ background:none;border:1px solid #2d371e;color:#8a9472;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1; }
-.gs-x:hover{ color:#e9efdd;border-color:#4e8c0a; }
-.gs-body{ position:relative; min-height:104px; padding:6px 20px 14px; }
-.gs-slide{ position:absolute; inset:6px 20px 14px; opacity:0; transform:translateX(24px); transition:opacity .45s, transform .45s; pointer-events:none; }
-.gs-slide.act{ opacity:1; transform:translateX(0); pointer-events:auto; }
-.gs-slide h3{ font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; color:#cfefa0; margin:2px 0 8px; letter-spacing:.5px; }
-.gs-slide p{ font-family:'IBM Plex Sans',sans-serif; font-size:15px; line-height:1.55; color:#c8d0b6; margin:0; max-width:600px; }
-.gs-slide p b{ color:#9bef1f; font-weight:600; }
-.gs-foot{ display:flex; align-items:center; gap:14px; padding:2px 18px 16px; }
-.gs-dots{ display:flex; gap:6px; flex:1; flex-wrap:wrap; }
-.gs-dot{ width:8px;height:8px;border-radius:50%;background:#39442a;cursor:pointer;transition:background .2s,transform .2s; }
-.gs-dot.act{ background:#8ce00c; transform:scale(1.25); box-shadow:0 0 8px rgba(136,255,0,.6); }
-.gs-nav{ background:none;border:1px solid #2d371e;color:#a9b494;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:14px; }
-.gs-nav:hover{ color:#e9efdd; border-color:#4e8c0a; }
+/* Arrow pointer */
+#ctip::before {
+  content: '';
+  position: absolute;
+  width: 9px; height: 9px;
+  background: rgba(11,15,8,.97);
+  border: 1px solid rgba(136,255,0,.28);
+  transform: rotate(45deg);
+}
+#ctip[data-arr=”left”]::before  { left: -5px;   top: 50%; margin-top: -5px;  border-right: none; border-top: none; }
+#ctip[data-arr=”right”]::before { right: -5px;  top: 50%; margin-top: -5px;  border-left: none;  border-bottom: none; }
+#ctip[data-arr=”top”]::before   { top: -5px;    left: 50%; margin-left: -5px; border-bottom: none; border-right: none; }
+#ctip[data-arr=”bottom”]::before{ bottom: -5px; left: 50%; margin-left: -5px; border-top: none;   border-left: none; }
 </style>
 
-<button id="gToggle">📖 Guida</button>
-<section id="gShow" aria-label="Guida a slide">
-  <div class="gs-top">
-    <span class="gs-badge" id="gsBadge">START</span>
-    <span class="gs-count" id="gsCount">1 / 10</span>
-    <button class="gs-x" id="gsX">✕</button>
-  </div>
-  <div class="gs-body" id="gsBody"></div>
-  <div class="gs-foot">
-    <button class="gs-nav" id="gsPrev">‹</button>
-    <div class="gs-dots" id="gsDots"></div>
-    <button class="gs-nav" id="gsNext">›</button>
-  </div>
-</section>
-
 <script>
-(function(){
-  var SLIDES=[
-    {b:'START', t:'Come iniziare', d:'Premi <b>PLAY</b> — l\'audio parte al primo click. Poi trascina i knob: il suono cambia dal vivo.'},
-    {b:'VCF', t:'Cutoff', k:'Cutoff', d:'Apre e chiude il filtro: è il classico <b>“wah”</b> acido. Muovilo mentre suona.'},
-    {b:'VCF', t:'Resonance', k:'Resonance', d:'Enfatizza il cutoff: più alta = più <b>“squelch”</b>, il timbro acido.'},
-    {b:'VCF', t:'Env Mod', k:'Env Mod', d:'Quanto l\'<b>inviluppo</b> muove il cutoff a ogni nota. Più alto = filtro che “canta”.'},
-    {b:'VCF', t:'Decay', k:'Decay', d:'Durata della <b>spinta</b> del filtro dopo ogni nota.'},
-    {b:'VCA', t:'Distort', k:'Distort', d:'Satura il segnale: aggiunge <b>grinta</b> e armoniche.'},
-    {b:'VCA', t:'Accent', k:'Accent', d:'Quanta <b>spinta</b> danno gli step accentati del sequencer.'},
-    {b:'SEQUENCER', t:'Scrivi la linea', d:'Nel tab <b>SEQUENCER</b> clicca il piano roll per le note. Usa <b>Accent</b> e <b>Slide</b> per il groove acido.'},
-    {b:'FX', t:'Effetti', d:'<b>Delay</b> e <b>Reverb</b> danno spazio; <b>Distortion</b> e <b>Chorus</b> aggiungono colore.'},
-    {b:'RICETTA', t:'Suono acid', d:'SAW · Cutoff medio-basso · Resonance alta · Env Mod deciso · Accent+Slide. Poi <b>muovi il Cutoff</b>.'}
-  ];
-  var show=document.getElementById('gShow'), body=document.getElementById('gsBody'), dots=document.getElementById('gsDots'),
-      badge=document.getElementById('gsBadge'), count=document.getElementById('gsCount'), toggle=document.getElementById('gToggle');
-  var idx=0, timer=null, open=false;
+(function () {
 
-  SLIDES.forEach(function(s,i){
-    var el=document.createElement('div'); el.className='gs-slide'; el.innerHTML='<h3>'+s.t+'</h3><p>'+s.d+'</p>'; body.appendChild(el);
-    var d=document.createElement('div'); d.className='gs-dot'; d.onclick=function(){ go(i,true); }; dots.appendChild(d);
-  });
-  var slideEls=body.querySelectorAll('.gs-slide'), dotEls=dots.querySelectorAll('.gs-dot');
+  /* ═══════════════════════════════════════════════════════════════════
+     TIPS DATABASE — every interactive element in all 5 tabs
+  ═══════════════════════════════════════════════════════════════════ */
+  const T = {
+    /* ── Nav tabs ── */
+    'nav-synth':    { b:'SYNTH',     t:'Sintesi — VCF + VCA',        d:'Filtro ladder 4-polo (<b>VCF</b>: Cutoff, Resonance, Env Mod, Decay) e amplificatore (<b>VCA</b>: Volume, Distort, Accent, Tuning). Il cuore del suono TB-303.' },
+    'nav-seq':      { b:'SEQUENCER', t:'Piano Roll 16-step',          d:'Editor a griglia: clicca le celle per inserire le note. Riga = altezza nota (B4 in alto → C3 in basso). Colonna = step 1–16. <b>ACC</b> = accent, <b>SLD</b> = slide (portamento).' },
+    'nav-fx':       { b:'FX',        t:'Rack Effetti',                d:'Quattro unità: <b>Delay</b> (eco BBD), <b>Reverb</b> (convolution hall), <b>Distortion</b> (tanh drive) e <b>Chorus</b> (BBD 2-voci). Ogni unità ha on/off e knob dedicati.' },
+    'nav-preset':   { b:'PRESET',    t:'Preset',                      d:'<b>Factory preset</b>: carica synth + FX + pattern completo. <b>Synth preset</b>: solo timbro, il tuo pattern rimane intatto. Combinali liberamente.' },
+    'nav-settings': { b:'SETTINGS',  t:'Impostazioni',                d:'Tempo BPM (anche Tap Tempo), modalità sorgente note, shuffle swing, accent amount e mappa della tastiera per il live play.' },
 
-  function knobByLabel(txt){ var r=null; document.querySelectorAll('.knob-wrap').forEach(function(w){ var l=w.querySelector('.knob-lbl'); if(l && l.textContent.trim().toLowerCase()===txt.toLowerCase()) r=w.querySelector('.knob'); }); return r; }
-  function ensureSynthTab(){ var t=[].slice.call(document.querySelectorAll('.tab')).find(function(x){return /synth/i.test(x.textContent);}); if(t && !t.classList.contains('active')) t.click(); }
-  function clearGlow(){ document.querySelectorAll('.knob.guide-glow').forEach(function(k){ k.classList.remove('guide-glow'); }); }
+    /* ── Transport ── */
+    'play':    { b:'TRANSPORT', t:'PLAY — Avvia il Sequencer',        d:'Parte il sequencer (se la sorgente è SEQ o PRESET). L\'audio viene inizializzato al primo click. <b>Barra spaziatrice</b> = shortcut play/stop.' },
+    'stop':    { b:'TRANSPORT', t:'STOP — Ferma e Reimposta',         d:'Ferma il sequencer e riporta la testina allo step 1. Il suono decade naturalmente. <b>Barra spaziatrice</b> durante la riproduzione = stop.' },
+    'midi-sw': { b:'MIDI',      t:'MIDI Live — On / Off',             d:'Attiva la modalità live: il sequencer si ferma e suoni con la tastiera del PC (schema <b>AWSED FTGYH UJK</b>, come un pianoforte). <b>Shift</b> + tasto = accent.' },
 
-  function render(){
-    slideEls.forEach(function(e,i){ e.classList.toggle('act',i===idx); });
-    dotEls.forEach(function(e,i){ e.classList.toggle('act',i===idx); });
-    badge.textContent=SLIDES[idx].b; count.textContent=(idx+1)+' / '+SLIDES.length;
-    clearGlow();
-    var k=SLIDES[idx].k;
-    if(k && open){ ensureSynthTab(); setTimeout(function(){ var el=knobByLabel(k); if(el) el.classList.add('guide-glow'); },60); }
+    /* ── VCO / Waveform ── */
+    'wave-saw': { b:'VCO', t:'SAW — Onda a Dente di Sega',           d:'Onda piena di armoniche pari e dispari: il suono acid classico, brillante e aggressivo. L\'oscillatore usa <b>PolyBLEP</b> per eliminare l\'aliasing digitale.' },
+    'wave-sqr': { b:'VCO', t:'SQR — Onda Quadra',                    d:'Solo armoniche dispari: suono cavo, nasale, tagliente. Ottima per groove minimali, bass techno e texture sperimentali. PolyBLEP applicato sulle due discontinuità per ciclo.' },
+
+    /* ── Pattern buttons ── */
+    'pat': { b:'PATTERN', t:'Selezione Pattern 1–8',                  d:'8 pattern indipendenti da 16 step ciascuno. Cambia pattern <b>durante la riproduzione</b> per costruire arrangiamenti live. Il piano roll si aggiorna automaticamente al pattern attivo.' },
+
+    /* ── VCF knobs ── */
+    'knob-cutoff':    { b:'VCF', t:'Cutoff — Frequenza di Taglio',    d:'Controlla quali frequenze passano il filtro ladder. <b>Basso</b> = suono scuro e chiuso. <b>Alto</b> = aperto e brillante. È il parametro più espressivo: muovilo mentre suona per l\'effetto acid classico.' },
+    'knob-resonance': { b:'VCF', t:'Resonance — Risonanza',           d:'Enfatizza le frequenze vicino al cutoff. <b>Alta</b> = “squelch” acido squillante. Valori vicino a 1.0 portano il filtro in auto-oscillazione (comportamento identico all\'hardware originale).' },
+    'knob-envmod':    { b:'VCF', t:'Env Mod — Modulazione Inviluppo', d:'Quanto l\'inviluppo AD (Attack-Decay) sposta il cutoff ad ogni nota triggerata. <b>Alto</b> = filtro che “canta” a ogni step, con un picco di apertura seguito da chiusura progressiva. È la chiave dell\'effetto acid.' },
+    'knob-decay':     { b:'VCF', t:'Decay — Decadimento Filtro',      d:'Durata della spinta dell\'inviluppo dopo ogni trigger. <b>Breve (0.05s)</b> = staccato percussivo e pulsante. <b>Lungo (2s)</b> = nota sostenuta con filtro che si chiude lentamente.' },
+
+    /* ── VCA knobs ── */
+    'knob-volume':  { b:'VCA', t:'Volume — Livello Voce',             d:'Livello di uscita dopo la distortion, prima degli effetti. Controlla il volume della singola voce synth, non il master finale.' },
+    'knob-distort': { b:'VCA', t:'Distort — Saturazione tanh',        d:'Satura il segnale con algoritmo <b>tanh(drive·x)/tanh(drive)</b>. 0 = bypass trasparente. 1 = drive ×10, overdrive pesante. Aggiunge armoniche calde e compressione naturale.' },
+    'knob-accent':  { b:'VCA', t:'Accent — Spinta degli Step ACC',    d:'Quantità di spinta extra sugli step accentati. Booste sia il volume (<b>+6dB via VCA</b>) sia l\'apertura del cutoff. L\'accent rende il groove vivo e dinamico: è la “voce” del pattern.' },
+    'knob-tuning':  { b:'VCO', t:'Tuning — Accordatura Fine',         d:'Trasposizione in semitoni (±12). Accordatura fine per suonare con altri strumenti, o per detuning intenzionale. La conversione usa la formula 12-TET standard (A4 = 440 Hz).' },
+
+    /* ── Step resolution ── */
+    'res-quarter':   { b:'TIMING', t:'1/4 — Semiminima',              d:'Un step ogni beat (quarto di misura). 4 note per bar a 4/4. Groove lento, respirato, basso. Ideale per tempi lenti o pattern da 4 note.' },
+    'res-eighth':    { b:'TIMING', t:'1/8 — Croma',                   d:'Un step ogni mezzo beat. 8 note per bar. Bilanciamento tra densità e respiro. Buono per groove funky e dub.' },
+    'res-sixteenth': { b:'TIMING', t:'1/16 — Semicroma',              d:'Un step ogni quarto di beat. 16 note per bar: la risoluzione standard dell\'originale TB-303. Groove denso e rapido. A 140 BPM ogni step dura ~107ms.' },
+
+    /* ── Output level ── */
+    'out-vol': { b:'OUTPUT', t:'Volume — Livello Master',             d:'Livello finale prima degli effetti FX. Il <b>meter LED</b> a destra mostra il livello in tempo reale: verde (ok), giallo (alto), rosso (clip). Riduci se clippa.' },
+
+    /* ── Sequencer toolbar ── */
+    'seq-random': { b:'SEQUENCER', t:'RANDOM — Genera Pattern',       d:'Genera un pattern casuale con note nella <b>scala pentatonica minore</b>. Probabilità gate: 70%, accent: 28%, slide: 18%. Ottimo punto di partenza creativo da rifinire.' },
+    'seq-clear':  { b:'SEQUENCER', t:'CLEAR — Azzera Pattern',        d:'Cancella tutte le note del pattern attivo: tutti i gate tornano a off. Accent e slide azzerati. Utile per ricominciare da zero su un pattern.' },
+    'seq-length': { b:'SEQUENCER', t:'LENGTH — Lunghezza Pattern',    d:'Impostazione lunghezza pattern (1–16 step). Pattern più corti creano groove minimali che si ripetono più velocemente all\'interno della griglia da 16.' },
+    'seq-shuffle':{ b:'SEQUENCER', t:'SHUFFLE — Swing Groove',        d:'Ritarda gli step pari per un timing più “umano” e groove. Vedi anche l\'impostazione Shuffle nelle Settings per il controllo fine.' },
+
+    /* ── Source mode ── */
+    'src-midi':   { b:'SOURCE', t:'MIDI — Live Keyboard',             d:'Il sequencer si ferma. Suoni dal vivo con la tastiera del PC: <b>A=C, W=C#, S=D, E=D#, D=E, F=F, T=F#, G=G, Y=G#, H=A, U=A#, J=B, K=C</b>. Shift = accent.' },
+    'src-seq':    { b:'SOURCE', t:'SEQ — Sequencer Mode',             d:'Modalità normale: il sequencer suona il pattern disegnato nel piano roll. Ogni modifica viene inviata all\'engine in tempo reale.' },
+    'src-preset': { b:'SOURCE', t:'PRESET — Pattern Factory',         d:'Usa i pattern factory come sorgente, ignorando il piano roll. Utile per demo rapide o per confrontare timbri diversi sullo stesso groove.' },
+
+    /* ── Piano roll ── */
+    'piano-roll': { b:'PIANO ROLL', t:'Editor Note — Clicca per Scrivere', d:'<b>Clicca</b> una cella per aggiungere/rimuovere una nota. La colonna è lo step (1→16), la riga è l\'altezza (B4 in alto, C3 in basso). La <b>testina bianca verticale</b> avanza durante la riproduzione.' },
+
+    /* ── Step buttons & sub-controls ── */
+    'step':    { b:'STEP',     t:'Step — Gate On / Off',              d:'<b>Clicca</b> per attivare/disattivare questo step. Verde = gate attivo (nota suona). Mostra la nota MIDI attiva. Sotto ogni step: <b>ACC</b> per accent, <b>SLD</b> per slide.' },
+    'sub-acc': { b:'ACCENT',   t:'ACC — Step Accentato',              d:'Questo step suona con +6dB di volume extra e il filtro si apre di più (accent boost). L\'inviluppo accent ha decay fisso di 200ms. Crea il “pump” caratteristico del suono acid.' },
+    'sub-sld': { b:'SLIDE',    t:'SLD — Portamento al Prossimo Step', d:'Porta la frequenza di questo step verso quella dello step successivo con un portamento esponenziale (~70ms). L\'inviluppo <b>non si resetta</b>: la nota suona legata senza click. Comportamento identico all\'hardware TB-303.' },
+
+    /* ── FX power buttons ── */
+    'fx-delay-power':  { b:'DELAY',      t:'Delay — Echo BBD',            d:'Eco analogico simulato. Delay time + feedback creano code ritmiche. In sincronia con il BPM: <b>375ms = croma a 160 BPM</b>. Feedback alto + mix basso = presenza sottile. Feedback alto + mix alto = dub style.' },
+    'fx-reverb-power': { b:'REVERB',     t:'Reverb — Convolution Hall',   d:'Riverbero a convoluzione con impulso sintetico. Size piccolo = stanza, grande = hall cavernosa. Anche un mix basso (10–20%) aggiunge profondità senza coprire il segnale originale.' },
+    'fx-dist-power':   { b:'DISTORTION', t:'Distortion — Post-VCA Drive', d:'Saturazione tanh sull\'uscita finale, dopo tutti gli effetti di sintesi. Diverso dal Distort del synth: agisce sul mix completo. Ottimo in combo con il Distort del VCA per texture stratificate.' },
+    'fx-chorus-power': { b:'CHORUS',     t:'Chorus — BBD 2 Voci',         d:'Chorus bucket-brigade con LFO sinusoidale. Allarga il suono nello stereo e aggiunge modulazione pitchata. Rate lento = chorus fluido, rate alto = vibrato. Mix basso per subtilezza.' },
+
+    /* ── FX knobs ── */
+    'fx-delay-time':   { b:'DELAY',      t:'Time — Tempo Echo',           d:'Durata dell\'eco (20ms–750ms). Valore di riferimento: <b>375ms = croma a 160 BPM</b>, 187ms = semicroma. Sincronia col BPM crea effetti ritmici. Valori più brevi danno slap echo.' },
+    'fx-delay-fdbk':   { b:'DELAY',      t:'Fdbk — Feedback',             d:'Quante volte l\'eco si rigenera su se stesso. <b>0%</b> = eco singolo. <b>90%</b> = code quasi infinite. Oltre il 90% il delay può andare in auto-oscillazione.' },
+    'fx-delay-mix':    { b:'DELAY',      t:'Mix — Wet/Dry',               d:'Bilanciamento tra segnale diretto (dry) e segnale processato (wet). 0% = solo dry. 100% = solo eco. Per un uso musicale, tieni il mix tra il 20% e il 50%.' },
+    'fx-reverb-size':  { b:'REVERB',     t:'Size — Dimensione Stanza',    d:'Dimensione virtuale dell\'ambiente. Basso = camera/plate (0.4–1.4s), alto = concert hall (fino a 3s). Influenza direttamente il tempo di decadimento della coda.' },
+    'fx-reverb-damp':  { b:'REVERB',     t:'Damp — Smorzamento Acuti',    d:'Smorzamento delle alte frequenze nella coda del reverb. <b>Alto</b> = riverbero scuro e caldo (classico vintage). <b>Basso</b> = riverbero brillante e arioso.' },
+    'fx-reverb-mix':   { b:'REVERB',     t:'Mix — Wet/Dry',               d:'Bilanciamento reverb. Anche un 10–15% aggiunge molto spazio. Oltre il 40% il suono perde definizione: tienilo discreto per un risultato professionale.' },
+    'fx-dist-drive':   { b:'DISTORTION', t:'Drive — Saturazione Output',  d:'Quantità di saturazione tanh sull\'uscita finale. <b>0–30%</b> = soft clip caldo, armoniche pari. <b>50–80%</b> = overdrive. <b>100%</b> = clipping pesante, suono compresso e aggressivo.' },
+    'fx-chorus-rate':  { b:'CHORUS',     t:'Rate — Velocità Modulazione', d:'Velocità dell\'LFO sinusoidale (0.2–4.2 Hz). <b>Lento</b> = chorus ampio e ondeggiante. <b>Veloce</b> = vibrato pronunciato. Valori medi (0.5–1.5 Hz) sono i più musicali.' },
+    'fx-chorus-depth': { b:'CHORUS',     t:'Depth — Profondità Pitch',    d:'Profondità della modulazione del delay (massimo ±8ms). <b>Basso</b> = solo stereo widening. <b>Alto</b> = pitch wobble evidente. Combinato con rate alto produce effetti flanger/phaser.' },
+    'fx-chorus-mix':   { b:'CHORUS',     t:'Mix — Wet/Dry',               d:'Bilanciamento chorus. A differenza di delay e reverb, il chorus funziona bene anche ad alto mix: 50–70% per stereo widening pieno, 20–30% per qualcosa di più sottile.' },
+
+    /* ── Preset page ── */
+    'factory-sel': { b:'PRESET', t:'Factory Pattern Preset',              d:'8 preset completi: cambiano synth + FX + pattern di 16 step + BPM. Scegli dal menu e premi <b>LOAD PRESET</b>. Il pattern viene caricato nel piano roll e nell\'engine audio.' },
+    'synth-sel':   { b:'PRESET', t:'Synth Preset',                        d:'12 preset timbrici: cambiano solo i parametri del synth (Cutoff, Resonance, Env Mod, Decay, Accent). Il pattern resta intatto. Combinali con i factory pattern per suoni nuovi.' },
+    'load-preset': { b:'PRESET', t:'LOAD PRESET',                         d:'Applica il preset selezionato. Se entrambi i menu sono valorizzati, carica prima il factory (synth + pattern), poi sovrascrive i parametri synth con il preset timbrico scelto.' },
+
+    /* ── Settings ── */
+    'bpm-disp':   { b:'TEMPO', t:'BPM — Velocità',                       d:'Velocità del sequencer (60–200 BPM). <b>Clicca il numero e digita</b> direttamente, poi premi Invio. Oppure usa i tasti +/− sotto. Il tempo influenza anche il calcolo del delay sincrono.' },
+    'bpm-minus':  { b:'TEMPO', t:'BPM − (Diminuisci)',                    d:'Diminuisce il BPM del valore selezionato (±1, ±5, ±10). Utile per rallentare gradualmente durante un set live.' },
+    'bpm-plus':   { b:'TEMPO', t:'BPM + (Aumenta)',                       d:'Aumenta il BPM del valore selezionato (±1, ±5, ±10). Utile per accelerare gradualmente o per trovare il BPM giusto per la traccia.' },
+    'tap-tempo':  { b:'TEMPO', t:'TAP TEMPO — Batti il Ritmo',            d:'<b>Clicca a ritmo</b> per impostare il BPM automaticamente. Dopo 2 tap calcola la media degli intervalli. Fino a 4 tap in memoria per maggiore precisione.' },
+    'bpm-step1':  { b:'TEMPO', t:'±1 — Passo Microtonale',                d:'Ogni click su +/− cambia di 1 BPM. Per tuning preciso e aggiustamenti fini in studio o live.' },
+    'bpm-step5':  { b:'TEMPO', t:'±5 — Passo Medio',                      d:'Ogni click su +/− cambia di 5 BPM. Buon compromesso tra velocità di variazione e controllo.' },
+    'bpm-step10': { b:'TEMPO', t:'±10 — Passo Ampio',                     d:'Ogni click su +/− cambia di 10 BPM. Per cambi di velocità drastici: da techno lento (120) a rave (140) in pochi click.' },
+    'mode-filter':{ b:'MODE',  t:'FILTER — Modalità Standard',            d:'Il sequencer suona il pattern e il VCF filtra normalmente con Cutoff, Resonance ed Env Mod. Modalità default del TB-303. Tutte le caratteristiche acide sono attive.' },
+    'mode-note':  { b:'MODE',  t:'NOTE — VCF Bypass',                     d:'Il VCF viene bypassato: le note suonano senza filtro, solo attraverso il VCA. Utile per sentire l\'oscillatore grezzo, la distortion pura, o per sound design non-acid.' },
+    'mode-midi':  { b:'MODE',  t:'MIDI IN — Suona dal Vivo',              d:'Il sequencer si ferma: suoni in tempo reale con la tastiera del PC. Schema <b>AWSED FTGYH UJK</b> (ottava C3–C4). <b>Shift</b> = accent sulla nota.' },
+    'swing-range':{ b:'FEEL',  t:'Shuffle — Swing Groove',                d:'Ritarda gli step pari (2, 4, 6, 8…) rispetto alla griglia rigida. <b>0%</b> = meccanico. <b>50%</b> = swing funky. <b>75%</b> = swing jazz pronunciato. Rende il groove più umano e sincopato.' },
+    'accent-range':{ b:'FEEL', t:'Accent Amount — Intensità Accent',      d:'Contrasto tra step normali e step accentati (ACC). <b>0%</b> = tutti alla stessa dinamica. <b>100%</b> = massimo contrasto. Valori tra 60–80% sono tipici per il suono acid espressivo.' },
+  };
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TOOLTIP ENGINE
+  ═══════════════════════════════════════════════════════════════════ */
+  const tip = document.createElement('div');
+  tip.id = 'ctip';
+  document.body.appendChild(tip);
+
+  let hideTimer = null;
+
+  function calcPos(el, tipW, tipH) {
+    const r = el.getBoundingClientRect();
+    const vW = window.innerWidth, vH = window.innerHeight;
+    const g = 14;
+    let x, y, arr;
+    if (r.right + tipW + g < vW) {
+      x = r.right + g; y = r.top + r.height / 2 - tipH / 2; arr = 'left';
+    } else if (r.left - tipW - g > 0) {
+      x = r.left - tipW - g; y = r.top + r.height / 2 - tipH / 2; arr = 'right';
+    } else if (r.bottom + tipH + g < vH) {
+      x = r.left + r.width / 2 - tipW / 2; y = r.bottom + g; arr = 'top';
+    } else {
+      x = r.left + r.width / 2 - tipW / 2; y = r.top - tipH - g; arr = 'bottom';
+    }
+    return {
+      x: Math.max(8, Math.min(x, vW - tipW - 8)),
+      y: Math.max(8, Math.min(y, vH - tipH - 8)),
+      arr
+    };
   }
-  function go(i,manual){ idx=(i+SLIDES.length)%SLIDES.length; render(); if(manual) restart(); }
-  function next(){ go(idx+1); } function prev(){ go(idx-1,true); }
-  function restart(){ if(timer) clearInterval(timer); timer=setInterval(next,5200); }
-  function stop(){ if(timer){ clearInterval(timer); timer=null; } }
 
-  function setOpen(o){
-    open=o; show.classList.toggle('on',o); toggle.textContent = o ? '✕ Chiudi guida' : '📖 Guida';
-    if(o){ render(); restart(); } else { stop(); clearGlow(); }
+  function showTip(el, data) {
+    clearTimeout(hideTimer);
+    tip.innerHTML =
+      '<div class=”ct-badge”>' + data.b + '</div>' +
+      '<div class=”ct-title”>' + data.t + '</div>' +
+      '<div class=”ct-body”>'  + data.d + '</div>';
+
+    // Make visible but transparent so we can measure height
+    tip.style.display = 'block';
+    tip.style.opacity = '0';
+    tip.style.transform = 'scale(.93) translateY(5px)';
+
+    // Measure and position
+    const tipH = tip.offsetHeight || 120;
+    const { x, y, arr } = calcPos(el, 292, tipH);
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+    tip.dataset.arr = arr;
+
+    // Force reflow: browser registers opacity=0 “from” state before we animate
+    void tip.offsetHeight;
+
+    // Trigger transition to visible
+    tip.style.opacity = '1';
+    tip.style.transform = 'scale(1) translateY(0)';
   }
-  toggle.onclick=function(){ setOpen(!open); };
-  document.getElementById('gsX').onclick=function(){ setOpen(false); };
-  document.getElementById('gsNext').onclick=function(){ go(idx+1,true); };
-  document.getElementById('gsPrev').onclick=prev;
-  show.addEventListener('mouseenter',stop);
-  show.addEventListener('mouseleave',function(){ if(open) restart(); });
 
-  // apri automaticamente dopo un attimo per mostrare l'effetto
-  setTimeout(function(){ setOpen(true); }, 900);
+  function hideTip() {
+    tip.style.opacity = '0';
+    tip.style.transform = 'scale(.93) translateY(5px)';
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { tip.style.display = 'none'; }, 200);
+  }
+
+  function wireTip(el, tipId) {
+    if (!el || !T[tipId] || el.__tw) return;
+    el.__tw = true;
+    el.addEventListener('mouseenter', () => showTip(el, T[tipId]));
+    el.addEventListener('mouseleave', hideTip);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     WIRE ALL STATIC ELEMENTS
+  ═══════════════════════════════════════════════════════════════════ */
+  function wireAll() {
+
+    /* Nav tabs */
+    document.querySelectorAll('.tab').forEach(tab => {
+      const s = tab.getAttribute('onclick') || '';
+      [['synth','nav-synth'],['seq','nav-seq'],['fx','nav-fx'],['preset','nav-preset'],['settings','nav-settings']]
+        .forEach(([k, v]) => { if (s.includes(“'” + k + “'”)) wireTip(tab, v); });
+    });
+
+    /* Transport — all instances */
+    ['play-key','play-key2','play-key3'].forEach(id => wireTip(document.getElementById(id), 'play'));
+    ['stop-key','stop-key2','stop-key3'].forEach(id => wireTip(document.getElementById(id), 'stop'));
+    wireTip(document.getElementById('midi-switch'), 'midi-sw');
+
+    /* Waveform selector */
+    document.querySelectorAll('.wave-btn').forEach(btn =>
+      wireTip(btn, btn.textContent.trim() === 'SAW' ? 'wave-saw' : 'wave-sqr'));
+
+    /* Synth knob wraps — distinguished by card header */
+    const KNOB_MAP = {
+      'Cutoff':'knob-cutoff', 'Resonance':'knob-resonance', 'Env Mod':'knob-envmod',
+      'Decay':'knob-decay', 'Volume':'knob-volume', 'Distort':'knob-distort',
+      'Accent':'knob-accent', 'Tuning':'knob-tuning'
+    };
+    document.querySelectorAll('.knob-wrap').forEach(w => {
+      if (w.classList.contains('fxk')) return;
+      const lbl = (w.querySelector('.knob-lbl')?.textContent || '').trim();
+      const cardTitle = w.closest('.card')?.querySelector('.card-hdr-txt')?.textContent || '';
+      const tipId = cardTitle.includes('Output Level') ? 'out-vol' : KNOB_MAP[lbl];
+      if (tipId) wireTip(w, tipId);
+    });
+
+    /* Step resolution buttons */
+    document.querySelectorAll('button.btn').forEach(btn => {
+      const t = (btn.textContent || '').trim().toLowerCase();
+      const map = {
+        '1/4 note':'res-quarter','1/8 note':'res-eighth','1/16 note':'res-sixteenth',
+        '1/4':'res-quarter','1/8':'res-eighth','1/16':'res-sixteenth',
+        'random':'seq-random','clear':'seq-clear','length':'seq-length','shuffle':'seq-shuffle'
+      };
+      if (map[t]) wireTip(btn, map[t]);
+    });
+
+    /* Piano roll canvas */
+    wireTip(document.getElementById('piano-roll-canvas'), 'piano-roll');
+
+    /* Step buttons & sub-controls — wire whatever exists now */
+    document.querySelectorAll('#steps-grid .step').forEach(s => wireTip(s, 'step'));
+    document.querySelectorAll('#step-sub .sub').forEach(s =>
+      wireTip(s, s.textContent.trim() === 'ACC' ? 'sub-acc' : 'sub-sld'));
+
+    /* Source mode toggle */
+    document.querySelectorAll('[data-srcmode]').forEach(btn =>
+      wireTip(btn, 'src-' + btn.getAttribute('data-srcmode')));
+
+    /* FX unit power buttons */
+    const fxPowerTips = { delay:'fx-delay-power', reverb:'fx-reverb-power', dist:'fx-dist-power', chorus:'fx-chorus-power' };
+    Object.entries(fxPowerTips).forEach(([id, tipId]) => {
+      const btn = document.querySelector('#fxunit-' + id + ' .fxpower');
+      if (btn) wireTip(btn, tipId);
+    });
+
+    /* FX knob wraps — by unit + label */
+    const FX_KNOB_MAP = {
+      delay:  { Time:'fx-delay-time', Fdbk:'fx-delay-fdbk', Mix:'fx-delay-mix' },
+      reverb: { Size:'fx-reverb-size', Damp:'fx-reverb-damp', Mix:'fx-reverb-mix' },
+      dist:   { Drive:'fx-dist-drive' },
+      chorus: { Rate:'fx-chorus-rate', Depth:'fx-chorus-depth', Mix:'fx-chorus-mix' }
+    };
+    Object.entries(FX_KNOB_MAP).forEach(([unit, lblMap]) => {
+      document.querySelectorAll('#fxunit-' + unit + ' .knob-wrap').forEach(w => {
+        const lbl = (w.querySelector('.knob-lbl')?.textContent || '').trim();
+        if (lblMap[lbl]) wireTip(w, lblMap[lbl]);
+      });
+    });
+
+    /* Preset page */
+    wireTip(document.getElementById('factory-select'), 'factory-sel');
+    wireTip(document.getElementById('synth-select'), 'synth-sel');
+    document.querySelectorAll('.btn.acid').forEach(btn => {
+      if ((btn.textContent || '').includes('LOAD')) wireTip(btn, 'load-preset');
+    });
+
+    /* Settings page */
+    wireTip(document.getElementById('bpm-display'), 'bpm-disp');
+    wireTip(document.getElementById('tap-btn'), 'tap-tempo');
+    wireTip(document.getElementById('bs1'), 'bpm-step1');
+    wireTip(document.getElementById('bs5'), 'bpm-step5');
+    wireTip(document.getElementById('bs10'), 'bpm-step10');
+    wireTip(document.getElementById('mode-filter'), 'mode-filter');
+    wireTip(document.getElementById('mode-note'), 'mode-note');
+    wireTip(document.getElementById('mode-midi'), 'mode-midi');
+    wireTip(document.getElementById('swing-range'), 'swing-range');
+    wireTip(document.getElementById('accamt-range'), 'accent-range');
+
+    /* BPM ± keycaps */
+    document.querySelectorAll('[onclick=”changeBPM(-bpmStep)”]').forEach(el => wireTip(el, 'bpm-minus'));
+    document.querySelectorAll('[onclick=”changeBPM(bpmStep)”]').forEach(el => wireTip(el, 'bpm-plus'));
+
+    /* Pattern buttons */
+    document.querySelectorAll('#pat-btns .keycap').forEach(k => wireTip(k, 'pat'));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     HOOK INTO DYNAMIC BUILDERS — step buttons, pattern keycaps
+  ═══════════════════════════════════════════════════════════════════ */
+  const _origBuildSteps = window.buildSteps;
+  window.buildSteps = function () {
+    _origBuildSteps && _origBuildSteps.apply(this, arguments);
+    document.querySelectorAll('#steps-grid .step').forEach(s => wireTip(s, 'step'));
+    document.querySelectorAll('#step-sub .sub').forEach(s =>
+      wireTip(s, s.textContent.trim() === 'ACC' ? 'sub-acc' : 'sub-sld'));
+  };
+
+  const _origBuildKeycaps = window.buildKeycaps;
+  window.buildKeycaps = function () {
+    _origBuildKeycaps && _origBuildKeycaps.apply(this, arguments);
+    document.querySelectorAll('#pat-btns .keycap').forEach(k => wireTip(k, 'pat'));
+  };
+
+  setTimeout(wireAll, 600);
+
 })();
 </script>
 
