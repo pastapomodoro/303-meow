@@ -209,70 +209,73 @@ body {
 
 .knob {
   width:54px; height:54px; border-radius:50%;
-  position:relative; cursor:pointer; flex-shrink:0;
-  /* corpo a cupola lucida (luce in alto) */
+  position:relative; cursor:ns-resize; flex-shrink:0;
+  /* gunmetal lucido: cupola cromata scura con forte luce in alto, su ghiera zigrinata */
   background:
-    radial-gradient(circle at 50% 30%, #ffffff 0%, #f4f6f9 32%, #dde2ea 68%, #c8ced8 88%, #b7becb 100%);
-  /* profondità: drop morbida + inset chiaro sopra + inset scuro sotto */
+    radial-gradient(circle at 50% 18%, #d3d9e2 0%, #949ba6 12%, #575d67 30%, #333840 50%, #1c1f24 66%, rgba(28,31,36,0) 71%),
+    repeating-conic-gradient(from 0deg, #464b52 0deg 4.5deg, #17191c 4.5deg 9deg);
   box-shadow:
-    0 10px 20px rgba(70,80,100,.34),
-    0 4px 8px rgba(70,80,100,.22),
-    inset 0 3px 5px rgba(255,255,255,.95),
-    inset 0 -8px 15px rgba(110,120,140,.28),
-    0 0 0 1px rgba(150,160,175,.5),
-    0 0 0 2px rgba(255,255,255,.5);
-  transition: box-shadow .12s;
+    0 14px 24px rgba(0,0,0,.52),
+    0 5px 10px rgba(0,0,0,.44),
+    inset 0 2px 3px rgba(255,255,255,.4),
+    inset 0 -10px 16px rgba(0,0,0,.6),
+    0 0 0 1px rgba(0,0,0,.7);
+  transition: box-shadow .14s, transform .1s;
 }
 .knob:hover {
   box-shadow:
-    0 13px 26px rgba(70,80,100,.4),
-    0 5px 10px rgba(70,80,100,.26),
-    inset 0 3px 5px rgba(255,255,255,.95),
-    inset 0 -8px 15px rgba(110,120,140,.28),
-    0 0 0 1px rgba(150,160,175,.5),
-    0 0 0 2px rgba(255,255,255,.55);
+    0 18px 32px rgba(0,0,0,.6),
+    0 7px 14px rgba(0,0,0,.48),
+    inset 0 2px 3px rgba(255,255,255,.45),
+    inset 0 -10px 16px rgba(0,0,0,.6),
+    0 0 0 1px rgba(0,0,0,.72);
 }
-/* tick ring esterno inciso */
+.knob:active { transform: scale(.975); }
+/* cupola cromata interna: luce alta netta + riflesso ambientale in basso */
 .knob::before {
-  content:''; position:absolute; inset:-8px; border-radius:50%;
-  border:1.5px solid rgba(90,100,120,.12);
-  border-bottom-color: rgba(255,255,255,.6);
-  border-left-color: rgba(255,255,255,.4);
+  content:''; position:absolute; inset:11%; border-radius:50%;
+  background:
+    radial-gradient(ellipse at 50% 90%, rgba(150,168,190,.6) 0%, rgba(150,168,190,0) 36%),
+    radial-gradient(circle at 50% 22%, #b6bdc8 0%, #6b727c 22%, #383e45 54%, #1e2126 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,.5),
+    inset 0 -5px 9px rgba(0,0,0,.65),
+    0 1px 2px rgba(0,0,0,.5);
 }
-/* riflesso speculare "spazzato" in alto (firma glossy) */
+/* riflesso speculare intenso e stretto in alto (lucido/chrome) */
 .knob::after {
-  content:''; position:absolute; top:7%; left:15%; width:70%; height:46%;
-  border-radius:50%; pointer-events:none;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.35) 42%, rgba(255,255,255,0) 74%);
+  content:''; position:absolute; top:9%; left:24%; width:52%; height:38%;
+  border-radius:50%; pointer-events:none; z-index:2;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.34) 38%, rgba(255,255,255,0) 72%);
   transform: rotate(-6deg);
 }
-/* glint secondario opzionale (elemento .knob-hl) */
-.knob-hl {
-  position:absolute;
-  width:22px; height:12px; border-radius:50%;
-  background: radial-gradient(ellipse, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 100%);
-  top:9px; left:9px; pointer-events:none;
-  transform: rotate(-30deg);
-}
+.knob-hl { display:none; }
 /* indicatore ruotante — wrapper a tutta area, ruota attorno al centro */
 .knob-ind {
-  position:absolute; inset:0;
+  position:absolute; inset:0; z-index:3;
   transform-origin:center center;
   pointer-events:none;
-  transition: transform .05s linear;
+  transition: transform .06s linear;
 }
-/* dot indicatore (dentro .knob-ind) */
+/* lancetta incisa chiara dal centro verso l'alto */
+.knob-ind::before {
+  content:''; position:absolute; left:50%; top:15%; width:3px; height:26%;
+  margin-left:-1.5px; border-radius:2px;
+  background: linear-gradient(to bottom, rgba(235,240,245,.92), rgba(200,210,220,.35));
+  box-shadow: 0 0 3px rgba(150,200,90,.4), inset 0 0 1px rgba(0,0,0,.5);
+}
+/* dot acid alla punta della lancetta */
 .knob-dot {
   position:absolute;
-  width:7px; height:7px; border-radius:50%;
-  top:7px; left:50%; margin-left:-3.5px;
-  background: radial-gradient(circle at 40% 30%, #bbff44, #55bb00);
-  box-shadow: 0 0 6px var(--acid-glow), 0 1px 2px rgba(0,0,0,.3);
+  width:8px; height:8px; border-radius:50%;
+  top:7%; left:50%; margin-left:-4px;
+  background: radial-gradient(circle at 38% 30%, #d6ff77, #86ee00 55%, #4a9e00);
+  box-shadow: 0 0 9px var(--acid-glow), 0 0 4px rgba(136,255,0,.9), inset 0 1px 1px rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.5);
   pointer-events:none;
 }
 .knob-dot.gray {
-  background: radial-gradient(circle at 40% 30%, #888880, #444440);
-  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+  background: radial-gradient(circle at 38% 30%, #d3d7dd, #8a8f98 55%, #4c505a);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.5);
 }
 .knob-lbl { font-size:8px; letter-spacing:1.5px; color:var(--text-dim); text-align:center; text-transform:uppercase; }
 .knob-val { font-size:8px; color:var(--text-xs); text-align:center; }
@@ -284,7 +287,62 @@ body {
    .sprite-knob resta come alias innocuo così i chiamanti
    esistenti (bridge JUCE, mountSpriteKnobs) continuano a girare.
 ═══════════════════════════════════════════════ */
-.sprite-knob { background-image:none !important; }
+.sprite-knob { /* sprite deprecato: nessun override, resta il dome CSS di .knob */ }
+/* ── Toggle sorgente note a 3 posizioni ── */
+.srcmode{ position:relative; display:inline-flex; background:#1b1d20; border-radius:8px; padding:3px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.55); }
+.srcmode-thumb{ position:absolute; top:3px; left:3px; bottom:3px; width:calc((100% - 6px)/3);
+  background:linear-gradient(180deg,#aaff22,#7ed000); border-radius:6px;
+  box-shadow:0 1px 3px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .18s cubic-bezier(.34,1.3,.5,1); z-index:0; }
+.srcmode-opt{ position:relative; z-index:1; border:0; background:transparent; cursor:pointer;
+  font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px;
+  color:#8a8f88; padding:7px 13px; min-width:54px; text-align:center; transition:color .15s; }
+.srcmode-opt.on{ color:#16200a; }
+/* ── Rack FX skeuomorfico ── */
+.fxrack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fxunit{ position:relative; border-radius:12px; padding:15px 16px 12px;
+  background:linear-gradient(180deg,#f7f7f3 0%, #e8e8e3 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 5px rgba(60,64,74,.08),
+              0 3px 8px rgba(60,64,74,.16), 0 0 0 1px rgba(0,0,0,.06);
+  display:flex; flex-direction:column; gap:12px; transition:opacity .2s, filter .2s; }
+.fxunit.off{ opacity:.5; filter:saturate(.35); }
+.fxscrew{ position:absolute; width:9px; height:9px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #dcdcd6, #a2a29a 68%, #6f6f68);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.14), 0 1px 1px rgba(255,255,255,.7); }
+.fxscrew::after{ content:''; position:absolute; inset:2px; border-top:1.2px solid rgba(0,0,0,.32); transform:rotate(40deg); border-radius:1px; }
+.fxscrew.tl{ top:7px; left:7px;} .fxscrew.tr{ top:7px; right:7px;}
+.fxscrew.bl{ bottom:7px; left:7px;} .fxscrew.br{ bottom:7px; right:7px;}
+.fxunit-head{ display:flex; align-items:center; gap:9px; padding:0 6px; }
+.fxpower{ position:relative; width:42px; height:22px; border-radius:11px; border:0; cursor:pointer; flex-shrink:0; padding:0;
+  background:#1b1d20; box-shadow: inset 0 2px 4px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.55);
+  transition:background .16s; }
+.fxpower.on{ background:linear-gradient(180deg,#8bea15,#5fa800); box-shadow: inset 0 1px 2px rgba(0,0,0,.25), 0 0 9px rgba(136,255,0,.45); }
+.fxled{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+  background:radial-gradient(circle at 40% 32%, #f4f4ee, #bdbdb4 75%, #9a9a92);
+  box-shadow:0 1px 3px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.7); transition:transform .16s; }
+.fxpower.on .fxled{ transform:translateX(20px); background:radial-gradient(circle at 40% 32%, #ffffff, #d6ffc4 75%, #a8e878); }
+.fxunit-name{ font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:2.5px; color:var(--text); line-height:1.1; }
+.fxunit-tag{ font-family:var(--mono); font-size:7px; letter-spacing:1.2px; color:var(--text-dim); text-transform:uppercase; }
+.fxunit-knobs{ display:flex; justify-content:space-around; align-items:flex-start; gap:6px; padding:2px 4px 0; }
+.fxk{ min-width:auto; gap:5px; flex:0 0 auto; }
+.fxk .knob-lbl{ font-size:8px; letter-spacing:1px; }
+.fxk .knob-val{ font-size:8px; color:var(--acid-dark); font-weight:600; }
+/* ── Settings ── */
+.settings-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:start; }
+.settings-wide{ display:grid; grid-template-columns:1.5fr 1fr; gap:12px; margin-top:12px; }
+.set-hint{ font-family:var(--mono); font-size:8px; color:var(--text-dim); letter-spacing:.5px; line-height:1.5; }
+.acid-range{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:4px;
+  background:linear-gradient(90deg, #88ff00 var(--p,0%), #202225 var(--p,0%));
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.55); outline:none; cursor:pointer; }
+.acid-range::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#f4f4ee,#b6b6ae); box-shadow:0 1px 3px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2); cursor:pointer; }
+.acid-range::-moz-range-thumb{ width:16px; height:16px; border:0; border-radius:50%; background:#e8e8e2; box-shadow:0 1px 3px rgba(0,0,0,.4); cursor:pointer; }
+.kbdkey{ display:inline-flex; flex-direction:column; align-items:center; gap:3px; }
+.kbdkey b{ font-family:var(--mono); font-size:10px; font-weight:700; color:var(--text); width:24px; height:24px;
+  display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#fff,#e6e6e0);
+  border-radius:5px; box-shadow:0 1px 2px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.9); }
+.kbdkey span{ font-family:var(--mono); font-size:7px; color:var(--text-dim); }
 .fx-sprite-knob { display:block; cursor:ns-resize; }
 
 /* ═══════════════════════════════════════════════
@@ -826,7 +884,7 @@ body {
                     <div style="display:flex;gap:16px;">
                       <span style="font-size:10px;color:#44aa00;">PAT <span style="color:var(--lcd-green);font-weight:600;">01</span></span>
                       <span style="font-size:10px;color:#44aa00;">BPM <span id="bpm-lcd" style="color:var(--lcd-green);font-weight:600;">125</span></span>
-                      <span style="font-size:10px;color:#44aa00;">WAVE <span style="color:var(--lcd-green);font-weight:600;">SAW</span></span>
+                      <span style="font-size:10px;color:#44aa00;">WAVE <span id="wave-lcd" style="color:var(--lcd-green);font-weight:600;">SAW</span></span>
                     </div>
                     <div id="play-ind" style="width:9px;height:9px;border-radius:50%;background:#0f2006;transition:all .15s;"></div>
                   </div>
@@ -855,7 +913,7 @@ body {
                   <div style="height:1px;background:#162808;margin-bottom:12px;"></div>
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                     <span style="font-size:7px;color:#2d4a00;letter-spacing:1.5px;">SEQUENCER</span>
-                    <span style="font-size:8px;color:#44aa00;">RES <span style="color:var(--lcd-green);font-weight:600;">1/16</span></span>
+                    <span style="font-size:8px;color:#44aa00;">RES <span id="res-lcd" style="color:var(--lcd-green);font-weight:600;">1/16</span></span>
                     <span style="font-size:8px;color:#44aa00;">PRESET <span style="color:var(--lcd-green);font-weight:600;">Classic Acid</span></span>
                   </div>
                   <div class="lcd-steps" id="lcd-s" style="gap:4px;"></div>
@@ -958,12 +1016,19 @@ body {
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
               <button class="btn sm">LENGTH</button>
               <button class="btn sm">SHUFFLE</button>
-              <button class="btn sm">RANDOM</button>
-              <button class="btn sm btn-red">CLEAR</button>
+              <button class="btn sm" onclick="window._prRandom&&window._prRandom()">RANDOM</button>
+              <button class="btn sm btn-red" onclick="window._prClear&&window._prClear()">CLEAR</button>
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
               <button class="btn sm">1/4</button>
               <button class="btn sm">1/8</button>
               <button class="btn sm acid">1/16</button>
+              <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
+              <div class="srcmode" title="Sorgente delle note">
+                <div class="srcmode-thumb" id="srcmode-thumb" style="transform:translateX(100%);"></div>
+                <button class="srcmode-opt" data-srcmode="midi" onclick="setSrcMode('midi')">MIDI</button>
+                <button class="srcmode-opt on" data-srcmode="seq" onclick="setSrcMode('seq')">SEQ</button>
+                <button class="srcmode-opt" data-srcmode="preset" onclick="setSrcMode('preset')">PRESET</button>
+              </div>
               <div style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text-dim);">
                 STEP <span id="slcd" style="color:var(--acid-dark);font-weight:600;">01</span>/16 &nbsp;·&nbsp; PAT <span style="color:var(--acid-dark);font-weight:600;">01</span> &nbsp;·&nbsp; BPM <span id="bpm-lcd2" style="color:var(--acid-dark);font-weight:600;">125</span>
               </div>
@@ -1035,98 +1100,92 @@ body {
 
     <!-- ══════════════ 03 FX ══════════════ -->
     <div class="page" id="page-fx">
-      <div style="display:grid;grid-template-columns:1fr 280px;gap:12px;">
+      <div class="fxrack">
 
-        <!-- SINISTRA: 4 knob card -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;">
-
-          <!-- DELAY -->
-          <div class="card">
-            <div class="card-hdr"><span class="card-hdr-txt">Delay</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
-              <div id="knob-wrap-delay" style="width:110px;height:110px;"></div>
-              <div style="text-align:center;">
-                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Delay</div>
-                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-delay">45</div>
-                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">375 ms · 1/8</div>
-              </div>
-            </div>
+        <div class="fxunit" id="fxunit-delay">
+          <span class="fxscrew tl"></span><span class="fxscrew tr"></span><span class="fxscrew bl"></span><span class="fxscrew br"></span>
+          <div class="fxunit-head">
+            <button class="fxpower on" onclick="fxToggle('delay',this)" title="On / Off"><span class="fxled"></span></button>
+            <div><div class="fxunit-name">DELAY</div><div class="fxunit-tag">Stereo · BBD echo</div></div>
           </div>
-
-          <!-- REVERB -->
-          <div class="card">
-            <div class="card-hdr"><span class="card-hdr-txt">Reverb</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
-              <div id="knob-wrap-reverb" style="width:110px;height:110px;"></div>
-              <div style="text-align:center;">
-                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Reverb</div>
-                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-reverb">50</div>
-                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Room · Stereo</div>
-              </div>
+          <div class="fxunit-knobs">
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="delayTime" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Time</div><div class="knob-val">375ms</div>
             </div>
-          </div>
-
-          <!-- DISTORTION -->
-          <div class="card">
-            <div class="card-hdr"><span class="card-hdr-txt">Distortion</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
-              <div id="knob-wrap-dist" style="width:110px;height:110px;"></div>
-              <div style="text-align:center;">
-                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Distortion</div>
-                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-dist">0</div>
-                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Tanh · DC Block</div>
-              </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="delayFeedback" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Fdbk</div><div class="knob-val">35%</div>
             </div>
-          </div>
-
-          <!-- CHORUS -->
-          <div class="card">
-            <div class="card-hdr"><span class="card-hdr-txt">Chorus</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 16px;">
-              <div id="knob-wrap-chorus" style="width:110px;height:110px;"></div>
-              <div style="text-align:center;">
-                <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Chorus</div>
-                <div style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);" id="val-chorus">0</div>
-                <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">Depth · Rate</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- DESTRA: display overview -->
-        <div class="col">
-          <div class="card" style="flex:1;">
-            <div class="card-hdr"><span class="card-hdr-txt">FX Overview</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;gap:0;padding:20px 18px;">
-              <canvas id="fx-canvas" width="244" height="180" style="width:100%;border-radius:6px;background:#111;display:block;margin-bottom:16px;
-                box-shadow:inset 0 2px 8px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.3);"></canvas>
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('delay',this)">
-                  <div style="width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);flex-shrink:0;" class="fx-led"></div>
-                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-mid);flex:1;text-transform:uppercase;">Delay</span>
-                  <span style="font-family:var(--mono);font-size:9px;color:var(--acid-dark);font-weight:600;" id="pct-delay">45%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('reverb',this)">
-                  <div style="width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);flex-shrink:0;" class="fx-led"></div>
-                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-mid);flex:1;text-transform:uppercase;">Reverb</span>
-                  <span style="font-family:var(--mono);font-size:9px;color:var(--acid-dark);font-weight:600;" id="pct-reverb">50%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('dist',this)">
-                  <div style="width:7px;height:7px;border-radius:50%;background:var(--inset);flex-shrink:0;" class="fx-led"></div>
-                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-dim);flex:1;text-transform:uppercase;">Distortion</span>
-                  <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);" id="pct-dist">0%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleFX('chorus',this)">
-                  <div style="width:7px;height:7px;border-radius:50%;background:var(--inset);flex-shrink:0;" class="fx-led"></div>
-                  <span style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-dim);flex:1;text-transform:uppercase;">Chorus</span>
-                  <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);" id="pct-chorus">0%</span>
-                </div>
-              </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="delayMix" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Mix</div><div class="knob-val">35%</div>
             </div>
           </div>
         </div>
-
+        <div class="fxunit" id="fxunit-reverb">
+          <span class="fxscrew tl"></span><span class="fxscrew tr"></span><span class="fxscrew bl"></span><span class="fxscrew br"></span>
+          <div class="fxunit-head">
+            <button class="fxpower on" onclick="fxToggle('reverb',this)" title="On / Off"><span class="fxled"></span></button>
+            <div><div class="fxunit-name">REVERB</div><div class="fxunit-tag">Convolution hall</div></div>
+          </div>
+          <div class="fxunit-knobs">
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="reverbSize" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Size</div><div class="knob-val">50%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="reverbDamp" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Damp</div><div class="knob-val">50%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="reverbMix" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Mix</div><div class="knob-val">25%</div>
+            </div>
+          </div>
+        </div>
+        <div class="fxunit off" id="fxunit-dist">
+          <span class="fxscrew tl"></span><span class="fxscrew tr"></span><span class="fxscrew bl"></span><span class="fxscrew br"></span>
+          <div class="fxunit-head">
+            <button class="fxpower" onclick="fxToggle('dist',this)" title="On / Off"><span class="fxled"></span></button>
+            <div><div class="fxunit-name">DISTORTION</div><div class="fxunit-tag">tanh drive · DC block</div></div>
+          </div>
+          <div class="fxunit-knobs">
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="distortion" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Drive</div><div class="knob-val">0%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Tone</div><div class="knob-val">50%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Level</div><div class="knob-val">100%</div>
+            </div>
+          </div>
+        </div>
+        <div class="fxunit off" id="fxunit-chorus">
+          <span class="fxscrew tl"></span><span class="fxscrew tr"></span><span class="fxscrew bl"></span><span class="fxscrew br"></span>
+          <div class="fxunit-head">
+            <button class="fxpower" onclick="fxToggle('chorus',this)" title="On / Off"><span class="fxled"></span></button>
+            <div><div class="fxunit-name">CHORUS</div><div class="fxunit-tag">BBD · 2-voice</div></div>
+          </div>
+          <div class="fxunit-knobs">
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="chorusRate" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Rate</div><div class="knob-val">30%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="chorusDepth" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Depth</div><div class="knob-val">40%</div>
+            </div>
+            <div class="knob-wrap fxk">
+              <div class="knob" data-fx="chorusMix" style="width:46px;height:46px;"></div>
+              <div class="knob-lbl">Mix</div><div class="knob-val">0%</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1274,83 +1333,90 @@ body {
 
     <!-- ══════════════ 05 SETTINGS ══════════════ -->
     <div class="page" id="page-settings">
-      <div style="display:grid;grid-template-columns:180px 200px 1fr;gap:12px;align-items:start;">
-
-        <!-- BPM — compatto -->
+      <div class="settings-grid">
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Tempo</span></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;">
+          <div class="card-body" style="padding:14px;">
             <div style="display:flex;align-items:baseline;gap:6px;">
-              <div style="font-family:var(--mono);font-size:36px;font-weight:600;color:var(--text);line-height:1;" id="bpm-display">125</div>
+              <div style="font-family:var(--mono);font-size:34px;font-weight:600;color:var(--text);line-height:1;cursor:text;" id="bpm-display" title="Clicca e digita">125</div>
               <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;">BPM</div>
             </div>
-            <div style="display:flex;gap:6px;">
-              <div class="keycap" onclick="changeBPM(-bpmStep)" style="flex:1;">
-                <div class="keycap-base"><div class="keycap-top" style="padding:10px 4px;justify-content:center;">
-                  <span class="keycap-num" style="font-size:16px;line-height:1;">−</span>
-                </div></div>
-              </div>
-              <div class="keycap" onclick="changeBPM(bpmStep)" style="flex:1;">
-                <div class="keycap-base"><div class="keycap-top" style="padding:10px 4px;justify-content:center;">
-                  <span class="keycap-num" style="font-size:16px;line-height:1;">+</span>
-                </div></div>
-              </div>
+            <div class="set-hint" style="margin:4px 0 8px;">Clicca il numero e digita · Invio</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <div class="keycap" onclick="changeBPM(-bpmStep)" style="flex:1;"><div class="keycap-base"><div class="keycap-top" style="padding:9px 4px;justify-content:center;"><span class="keycap-num" style="font-size:16px;line-height:1;">−</span></div></div></div>
+              <div class="keycap" onclick="changeBPM(bpmStep)" style="flex:1;"><div class="keycap-base"><div class="keycap-top" style="padding:9px 4px;justify-content:center;"><span class="keycap-num" style="font-size:16px;line-height:1;">+</span></div></div></div>
             </div>
-            <div style="display:flex;gap:5px;">
+            <div style="display:flex;gap:5px;margin-bottom:8px;">
               <button class="btn sm acid" id="bs1"  onclick="setBpmStep(1)"  style="flex:1;padding:5px;">±1</button>
               <button class="btn sm"      id="bs5"  onclick="setBpmStep(5)"  style="flex:1;padding:5px;">±5</button>
               <button class="btn sm"      id="bs10" onclick="setBpmStep(10)" style="flex:1;padding:5px;">±10</button>
             </div>
-            <div class="keycap" id="tap-btn" onclick="tapTempo()">
-              <div class="keycap-base"><div class="keycap-top" style="padding:8px 4px;justify-content:center;">
-                <span class="keycap-num" style="font-size:9px;letter-spacing:2px;">TAP</span>
-              </div></div>
-            </div>
-          </div>
+            <div class="keycap" id="tap-btn" onclick="tapTempo()"><div class="keycap-base"><div class="keycap-top" style="padding:8px 4px;justify-content:center;"><span class="keycap-num" style="font-size:9px;letter-spacing:2px;">TAP TEMPO</span></div></div></div></div>
         </div>
-
-        <!-- MODE — compatto -->
         <div class="card">
-          <div class="card-hdr"><span class="card-hdr-txt">Mode</span></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;">
-            <div id="mode-filter" onclick="setMode('filter')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:linear-gradient(to right,#ddffaa,#eeffcc);border:1.5px solid var(--acid-dark);transition:all .1s;">
+          <div class="card-hdr"><span class="card-hdr-txt">Playback Mode</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div id="mode-filter" onclick="setMode('filter')" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:5px;cursor:pointer;background:linear-gradient(to right,#ddffaa,#eeffcc);border:1.5px solid var(--acid-dark);margin-bottom:6px;transition:all .1s;">
               <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--acid);box-shadow:0 0 5px var(--acid-glow);"></div>
-              <div>
-                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--acid-deep);letter-spacing:1px;">FILTER</div>
-                <div style="font-family:var(--mono);font-size:7px;color:var(--acid-dark);margin-top:1px;">VCF active</div>
-              </div>
+              <div><div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--acid-deep);letter-spacing:1px;">FILTER</div><div style="font-family:var(--mono);font-size:7px;color:var(--acid-dark);margin-top:1px;">VCF attivo</div></div>
             </div>
-            <div id="mode-note" onclick="setMode('note')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:all .1s;">
+            <div id="mode-note" onclick="setMode('note')" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;transition:all .1s;">
               <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--inset);"></div>
-              <div>
-                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">NOTE</div>
-                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">VCF bypassed</div>
-              </div>
+              <div><div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">NOTE</div><div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">VCF bypass</div></div>
             </div>
-            <div id="mode-midi" onclick="setMode('midi')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:all .1s;">
+            <div id="mode-midi" onclick="setMode('midi')" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:5px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:all .1s;">
               <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--inset);"></div>
-              <div>
-                <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">MIDI IN</div>
-                <div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">Seq bypassed</div>
-              </div>
+              <div><div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-mid);letter-spacing:1px;">MIDI IN</div><div style="font-family:var(--mono);font-size:7px;color:var(--text-dim);margin-top:1px;">Seq bypass</div></div>
+            </div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Feel</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+              <span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text-mid);">SHUFFLE</span>
+              <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acid-dark);" id="swing-val">0%</span>
             </div>
-          </div>
+            <input type="range" min="0" max="75" value="0" class="acid-range" id="swing-range" style="--p:0%;" oninput="this.style.setProperty('--p',(this.value/75*100)+'%');document.getElementById('swing-val').textContent=this.value+'%';">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 6px;">
+              <span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text-mid);">ACCENT AMT</span>
+              <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acid-dark);" id="accamt-val">75%</span>
+            </div>
+            <input type="range" min="0" max="100" value="75" class="acid-range" id="accamt-range" style="--p:75%;" oninput="this.style.setProperty('--p',this.value+'%');document.getElementById('accamt-val').textContent=this.value+'%';">
+            <div class="set-hint" style="margin-top:12px;">Swing sposta gli step pari · Accent regola la spinta</div></div>
         </div>
-
-        <!-- SPAZIO ILLUSTRAZIONE -->
-        <div style="
-          background:var(--surface);
-          border:1px dashed var(--border);
-          border-radius:8px;
-          display:flex;align-items:center;justify-content:center;
-          min-height:220px;
-          box-shadow:inset 0 2px 8px rgba(0,0,0,.04);
-        ">
-          <div style="text-align:center;">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;opacity:.5;">ILLUSTRATION</div>
-          </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Audio Engine</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--acid);box-shadow:0 0 6px var(--acid-glow);"></div>
+              <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text);" id="audio-status">AudioWorklet · ready</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-family:var(--mono);font-size:8px;color:var(--text-dim);">
+              <div style="display:flex;justify-content:space-between;"><span>ENGINE</span><span style="color:var(--text-mid);">TB-303 DSP</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>VCF</span><span style="color:var(--text-mid);">Huovilainen ladder</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>VCO</span><span style="color:var(--text-mid);">PolyBLEP saw/sqr</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>OUTPUT</span><span style="color:var(--text-mid);">Stereo</span></div>
+            </div>
+            <div class="set-hint" style="margin-top:12px;">L'audio parte al primo PLAY (gesto utente)</div></div>
         </div>
-
+      </div>
+      <div class="settings-wide">
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Keyboard — Live Play</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div class="set-hint" style="margin-bottom:10px;">In <b style="color:var(--acid-dark);">MIDI mode</b> (toggle nel SEQUENCER) suoni dal vivo con la tastiera del PC — Shift = accento:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;"><div class="kbdkey"><b>A</b><span>C</span></div><div class="kbdkey"><b>W</b><span>C#</span></div><div class="kbdkey"><b>S</b><span>D</span></div><div class="kbdkey"><b>E</b><span>D#</span></div><div class="kbdkey"><b>D</b><span>E</span></div><div class="kbdkey"><b>F</b><span>F</span></div><div class="kbdkey"><b>T</b><span>F#</span></div><div class="kbdkey"><b>G</b><span>G</span></div><div class="kbdkey"><b>Y</b><span>G#</span></div><div class="kbdkey"><b>H</b><span>A</span></div><div class="kbdkey"><b>U</b><span>A#</span></div><div class="kbdkey"><b>J</b><span>B</span></div><div class="kbdkey"><b>K</b><span>C</span></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">About</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div style="font-family:var(--display,var(--mono));font-size:18px;font-weight:700;letter-spacing:3px;color:var(--text);">ACIDLAB</div>
+            <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:2px;">BASS SYNTHESIZER · v1.0.0</div>
+            <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+            <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.7;">
+              Clone software del Roland TB-303.<br>DSP C++/JUCE · UI WebView HTML.<br>Engine WebAudio nel browser.<br><br>Eugenio Bellini — NABA UI/UX 2026
+            </div></div>
+        </div>
       </div>
     </div>
 
@@ -1364,6 +1430,7 @@ function nav(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
+  if(window._drawPR){ requestAnimationFrame(()=>window._drawPR()); }
 }
 
 // ── STATE
@@ -1540,7 +1607,7 @@ buildKeycaps();
           background:${data[i]?'#88ff00':'#1e1e1e'};
           border:1px solid ${data[i]?'rgba(136,255,0,.6)':'#333'};
           box-shadow:${data[i]?'0 0 5px rgba(136,255,0,.35)':'none'};transition:all .08s;`;
-        c.onclick=()=>{data[i]=!data[i];buildRows();};
+        c.onclick=()=>{data[i]=!data[i];buildRows(); if(window._onPatternChange) window._onPatternChange();};
         el.appendChild(c);
       }
     });
@@ -1631,10 +1698,41 @@ buildKeycaps();
         const k=`${s}:${r}`;
         notes.has(k)?notes.delete(k):notes.add(k);
         draw();
+        if(window._onPatternChange) window._onPatternChange();
       }
     });
   }
 
+  window._prBuildPattern=function(){
+    const steps=[];
+    for(let s=0;s<STEPS;s++){
+      let row=-1;
+      for(let r=0;r<ROWS;r++){ if(notes.has(s+':'+r)){ row=r; break; } }
+      if(row<0) steps.push({note:48,gate:false,accent:false,slide:false,octave:0});
+      else steps.push({note:71-row,gate:true,accent:!!accentData[s],slide:!!slideData[s],octave:0});
+    }
+    return steps;
+  };
+  window._prSetPattern=function(pat){
+    notes.clear(); slideData.fill(false); accentData.fill(false);
+    for(let s=0;s<STEPS && pat && s<pat.length;s++){
+      const st=pat[s]; if(!st||!st.gate) continue;
+      let n=st.note+(st.octave||0)*12; while(n<48)n+=12; while(n>71)n-=12;
+      const row=71-n; if(row>=0&&row<ROWS) notes.add(s+':'+row);
+      slideData[s]=!!st.slide; accentData[s]=!!st.accent;
+    }
+    buildRows(); draw();
+  };
+  window._prClear=function(){ notes.clear(); slideData.fill(false); accentData.fill(false); buildRows(); draw(); if(window._onPatternChange) window._onPatternChange(); };
+  window._prRandom=function(){
+    notes.clear(); slideData.fill(false); accentData.fill(false);
+    const scale=[48,50,51,53,55,58,60,62,63];
+    for(let s=0;s<STEPS;s++){
+      if(Math.random()<0.7){ const n=scale[(Math.random()*scale.length)|0]; const row=71-n; if(row>=0&&row<ROWS) notes.add(s+':'+row);
+        slideData[s]=Math.random()<0.18; accentData[s]=Math.random()<0.28; }
+    }
+    buildRows(); draw(); if(window._onPatternChange) window._onPatternChange();
+  };
   window.playing2=false;
   window._prStep=0;
   window._drawPR=draw;
@@ -1817,6 +1915,18 @@ function toggleFX(id, row){
   drawFXCanvas();
 }
 
+function fxToggle(uid,btn){
+  const on=btn.classList.toggle('on');
+  const unit=document.getElementById('fxunit-'+uid);
+  if(unit) unit.classList.toggle('off',!on);
+}
+window.fxToggle=fxToggle;
+// base setSrcMode: aggiorna solo il toggle (override dall'engine WebAudio / bridge JUCE)
+function setSrcMode(m){
+  document.querySelectorAll('[data-srcmode]').forEach(b=>b.classList.toggle('on', b.getAttribute('data-srcmode')===m));
+  const th=document.getElementById('srcmode-thumb'); if(th) th.style.transform='translateX('+(({midi:0,seq:100,preset:200})[m]||0)+'%)';
+}
+window.setSrcMode=setSrcMode;
 setTimeout(()=>{ mountSpriteKnobs(); initFXKnobs(); drawFXCanvas(); },150);
 
 function setWave(el){document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
@@ -2063,6 +2173,7 @@ class TB303Processor extends AudioWorkletProcessor {
     if(d.type==='param') this.setParam(d.id,d.value);
     else if(d.type==='pattern'){ this.pattern=d.steps; this.len=d.steps.length||16; }
     else if(d.type==='transport'){ if(d.playing) this.start(); else this.playing=false; }
+    else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note); }
   }
   setParam(id,v){
     if(id==='cutoff') this.baseCutoff=v;
@@ -2083,7 +2194,7 @@ class TB303Processor extends AudioWorkletProcessor {
   setSlide(en,from,to){ this.sliding=en; this.curFreq=this.noteToHz(from,this.tuningCents); this.tgtFreq=this.noteToHz(to,this.tuningCents); }
   noteOn(n,acc,sl,prev){ if(sl){ this.setSlide(true,prev,n);} else { this.setSlide(false,n,n); this.setNote(n);} this.nState=1; if(acc) this.aState=1; }
   sendStep(step){ const s=this.pattern[step]; if(!s||!s.gate) return; let n=s.note+(s.octave||0)*12; if(n<0)n=0; if(n>127)n=127; this.noteOn(n,!!s.accent,this.prevSlide,this.prevNote); this.prevNote=n; this.prevSlide=!!s.slide; }
-  advance(){ this.step=(this.step+1)%this.len; this.sendStep(this.step); }
+  advance(){ this.step=(this.step+1)%this.len; this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); }
   polyBlep(t,dt){ if(t<dt){t/=dt; return t+t-t*t-1;} else if(t>1-dt){t=(t-1)/dt; return t*t+t+t+1;} return 0; }
   vcoTick(){
     if(this.sliding){ const diff=this.tgtFreq-this.curFreq; if(Math.abs(diff)<0.01){this.curFreq=this.tgtFreq; this.sliding=false;} else { this.curFreq+=(this.tgtFreq-this.curFreq)*(1-this.slideCoeff);} }
@@ -2119,7 +2230,7 @@ class TB303Processor extends AudioWorkletProcessor {
     const spp=60/this.bpm/this.res*this.sr;
     for(let i=0;i<N;i++){
       if(this.playing){
-        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.firstBeat=false; } this.counter+=spp; }
+        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp; }
         this.counter-=1;
         if(this.counter<=0) this.advance();
       }
@@ -2136,6 +2247,47 @@ registerProcessor('tb303-processor', TB303Processor);
 
   // ── Controller lato UI ──
   let ctx=null, node=null, ready=false, starting=false, webPlaying=false;
+  // ── FX chain (delay/reverb/chorus WebAudio; distortion nel worklet) ──
+  const fxState={ delay:{time:0.375,fb:0.35,mix:0.35,on:true}, reverb:{size:0.5,damp:0.5,mix:0.25,on:true,_last:-1}, dist:{drive:0,on:false}, chorus:{rate:0.3,depth:0.4,mix:0,on:false} };
+  let fxNodes=null, fxDistNorm=0;
+  function makeImpulse(sec,decay){
+    const rate=ctx.sampleRate, len=Math.max(1,(rate*sec)|0), buf=ctx.createBuffer(2,len,rate);
+    for(let ch=0;ch<2;ch++){ const d=buf.getChannelData(ch); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay); }
+    return buf;
+  }
+  function buildFX(){
+    const F=fxState;
+    const master=ctx.createGain(); master.connect(ctx.destination);
+    node.connect(master);
+    const dl=ctx.createDelay(1.5); dl.delayTime.value=F.delay.time;
+    const fb=ctx.createGain(); fb.gain.value=F.delay.fb;
+    const dw=ctx.createGain(); dw.gain.value=F.delay.on?F.delay.mix:0;
+    node.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dw); dw.connect(master);
+    const cv=ctx.createConvolver(); cv.buffer=makeImpulse(0.4+F.reverb.size*2.6,2.2);
+    const dp=ctx.createBiquadFilter(); dp.type='lowpass'; dp.frequency.value=1500+(1-F.reverb.damp)*9000;
+    const rw=ctx.createGain(); rw.gain.value=F.reverb.on?F.reverb.mix:0;
+    node.connect(cv); cv.connect(dp); dp.connect(rw); rw.connect(master);
+    const chd=ctx.createDelay(0.05); chd.delayTime.value=0.022;
+    const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.2+F.chorus.rate*4;
+    const lg=ctx.createGain(); lg.gain.value=F.chorus.depth*0.008;
+    lfo.connect(lg); lg.connect(chd.delayTime); lfo.start();
+    const cw=ctx.createGain(); cw.gain.value=F.chorus.on?F.chorus.mix:0;
+    node.connect(chd); chd.connect(cw); cw.connect(master);
+    fxNodes={master,dl,fb,dw,cv,dp,rw,chd,lfo,lg,cw};
+  }
+  function applyFX(p,norm){
+    const F=fxState;
+    if(p==='delayTime'){ F.delay.time=0.02+norm*0.73; if(fxNodes) fxNodes.dl.delayTime.value=F.delay.time; }
+    else if(p==='delayFeedback'){ F.delay.fb=norm*0.9; if(fxNodes) fxNodes.fb.gain.value=F.delay.fb; }
+    else if(p==='delayMix'){ F.delay.mix=norm; if(fxNodes&&F.delay.on) fxNodes.dw.gain.value=norm; }
+    else if(p==='reverbSize'){ F.reverb.size=norm; if(fxNodes&&Math.abs(norm-F.reverb._last)>0.04){ F.reverb._last=norm; fxNodes.cv.buffer=makeImpulse(0.4+norm*2.6,2.2); } }
+    else if(p==='reverbDamp'){ F.reverb.damp=norm; if(fxNodes) fxNodes.dp.frequency.value=1500+(1-norm)*9000; }
+    else if(p==='reverbMix'){ F.reverb.mix=norm; if(fxNodes&&F.reverb.on) fxNodes.rw.gain.value=norm; }
+    else if(p==='distortion'){ F.dist.drive=norm; fxDistNorm=norm; send('distortion', F.dist.on?norm:0); }
+    else if(p==='chorusRate'){ F.chorus.rate=norm; if(fxNodes) fxNodes.lfo.frequency.value=0.2+norm*4; }
+    else if(p==='chorusDepth'){ F.chorus.depth=norm; if(fxNodes) fxNodes.lg.gain.value=norm*0.008; }
+    else if(p==='chorusMix'){ F.chorus.mix=norm; if(fxNodes&&F.chorus.on) fxNodes.cw.gain.value=norm; }
+  }
   function post(m){ if(node) node.port.postMessage(m); }
   function send(id,value){ post({type:'param',id,value}); }
 
@@ -2148,13 +2300,14 @@ registerProcessor('tb303-processor', TB303Processor);
       const url = URL.createObjectURL(new Blob([WORKLET_CODE],{type:'application/javascript'}));
       await ctx.audioWorklet.addModule(url);
       node = new AudioWorkletNode(ctx,'tb303-processor',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
-      node.connect(ctx.destination);
-      post({type:'pattern',steps:DEFAULT_PATTERN});
+      buildFX();
+      node.port.onmessage=(ev)=>{ const m=ev.data||{}; if(m.type==='step'){ const st=m.step|0; window._prStep=st; curStep=st; if(window._drawPR) window._drawPR(); if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); } const sl=document.getElementById('slcd'); if(sl) sl.textContent=String(st+1).padStart(2,'0'); } };
+      post({type:'pattern',steps:currentPattern()});
       send('cutoff',DEFAULTS.cutoff); send('resonance',DEFAULTS.resonance);
       send('envMod',DEFAULTS.envMod); send('decay',DEFAULTS.decay);
       send('accent',DEFAULTS.accent); send('volume',DEFAULTS.volume);
       send('distortion',DEFAULTS.distortion); send('tuning',DEFAULTS.tuning*100);
-      send('waveform',DEFAULTS.waveform); send('tempo',bpm); send('resolution',DEFAULTS.resolution);
+      send('waveform',DEFAULTS.waveform); send('tempo',bpm); send('resolution',curRes);
       ready=true;
     }catch(e){ console.error('WebAudio init error',e); }
     starting=false;
@@ -2163,12 +2316,74 @@ registerProcessor('tb303-processor', TB303Processor);
   async function audioPlay(){ await ensureAudio(); if(ctx && ctx.state==='suspended') await ctx.resume(); post({type:'transport',playing:true}); }
   function audioStop(){ post({type:'transport',playing:false}); }
 
-  // ── Transport: avvolge le funzioni del sketch (mantiene l'animazione visiva) ──
-  const _tp=window.togglePlay, _ds=window.doStop, _tp2=window.togglePlay2, _ds2=window.doStop2;
-  window.togglePlay = function(){ _tp&&_tp(); webPlaying=!webPlaying; webPlaying?audioPlay():audioStop(); };
-  window.doStop     = function(){ if(!webPlaying){ _ds&&_ds(); return;} _tp&&_tp(); webPlaying=false; audioStop(); };
-  window.togglePlay2= function(){ _tp2&&_tp2(); webPlaying=!webPlaying; webPlaying?audioPlay():audioStop(); };
-  window.doStop2    = function(){ if(!webPlaying){ _ds2&&_ds2(); return;} _tp2&&_tp2(); webPlaying=false; audioStop(); };
+  // ── Sorgente note + modalità (MIDI / SEQ / PRESET) ──
+  const _P=a=>a.map(x=>({note:x[0],gate:!!x[1],accent:!!x[2],slide:!!x[3],octave:x[4]||0}));
+  const FACTORY_PATTERNS=[
+    _P([[45,1,1,0,0],[48,1,0,0,0],[45,1,0,1,0],[43,1,0,0,0],[45,1,0,0,0],[40,1,1,0,0],[43,1,0,0,0],[45,1,0,0,0],[50,1,0,1,0],[45,1,0,0,0],[48,1,0,0,0],[45,1,1,0,0],[43,1,0,0,0],[41,1,0,0,0],[40,1,0,1,0],[38,1,0,0,0]]),
+    _P([[40,1,1,0,0],[40,0,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[38,1,1,1,0],[40,1,0,0,0],[40,0,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[40,1,1,0,0],[43,1,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[38,1,1,1,0],[40,1,0,0,0],[36,1,0,0,0]]),
+    _P([[36,1,1,0,0],[36,0,0,0,0],[41,1,0,0,0],[36,0,0,0,0],[44,1,0,0,0],[36,1,1,0,0],[41,1,0,0,0],[36,0,0,0,0],[46,1,0,0,0],[36,1,0,0,0],[44,1,1,0,0],[36,1,0,0,0],[41,1,0,0,0],[46,1,0,1,0],[48,1,1,0,0],[36,1,0,0,0]]),
+    _P([[43,1,1,0,0],[43,0,0,0,0],[43,0,0,0,0],[46,1,1,0,0],[43,0,0,0,0],[43,1,0,0,0],[39,1,0,1,0],[41,1,0,0,0],[43,1,0,0,0],[43,0,0,0,0],[43,0,0,0,0],[46,1,1,0,0],[43,0,0,0,0],[41,1,0,0,0],[39,1,0,1,0],[36,1,1,0,0]]),
+    _P([[45,1,1,0,0],[45,0,0,0,0],[52,1,0,1,0],[52,1,0,0,0],[45,1,0,0,0],[45,0,0,0,0],[50,1,1,0,0],[50,0,0,0,0],[45,1,0,0,0],[45,0,0,0,0],[52,1,0,1,0],[52,1,0,0,0],[53,1,1,0,0],[52,1,0,0,0],[50,1,0,1,0],[45,1,0,0,0]]),
+    _P([[40,1,1,0,0],[40,0,0,0,0],[40,0,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[39,1,1,0,0],[40,0,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[40,1,0,0,0],[38,1,1,0,0],[38,0,0,0,0],[40,1,0,0,0],[40,0,0,0,0],[40,1,1,0,0],[40,1,0,0,0]]),
+    _P([[45,1,1,0,0],[45,1,0,0,0],[48,1,0,1,0],[48,1,1,0,0],[45,1,0,0,0],[45,1,0,0,0],[43,1,1,0,0],[41,1,0,0,0],[40,1,1,0,0],[40,1,0,0,0],[45,1,0,1,0],[45,1,1,0,0],[43,1,0,0,0],[41,1,0,0,0],[40,1,1,0,0],[38,1,0,0,0]]),
+    _P([[36,1,1,0,0],[36,0,0,0,0],[43,1,0,0,0],[43,0,0,0,0],[44,1,1,0,0],[44,0,0,0,0],[41,1,0,0,0],[41,1,0,0,0],[36,1,1,0,0],[36,0,0,0,0],[43,1,0,0,0],[43,0,0,0,0],[44,1,1,0,0],[41,1,0,0,0],[39,1,0,1,0],[36,1,1,0,0]])
+  ];
+  window.FACTORY_PATTERNS_JS=FACTORY_PATTERNS;
+  let srcMode='seq', presetIdx=0;
+  const cloneP=p=>p.map(x=>({note:x.note,gate:!!x.gate,accent:!!x.accent,slide:!!x.slide,octave:x.octave||0}));
+  function currentPattern(){
+    if(srcMode!=='midi' && window._prBuildPattern){ const p=window._prBuildPattern(); if(p&&p.length) return p; }
+    return cloneP(FACTORY_PATTERNS[presetIdx]||FACTORY_PATTERNS[0]);
+  }
+  function pushPattern(){ post({type:'pattern',steps:currentPattern()}); }
+  window._onPatternChange=function(){ if(srcMode!=='midi') pushPattern(); };
+  window._setPresetIdx=function(i){ presetIdx=i|0; if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[presetIdx]||FACTORY_PATTERNS[0]); if(srcMode!=='midi'){ pushPattern(); if(webPlaying) post({type:'transport',playing:true}); } };
+
+  function setPlayVisual(on){
+    playing=on; window.playing2=on;
+    [['play-key',on],['stop-key',!on],['play-key2',on],['stop-key2',!on]].forEach(a=>{ const e=document.getElementById(a[0]); if(e) e.classList.toggle('pressed',a[1]); });
+    if(window.updatePlayInd) window.updatePlayInd();
+  }
+  async function uiPlay(){
+    await ensureAudio(); if(ctx && ctx.state==='suspended') await ctx.resume();
+    webPlaying=true; setPlayVisual(true);
+    if(srcMode==='midi'){ post({type:'transport',playing:false}); return; }
+    pushPattern(); post({type:'transport',playing:true});
+  }
+  function uiStop(){
+    webPlaying=false; setPlayVisual(false);
+    post({type:'transport',playing:false});
+    window._prStep=0; curStep=0;
+    if(window._drawPR) window._drawPR();
+    if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); }
+  }
+  window.togglePlay = function(){ webPlaying?uiStop():uiPlay(); };
+  window.togglePlay2= function(){ webPlaying?uiStop():uiPlay(); };
+  window.doStop     = function(){ uiStop(); };
+  window.doStop2    = function(){ uiStop(); };
+
+  window.addEventListener('keydown',ev=>{
+    if(ev.code!=='Space' && ev.key!==' ') return;
+    const t=ev.target||{}; if(/INPUT|TEXTAREA|BUTTON|SELECT/.test(t.tagName||'') || t.isContentEditable) return;
+    ev.preventDefault(); window.togglePlay();
+  });
+  window.setSrcMode=function(m){
+    srcMode=m;
+    document.querySelectorAll('[data-srcmode]').forEach(b=>b.classList.toggle('on', b.getAttribute('data-srcmode')===m));
+    const th=document.getElementById('srcmode-thumb'); if(th) th.style.transform='translateX('+(({midi:0,seq:100,preset:200})[m]||0)+'%)';
+    if(m==='midi'){ post({type:'transport',playing:false}); }
+    else { pushPattern(); if(webPlaying) post({type:'transport',playing:true}); }
+  };
+
+  // MIDI mode: suona dal vivo con la tastiera del computer (una ottava da C3)
+  const KEYMAP={a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12,o:13,l:14};
+  window.addEventListener('keydown',ev=>{
+    if(srcMode!=='midi' || ev.repeat) return;
+    const t=ev.target||{}; if(/INPUT|TEXTAREA/.test(t.tagName||'') || t.isContentEditable) return;
+    const k=(ev.key||'').toLowerCase(); if(!(k in KEYMAP)) return;
+    ev.preventDefault();
+    ensureAudio().then(()=>{ if(ctx&&ctx.state==='suspended')ctx.resume(); post({type:'note',note:48+KEYMAP[k],accent:ev.shiftKey}); });
+  });
 
   // ── Waveform ──
   const _sw=window.setWave;
@@ -2180,7 +2395,8 @@ registerProcessor('tb303-processor', TB303Processor);
   const _cb=window.changeBPM;
   window.changeBPM = function(d){ bpm=Math.max(60,Math.min(200,bpm+(d||0))); showBpm(); send('tempo',bpm); };
 
-  // ── Knob draggabili (nel browser i knob SYNTH non erano interattivi) ──
+  // ── Knob draggabili + registry per preset/automazione ──
+  let curRes=DEFAULTS.resolution;
   const RANGES={
     'Cutoff':{p:'cutoff',min:20,max:20000,skew:0.25,fmt:v=>Math.round(v)+'Hz'},
     'Resonance':{p:'resonance',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
@@ -2191,28 +2407,135 @@ registerProcessor('tb303-processor', TB303Processor);
     'Accent':{p:'accent',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
     'Tuning':{p:'tuning',min:-12,max:12,skew:1,fmt:v=>v.toFixed(1)}
   };
+  const RP={}; Object.keys(RANGES).forEach(k=>RP[RANGES[k].p]=RANGES[k]);
   const n2v=(r,n)=>r.min+(r.max-r.min)*Math.pow(Math.max(0,Math.min(1,n)),1/r.skew);
   const v2n=(r,v)=>Math.pow(Math.max(0,Math.min(1,(v-r.min)/(r.max-r.min))),r.skew);
 
+  const knobCtl={};   // param -> setScaled(value[,silent])
   function wireKnobs(){
     document.querySelectorAll('.knob-wrap').forEach(w=>{
       const lbl=w.querySelector('.knob-lbl'); const knob=w.querySelector('.knob'); const val=w.querySelector('.knob-val');
       if(!lbl||!knob) return;
       const base=RANGES[(lbl.textContent||'').trim()]; if(!base) return;
-      const cur=DEFAULTS[base.p];
-      let norm=v2n(base,cur);
-      if(window.setKnobFrame) window.setKnobFrame(knob,norm);
-      if(val) val.textContent=base.fmt(cur);
+      let norm=v2n(base,DEFAULTS[base.p]);
+      const render=()=>{ if(window.setKnobFrame) window.setKnobFrame(knob,norm); const v=n2v(base,norm); if(val) val.textContent=base.fmt(v); return v; };
+      const setScaled=(scaled,silent)=>{ norm=v2n(base,scaled); const v=render(); if(!silent) send(base.p, base.p==='tuning'? v*100 : v); };
+      knobCtl[base.p]=setScaled;
+      render();
       knob.style.cursor='ns-resize';
       let drag=false, sy=0, sv=0;
       knob.addEventListener('mousedown',e=>{ drag=true; sy=e.clientY; sv=norm; e.preventDefault(); });
-      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1, sv+(sy-e.clientY)/150)); const v=n2v(base,norm); if(window.setKnobFrame) window.setKnobFrame(knob,norm); if(val) val.textContent=base.fmt(v); send(base.p, base.p==='tuning'? v*100 : v); });
+      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1, sv+(sy-e.clientY)/150)); const v=render(); send(base.p, base.p==='tuning'? v*100 : v); });
       window.addEventListener('mouseup',()=>drag=false);
     });
   }
 
+  // ── Step resolution: cabla entrambi i set di pulsanti (SETTINGS + toolbar SEQ) ──
+  function wireResolution(){
+    const key=b=>(b.textContent||'').trim().toLowerCase().replace(' note','');
+    const map={'1/4':1,'1/8':2,'1/16':4}, label={1:'1/4',2:'1/8',4:'1/16'};
+    const btns=[...document.querySelectorAll('button.btn')].filter(b=>map[key(b)]!==undefined);
+    const apply=r=>{
+      curRes=r; send('resolution',r);
+      btns.forEach(x=>x.classList.toggle('acid',map[key(x)]===r));
+      document.querySelectorAll('#res-lcd').forEach(e=>e.textContent=label[r]);
+    };
+    btns.forEach(b=>b.addEventListener('click',()=>apply(map[key(b)])));
+    apply(curRes);
+  }
+
+  // ── Preset: applicali davvero ai knob + engine (nel browser) ──
+  function setWaveUI(isSqr){
+    document.querySelectorAll('.wave-btn').forEach((b,i)=>b.classList.toggle('active', i===(isSqr?1:0)));
+    document.querySelectorAll('#wave-lcd').forEach(e=>e.textContent=isSqr?'SQR':'SAW');
+    send('waveform', isSqr?1:0);
+  }
+  function setTempo(v){ bpm=Math.max(60,Math.min(200,Math.round(v)||bpm)); showBpm(); send('tempo',bpm); }
+  function applyFactory(d,idx){
+    if(!d) return;
+    if(knobCtl.cutoff)    knobCtl.cutoff(parseFloat(String(d.cut))||600);
+    if(knobCtl.resonance) knobCtl.resonance(d.res);
+    if(knobCtl.envMod)    knobCtl.envMod(d.env);
+    if(knobCtl.decay)     knobCtl.decay(d.dec);
+    setWaveUI((d.wave||'SAW').toUpperCase()==='SQR');
+    setTempo(d.tempo);
+    if(idx!=null && window._setPresetIdx) window._setPresetIdx(idx);
+  }
+  function applySynth(d){
+    if(!d) return;
+    if(knobCtl.cutoff)    knobCtl.cutoff(n2v(RP.cutoff, d.cut));
+    if(knobCtl.resonance) knobCtl.resonance(d.res);
+    if(knobCtl.envMod)    knobCtl.envMod(d.env);
+    if(knobCtl.decay)     knobCtl.decay(d.dec);
+    if(knobCtl.accent)    knobCtl.accent(d.acc);
+  }
+  const _ofs=window.onFactorySelect, _oss=window.onSynthSelect, _lp=window.loadPreset;
+  const FD=()=>(typeof FACTORY_DATA!=='undefined')?FACTORY_DATA:[];
+  const SD=()=>(typeof SYNTH_DATA!=='undefined')?SYNTH_DATA:[];
+  window.onFactorySelect=function(sel){ _ofs&&_ofs(sel); applyFactory(FD()[sel.value], +sel.value); };
+  window.onSynthSelect  =function(sel){ _oss&&_oss(sel); applySynth(SD()[sel.value]); };
+  window.loadPreset     =function(){
+    _lp&&_lp();
+    const fs=document.getElementById('factory-select'), ss=document.getElementById('synth-select');
+    if(fs) applyFactory(FD()[fs.value], +fs.value);
+    if(ss) applySynth(SD()[ss.value]);
+  };
+
+  // ── BPM da tastiera: campo editabile ──
+  function wireBpmKeyboard(){
+    document.querySelectorAll('#bpm-display').forEach(el=>{
+      el.setAttribute('contenteditable','true');
+      el.setAttribute('inputmode','numeric');
+      el.title='Clicca e digita il BPM';
+      el.style.cursor='text';
+      el.addEventListener('focus',()=>{ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); });
+      el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+      el.addEventListener('blur',()=>{ let v=parseInt((el.textContent||'').replace(/[^0-9]/g,''),10); setTempo(v); });
+    });
+  }
+
   // init dopo che il sketch ha costruito la UI
-  setTimeout(()=>{ showBpm(); wireKnobs(); }, 400);
+  // ── FX knobs (browser): aggiornano il display; Drive va all'engine ──
+  const FXFMT={ delayTime:v=>Math.round((0.02+v*0.73)*1000)+'ms', delayFeedback:v=>Math.round(v*90)+'%', delayMix:v=>Math.round(v*100)+'%', reverbSize:v=>Math.round(v*100)+'%', reverbDamp:v=>Math.round(v*100)+'%', reverbMix:v=>Math.round(v*100)+'%', distortion:v=>Math.round(v*100)+'%', chorusRate:v=>Math.round(v*100)+'%', chorusDepth:v=>Math.round(v*100)+'%', chorusMix:v=>Math.round(v*100)+'%' };
+  const FXDEF={ delayTime:0.486, delayFeedback:0.389, delayMix:0.35, reverbSize:0.5, reverbDamp:0.5, reverbMix:0.25, distortion:0, chorusRate:0.3, chorusDepth:0.4, chorusMix:0 };
+  function wireFXKnobs(){
+    document.querySelectorAll('.fxk .knob').forEach(knob=>{
+      const wrap=knob.closest('.knob-wrap'); const val=wrap&&wrap.querySelector('.knob-val');
+      const fx=knob.getAttribute('data-fx');
+      let norm=(fx && FXDEF[fx]!=null)?FXDEF[fx]:0.5;
+      const render=()=>{ if(window.setKnobFrame) window.setKnobFrame(knob,norm); if(val) val.textContent=(fx&&FXFMT[fx])?FXFMT[fx](norm):Math.round(norm*100)+'%'; };
+      render(); if(fx==='distortion') fxDistNorm=norm;
+      knob.style.cursor='ns-resize';
+      let drag=false,sy=0,sv=0;
+      knob.addEventListener('mousedown',e=>{drag=true;sy=e.clientY;sv=norm;e.preventDefault();});
+      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1,sv+(sy-e.clientY)/150)); render(); if(fx) applyFX(fx,norm); });
+      window.addEventListener('mouseup',()=>drag=false);
+    });
+  }
+  const _fxt=window.fxToggle;
+  window.fxToggle=function(uid,btn){
+    _fxt&&_fxt(uid,btn);
+    const on=btn.classList.contains('on'), F=fxState;
+    if(uid==='delay'){ F.delay.on=on; if(fxNodes) fxNodes.dw.gain.value=on?F.delay.mix:0; }
+    else if(uid==='reverb'){ F.reverb.on=on; if(fxNodes) fxNodes.rw.gain.value=on?F.reverb.mix:0; }
+    else if(uid==='dist'){ F.dist.on=on; send('distortion', on?F.dist.drive:0); }
+    else if(uid==='chorus'){ F.chorus.on=on; if(fxNodes) fxNodes.cw.gain.value=on?F.chorus.mix:0; }
+  };
+
+  // ── Pattern buttons: pattern diverso per ogni tasto ──
+  window.loadPatternButton=function(n){
+    const idx=n%FACTORY_PATTERNS.length;
+    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>k.classList.toggle('active',i===n));
+    presetIdx=idx;
+    if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[idx]);
+    pushPattern();
+    if(webPlaying) post({type:'transport',playing:true});
+  };
+  function wirePatternButtons(){
+    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{ k.onclick=()=>window.loadPatternButton(i); });
+  }
+
+  setTimeout(()=>{ showBpm(); wireKnobs(); wireResolution(); wireBpmKeyboard(); wireFXKnobs(); wirePatternButtons(); if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[0]); if(window.setSrcMode) window.setSrcMode('seq'); }, 400);
 })();
 </script>
 

@@ -352,37 +352,26 @@ BRIDGE = r"""
     window._syncNotesToCanvas=syncNotesToCanvas;
   }, 250);
 
-  // ── FX knobs → JUCE (patch after initFXKnobs runs at 150ms) ─────────────
+  // ── FX rack knobs → JUCE relays (new data-fx knobs) ─────────────────────
   setTimeout(()=>{
-    const FX_PARAMS={delay:'delayMix', reverb:'reverbMix', dist:'distortion'};
-    Object.entries(FX_PARAMS).forEach(([id,param])=>{
+    const FXMAP={delayTime:'delayTime', delayFeedback:'delayFeedback', delayMix:'delayMix',
+                 reverbSize:'reverbSize', reverbMix:'reverbMix', distortion:'distortion'};
+    document.querySelectorAll('.fxk .knob[data-fx]').forEach(knob=>{
+      const fx=knob.getAttribute('data-fx'); const param=FXMAP[fx]; if(!param) return;
+      const wrap=knob.closest('.knob-wrap'); const val=wrap&&wrap.querySelector('.knob-val');
       const state=S(param);
-      // JUCE → fxVals
-      state.valueChangedEvent.add(()=>{
-        fxVals[id]=Math.round(state.getNormalisedValue()*100);
-        updateFX(id);
-      });
-      // Patch canvas mousedown to also push to JUCE
-      const c=document.getElementById('knob-canvas-'+id);
-      if(!c) return;
-      c.addEventListener('mousedown',e=>{
-        state.sliderDragStarted();
-        const start=fxVals[id];
-        const startY=e.clientY;
-        const onMove=ev=>{
-          const nv=Math.max(0,Math.min(100,start+Math.round((startY-ev.clientY)*0.6)));
-          state.setNormalisedValue(nv/100);
-        };
-        const onUp=()=>{
-          state.sliderDragEnded();
-          document.removeEventListener('mousemove',onMove);
-          document.removeEventListener('mouseup',onUp);
-        };
-        document.addEventListener('mousemove',onMove);
-        document.addEventListener('mouseup',onUp);
-      },{capture:true});
+      const show=()=>{ const nv=state.getNormalisedValue(); if(window.setKnobFrame) window.setKnobFrame(knob,nv); if(val) val.textContent=Math.round(nv*100)+'%'; };
+      state.valueChangedEvent.add(show); show();
+      let drag=false, sy=0, sv=0;
+      knob.addEventListener('mousedown',e=>{ drag=true; sy=e.clientY; sv=state.getNormalisedValue(); state.sliderDragStarted(); e.preventDefault(); });
+      document.addEventListener('mousemove',e=>{ if(!drag)return; state.setNormalisedValue(Math.max(0,Math.min(1, sv+(sy-e.clientY)/150))); });
+      document.addEventListener('mouseup',()=>{ if(drag){ drag=false; state.sliderDragEnded(); } });
     });
   },300);
+
+  // ── Source-mode toggle: MIDI position drives setMidiMode ──────────────────
+  const _bSrc=window.setSrcMode;
+  window.setSrcMode=function(m){ _bSrc&&_bSrc(m); fnSetMidiMode(m==='midi'); };
 
   // ── Preset loading ────────────────────────────────────────────────────────
   const _origLoadPreset=window.loadPreset;
@@ -429,8 +418,14 @@ BRIDGE = r"""
 </html>
 """
 
+
 with open(OUT, 'w') as f:
     f.write(full_body)
     f.write(BRIDGE)
 
-print(f"Written {OUT} ({sum(1 for _ in open(OUT))} lines)")
+# Root index.html copy for Vercel static deploy (same self-contained page)
+import shutil as _sh
+ROOT_INDEX = os.path.join(BASE, "index.html")
+_sh.copyfile(OUT, ROOT_INDEX)
+
+print(f"Written {OUT} + {ROOT_INDEX} ({sum(1 for _ in open(OUT))} lines)")
