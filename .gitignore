@@ -1,6 +1,7 @@
 # Build output
 build/
 build-release/
+build-vst3/
 
 # Dependencies (JUCE fetched via CMake FetchContent)
 .deps/
@@ -35,3 +36,18 @@ JuceLibraryCode/
 *.als
 *.ptx
 *.logic
+
+# API keys — mai versionare
+.env
+.env.local
+
+# Texture candidates generate da Gemini (staging area, non versionate)
+# Solo il PNG approvato in Resources/ viene versionato
+assets/textures/
+
+# File di staging e lavoro intermedio
+_staged.html
+building process/
+
+# Claude Code config
+.claude/

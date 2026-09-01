@@ -1,5 +1,12 @@
-"""Assembles Resources/ui.html from the sketch (HTML/CSS+JS) + JUCE-bridge overlay."""
+"""Assembles Resources/ui.html and index.html from the sketch.
+
+Il progetto lavora solo sulla versione standalone: l'overlay che collegava la UI
+ai parametri JUCE non viene piu iniettato. Il codice del bridge resta qui sotto
+(e in git) e si riattiva rimettendo INCLUDE_JUCE_BRIDGE = True.
+"""
 import os
+
+INCLUDE_JUCE_BRIDGE = False
 
 BASE   = os.path.dirname(__file__)
 SKETCH = os.path.join(BASE, "sketch definitivo.html")
@@ -92,6 +99,8 @@ BRIDGE = r"""
   const fnSetAccent      =getNativeFunction('setStepAccent');
   const fnSetSlide       =getNativeFunction('setStepSlide');
   const fnSetResolution  =getNativeFunction('setResolution');
+  const fnClearPattern   =getNativeFunction('clearPattern');
+  const fnRandomPattern  =getNativeFunction('randomPattern');
   const fnLoadPreset     =getNativeFunction('loadPreset');
   const fnLoadSynthPreset=getNativeFunction('loadSynthPreset');
   const fnSetMidiMode    =getNativeFunction('setMidiMode');
@@ -311,46 +320,60 @@ BRIDGE = r"""
     }
   };
 
-  // ── Piano roll: override canvas click to use JUCE ─────────────────────────
+  // ── Piano roll ↔ C++ sequencer (via clean _prSetPattern API) ──────────────
   const STEPS=16, ROWS=24, NOTE_H=18;
   setTimeout(()=>{
     const canvas=document.getElementById('piano-roll-canvas');
     if(!canvas) return;
-    // Piano roll uses its own local `notes` Set — sync stepData ↔ notes
-    function syncNotesToCanvas(){
-      notes.clear();
-      const ALL_NOTES=[];
-      for(let oct=4;oct>=3;oct--){
-        ['B','A#','A','G#','G','F#','F','E','D#','D','C#','C'].forEach(n=>ALL_NOTES.push(n+oct));
-      }
-      stepData.forEach((s,si)=>{
-        if(!s.gate) return;
-        const noteName=midiToName(s.note); // e.g. "A3"
-        const row=ALL_NOTES.findIndex(n=>n===noteName);
-        if(row>=0) notes.add(`${si}:${row}`);
-      });
-      if(window._drawPR) window._drawPR();
-    }
-
-    // Patch mousedown: after existing handler, also call JUCE
+    // Display the C++ pattern in the piano roll
+    function syncNotesToCanvas(){ if(window._prSetPattern) window._prSetPattern(stepData); }
+    // Edit: click -> drive the C++ sequencer, then reflect immediately
     canvas.addEventListener('mousedown', e=>{
       const rect=canvas.getBoundingClientRect();
-      const W=rect.width, cW=W/STEPS;
+      const cW=rect.width/STEPS;
       const si=Math.floor((e.clientX-rect.left)/cW);
       const row=Math.floor((e.clientY-rect.top)/NOTE_H);
       if(si<0||si>=STEPS||row<0||row>=ROWS) return;
-      // midiNote from row: row 0=B4(71), row 23=C3(48)
       const midiNote=71-row;
       const s=stepData[si];
       if(s.gate&&s.note===midiNote){ s.gate=false; fnToggleStep(si); }
       else { s.note=midiNote; s.gate=true; fnSetStepNote(si,midiNote); }
-      window.buildSteps(); buildLCD('lcd-s');
+      syncNotesToCanvas(); window.buildSteps&&window.buildSteps();
     });
-
-    // Initial sync
     syncNotesToCanvas();
     window._syncNotesToCanvas=syncNotesToCanvas;
   }, 250);
+
+  // ── CLEAR / RANDOM -> C++ (native fn returns the new 16-step pattern) ──────
+  function _applySteps(steps){
+    if(!steps) return;
+    steps.forEach((s,i)=>{ if(stepData[i]){ stepData[i].gate=!!s.gate; stepData[i].note=s.note; stepData[i].accent=!!s.accent; stepData[i].slide=!!s.slide; } });
+    if(window._prSetPattern) window._prSetPattern(stepData);
+    window.buildSteps&&window.buildSteps();
+  }
+  window._prClear=function(){ fnClearPattern().then(_applySteps); };
+  window._prRandom=function(){ fnRandomPattern().then(_applySteps); };
+
+  // ── Spacebar = play/stop ──────────────────────────────────────────────────
+  window.addEventListener('keydown',e=>{
+    if(e.code!=='Space' && e.key!==' ') return;
+    if(e.repeat) return;
+    // solo i campi di testo bloccano lo spazio: includere BUTTON qui rendeva
+    // la barra spaziatrice inerte appena si cliccava un tab o il trasporto
+    const t=e.target||{}, tag=(t.tagName||'').toUpperCase();
+    if(tag==='INPUT' || tag==='TEXTAREA' || t.isContentEditable) return;
+    e.preventDefault();
+    const ae=document.activeElement; if(ae && ae.blur) ae.blur();
+    window.togglePlay();
+  });
+
+  // ── BPM da tastiera -> relay tempo ────────────────────────────────────────
+  setTimeout(()=>{
+    const el=document.getElementById('bpm-display'); if(!el) return;
+    el.setAttribute('contenteditable','true'); el.style.cursor='text'; el.title='Clicca e digita il BPM';
+    el.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); el.blur(); } });
+    el.addEventListener('blur',()=>{ let v=parseInt((el.textContent||'').replace(/[^0-9]/g,''),10); if(isNaN(v)){ return; } v=Math.max(60,Math.min(200,v)); const n=(v-60)/140; tempoState.sliderDragStarted(); tempoState.setNormalisedValue(n); tempoState.sliderDragEnded(); el.textContent=v; });
+  }, 300);
 
   // ── FX rack knobs → JUCE relays (new data-fx knobs) ─────────────────────
   setTimeout(()=>{
@@ -419,9 +442,11 @@ BRIDGE = r"""
 """
 
 
+CLOSE = "</body>\n</html>\n"
+
 with open(OUT, 'w') as f:
     f.write(full_body)
-    f.write(BRIDGE)
+    f.write(BRIDGE if INCLUDE_JUCE_BRIDGE else CLOSE)
 
 # Root index.html copy for Vercel static deploy (same self-contained page)
 import shutil as _sh

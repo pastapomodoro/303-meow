@@ -8,42 +8,42 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap');
 
 /* ═══════════════════════════════════════════════
-   DESIGN TOKENS — SKEUOMORPHIC WHITE
+   DESIGN TOKENS — MERIS WHITE × ACIDLAB
 ═══════════════════════════════════════════════ */
 :root {
-  /* Superfici — grigio-azzurro (direzione ibrida glossy) */
-  --body-bg:    #aab0ba;
-  --body-grad:  radial-gradient(ellipse at 40% 20%, #cdd3dd 0%, #99a1ad 100%);
+  /* Surround — grigio neutro scuro (come desktop studio) */
+  --body-bg:    #909296;
+  --body-grad:  radial-gradient(ellipse at 50% 25%, #a4a6aa 0%, #808284 100%);
 
-  /* Pannello principale */
-  --panel-face: #e6eaf0;
+  /* Pannello principale — bianco puro */
+  --panel-face: #f5f5f3;
   --panel-hi:   #ffffff;
-  --panel-mid:  #d3d9e3;
-  --panel-shad: #b6bdca;
-  --panel-edge: #99a2b0;
+  --panel-mid:  #e8e8e6;
+  --panel-shad: #ccccca;
+  --panel-edge: #b0b0ae;
 
   /* Superfici incassate */
-  --inset-bg:   #ccd3dd;
-  --inset-deep: #bac2ce;
+  --inset-bg:   #eaeae8;
+  --inset-deep: #dededd;
 
-  /* Superfici rialzate */
-  --raised-hi:  #fbfcfd;
-  --raised-mid: #e2e7ee;
-  --raised-shad:#c2cad6;
+  /* Card bianche */
+  --raised-hi:  #ffffff;
+  --raised-mid: #f8f8f6;
+  --raised-shad:#e2e2e0;
 
-  /* Verde acido */
+  /* Verde acido — rimane invariato (brand AcidLab) */
   --acid:       #88ff00;
   --acid-hi:    #bbff66;
   --acid-mid:   #66dd00;
   --acid-dark:  #3a7a00;
   --acid-deep:  #1e4400;
   --acid-glow:  rgba(136,255,0,0.45);
-  --acid-bg:    rgba(136,255,0,0.12);
+  --acid-bg:    rgba(136,255,0,0.10);
   --acid-btn-t: linear-gradient(to bottom, #aaff33 0%, #77dd00 50%, #55bb00 100%);
   --acid-btn-s: inset 0 1px 0 rgba(255,255,255,.6),
                 inset 0 -4px 8px rgba(90,150,20,.5),
-                0 0 18px rgba(136,255,0,.55),
-                0 3px 7px rgba(70,110,10,.35);
+                0 0 14px rgba(136,255,0,.45),
+                0 2px 6px rgba(70,110,10,.30);
 
   /* LCD */
   --lcd-bg:     #050c02;
@@ -54,18 +54,18 @@
 
   /* Testo */
   --text:       #1a1a18;
-  --text-mid:   #555550;
-  --text-dim:   #888882;
+  --text-mid:   #4a4a48;
+  --text-dim:   #7a7a78;
   --text-xs:    #aaaaaa;
 
   /* Mono font */
   --mono: 'IBM Plex Mono', monospace;
 
-  /* Shadows */
+  /* Shadows — più morbide per il bianco */
   --panel-shadow:
-    0 20px 60px rgba(0,0,0,.35),
-    0 8px 20px rgba(0,0,0,.25),
-    0 2px 4px rgba(0,0,0,.15);
+    0 24px 64px rgba(0,0,0,.30),
+    0 8px 20px rgba(0,0,0,.18),
+    0 2px 4px rgba(0,0,0,.10);
 }
 
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -86,38 +86,42 @@ body {
 .chassis {
   width: 100%;
   max-width: 1160px;
-  background:
-    linear-gradient(160deg, #f8f8f4 0%, #e8e8e4 40%, #d8d8d4 100%);
-  border-radius: 12px;
+  background: linear-gradient(175deg, #fafaf8 0%, #f2f2f0 55%, #eaeae8 100%);
+  border-radius: 14px;
   box-shadow:
     var(--panel-shadow),
-    inset 0 1px 0 rgba(255,255,255,.9),
-    inset 0 -2px 0 rgba(0,0,0,.12),
-    inset 2px 0 0 rgba(255,255,255,.5),
-    inset -2px 0 0 rgba(0,0,0,.08);
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(0,0,0,.07),
+    inset 2px 0 0 rgba(255,255,255,.7),
+    inset -2px 0 0 rgba(0,0,0,.04);
   border: 1px solid var(--panel-edge);
   overflow: hidden;
+  position: relative;
 }
 
-/* ── Texture noise sul pannello ── */
+/* ── Texture pannello — Meris bianco + fallback gradient ── */
 .chassis::before {
   content:'';
   position:absolute; inset:0; border-radius:12px;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events:none; opacity:.4;
+  /* Texture plastica bianca servita dal resource provider JUCE;
+     in browser preview cade sul fallback gradient del padre */
+  background-image: url("/assets/panel.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.55;
+  pointer-events:none;
+  mix-blend-mode: multiply;
 }
 
 /* ── Topbar / Nameplate ── */
 .nameplate {
   display:flex; align-items:center; gap:0;
   padding: 0 20px;
-  height: 52px;
-  background:
-    linear-gradient(to bottom, #f4f4f0 0%, #e4e4e0 100%);
-  border-bottom: 1px solid var(--panel-shad);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.8) inset,
-    0 3px 8px rgba(0,0,0,.1);
+  height: 48px;
+  background: rgba(255,255,255,0.6);
+  border-bottom: 1px solid rgba(0,0,0,.07);
+  backdrop-filter: blur(0px);
 }
 .logo-text {
   font-size:18px; font-weight:600; letter-spacing:4px;
@@ -163,131 +167,162 @@ body {
 @keyframes led-pulse { 0%,100%{opacity:1;box-shadow:0 0 6px var(--acid-glow),0 0 12px rgba(136,255,0,.25)} 50%{opacity:.6;box-shadow:0 0 3px var(--acid-glow)} }
 
 /* ── Content area ── */
-.content { padding:16px; }
+/* --page-h blocca l'altezza del chassis: cambiando tab il pannello non si
+   ridimensiona più. Il valore è l'altezza della pagina più alta (sequencer). */
+.content { padding:16px; min-height: var(--page-h, 660px); box-sizing:border-box; }
 .page { display:none; }
-.page.active { display:block; }
+/* la pagina non si stira: tiene le proporzioni progettate e lo spazio che
+   avanza rispetto alla pagina più alta diventa margine simmetrico */
+.page.active { display:flex; flex-direction:column; justify-content:center;
+               min-height: calc(var(--page-h, 660px) - 32px); }
 
 /* ═══════════════════════════════════════════════
    PANEL CARD (skeuomorfismo)
 ═══════════════════════════════════════════════ */
 .card {
-  background: linear-gradient(160deg, #f6f6f2 0%, #ededea 60%, #e4e4e0 100%);
-  border-radius: 8px;
-  border: 1px solid var(--panel-shad);
+  /* rilievo: faccia leggermente bombata + stacco reale dal chassis */
+  background: linear-gradient(178deg, #ffffff 0%, #fcfcfa 52%, #f1f1ee 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.10);
   box-shadow:
-    0 4px 12px rgba(0,0,0,.12),
-    0 1px 3px rgba(0,0,0,.08),
-    inset 0 1px 0 rgba(255,255,255,.85),
-    inset 0 -1px 0 rgba(0,0,0,.06),
-    inset 1px 0 0 rgba(255,255,255,.5),
-    inset -1px 0 0 rgba(0,0,0,.05);
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(0,0,0,.05),
+    inset 1px 0 0 rgba(255,255,255,.7),
+    0 1px 1px rgba(0,0,0,.05),
+    0 4px 10px rgba(0,0,0,.10),
+    0 12px 26px rgba(0,0,0,.07);
   overflow:hidden;
+  /* il corpo riempie la card: lo spazio in eccesso va nel contenuto,
+     non in una fascia vuota sotto */
+  display:flex; flex-direction:column;
 }
+.card > .card-body { flex:1; }
+/* colonna sinistra SYNTH: le tre card si dividono l'altezza in parti uguali e
+   centrano il contenuto, così lo spazio libero non finisce tutto in fondo */
+#page-synth .col:first-child > .card > .card-body,
+#page-synth .col:last-child  > .card > .card-body {
+  display:flex; flex-direction:column; justify-content:center;
+}
+/* FX e PRESET sono pagine basse: invece di lasciare due fasce vuote sopra e
+   sotto, i loro moduli si allargano a riempire l'altezza fissa del chassis */
+#page-fx > .fxrack        { flex:1; }
+#page-preset > div        { flex:1; }
 .card-hdr {
   display:flex; align-items:center; gap:8px;
-  padding: 8px 14px;
-  background: linear-gradient(to bottom, #ebebе7 0%, #e0e0dc 100%);
-  border-bottom: 1px solid var(--panel-shad);
-  box-shadow: 0 1px 0 rgba(255,255,255,.7);
+  padding: 7px 14px;
+  /* fascia incisa: ombra in alto, luce sul bordo basso */
+  background: linear-gradient(180deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.012) 60%, transparent 100%);
+  border-bottom: 1px solid rgba(0,0,0,.09);
+  box-shadow: 0 1px 0 rgba(255,255,255,.92);
 }
 .card-hdr::before {
-  content:''; width:3px; height:13px; border-radius:2px; flex-shrink:0;
-  background: linear-gradient(to bottom, var(--acid-hi), var(--acid-mid));
-  box-shadow: 0 0 4px var(--acid-glow);
+  content:''; width:2px; height:11px; border-radius:2px; flex-shrink:0;
+  background: var(--acid);
+  box-shadow: 0 0 5px var(--acid-glow);
 }
-.card-hdr.blue::before  { background:linear-gradient(to bottom,#88ccff,#4488ff); box-shadow:0 0 4px rgba(100,150,255,.5); }
-.card-hdr.red::before   { background:linear-gradient(to bottom,#ff8866,#ff3311); box-shadow:0 0 4px rgba(255,80,0,.5); }
-.card-hdr.gray::before  { background:linear-gradient(to bottom,#cccccc,#999999); box-shadow:none; }
-.card-hdr-txt { font-size:8px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-mid); }
-.card-body { padding:14px; }
+.card-hdr.blue::before  { background:#4488ff; box-shadow:0 0 4px rgba(100,150,255,.5); }
+.card-hdr.red::before   { background:#ff4422; box-shadow:0 0 4px rgba(255,80,0,.5); }
+.card-hdr.gray::before  { background:#aaaaaa; box-shadow:none; }
+.card-hdr-txt { font-size:7.5px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-dim); }
+.card-body { padding:12px; }
 
 /* ═══════════════════════════════════════════════
    KNOB — CSS skeuomorfismo completo
 ═══════════════════════════════════════════════ */
-.knobs-row { display:flex; gap:8px; flex-wrap:wrap; }
+/* vaschetta incassata: i knob stanno DENTRO al pannello, non appoggiati sopra */
+.knobs-row {
+  display:flex; gap:8px; flex-wrap:wrap;
+  padding:13px 10px 11px; border-radius:9px;
+  background:linear-gradient(180deg,#e9e9e6 0%,#f3f3f1 62%,#f7f7f5 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,.10),
+    inset 0 -1px 0 rgba(255,255,255,.95),
+    0 1px 0 rgba(255,255,255,.9);
+}
 .knob-wrap { display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:54px; }
 
 .knob {
-  width:54px; height:54px; border-radius:50%;
-  position:relative; cursor:ns-resize; flex-shrink:0;
-  /* gunmetal lucido: cupola cromata scura con forte luce in alto, su ghiera zigrinata */
-  background:
-    radial-gradient(circle at 50% 18%, #d3d9e2 0%, #949ba6 12%, #575d67 30%, #333840 50%, #1c1f24 66%, rgba(28,31,36,0) 71%),
-    repeating-conic-gradient(from 0deg, #464b52 0deg 4.5deg, #17191c 4.5deg 9deg);
-  box-shadow:
-    0 14px 24px rgba(0,0,0,.52),
-    0 5px 10px rgba(0,0,0,.44),
-    inset 0 2px 3px rgba(255,255,255,.4),
-    inset 0 -10px 16px rgba(0,0,0,.6),
-    0 0 0 1px rgba(0,0,0,.7);
-  transition: box-shadow .14s, transform .1s;
+  position:relative; flex-shrink:0; cursor:ns-resize; border-radius:50%;
+  --v:0;                                    /* 0..1 — scritto da setKnobFrame */
+  --ang:calc(-135deg + var(--v) * 270deg);
+  --aw:3px;                                 /* spessore anello di valore */
+  transition:transform .10s;
 }
-.knob:hover {
-  box-shadow:
-    0 18px 32px rgba(0,0,0,.6),
-    0 7px 14px rgba(0,0,0,.48),
-    inset 0 2px 3px rgba(255,255,255,.45),
-    inset 0 -10px 16px rgba(0,0,0,.6),
-    0 0 0 1px rgba(0,0,0,.72);
+.knob:active { transform:scale(.98); }
+
+/* Anello di valore: traccia grigia incassata + arco acido, ritagliati ad anello */
+.knob .k-trk, .knob .k-arc {
+  position:absolute; inset:0; border-radius:50%; pointer-events:none; z-index:0;
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--aw)),#000 calc(100% - var(--aw)));
+          mask:radial-gradient(farthest-side,transparent calc(100% - var(--aw)),#000 calc(100% - var(--aw)));
 }
-.knob:active { transform: scale(.975); }
-/* cupola cromata interna: luce alta netta + riflesso ambientale in basso */
-.knob::before {
-  content:''; position:absolute; inset:11%; border-radius:50%;
-  background:
-    radial-gradient(ellipse at 50% 90%, rgba(150,168,190,.6) 0%, rgba(150,168,190,0) 36%),
-    radial-gradient(circle at 50% 22%, #b6bdc8 0%, #6b727c 22%, #383e45 54%, #1e2126 100%);
-  box-shadow:
-    inset 0 2px 3px rgba(255,255,255,.5),
-    inset 0 -5px 9px rgba(0,0,0,.65),
-    0 1px 2px rgba(0,0,0,.5);
-}
-/* riflesso speculare intenso e stretto in alto (lucido/chrome) */
-.knob::after {
-  content:''; position:absolute; top:9%; left:24%; width:52%; height:38%;
-  border-radius:50%; pointer-events:none; z-index:2;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.34) 38%, rgba(255,255,255,0) 72%);
-  transform: rotate(-6deg);
-}
-.knob-hl { display:none; }
-/* indicatore ruotante — wrapper a tutta area, ruota attorno al centro */
+.knob .k-trk { background:conic-gradient(from 225deg,#c9c9c4 0 270deg,transparent 270deg); }
+.knob .k-arc { background:conic-gradient(from 225deg,var(--acid-mid) 0 calc(var(--v) * 270deg),transparent 0); }
+
+.knob .k-body { position:absolute; border-radius:50%; z-index:1; }
+.knob .k-cap  { position:absolute; border-radius:50%; z-index:2; }
+
+/* Indicatore: wrapper a tutta area ruotato attorno al centro da setKnobFrame */
 .knob-ind {
-  position:absolute; inset:0; z-index:3;
-  transform-origin:center center;
-  pointer-events:none;
-  transition: transform .06s linear;
+  position:absolute; inset:0; z-index:3; pointer-events:none;
+  transform-origin:center center; transition:transform .06s linear;
 }
-/* lancetta incisa chiara dal centro verso l'alto */
-.knob-ind::before {
-  content:''; position:absolute; left:50%; top:15%; width:3px; height:26%;
-  margin-left:-1.5px; border-radius:2px;
-  background: linear-gradient(to bottom, rgba(235,240,245,.92), rgba(200,210,220,.35));
-  box-shadow: 0 0 3px rgba(150,200,90,.4), inset 0 0 1px rgba(0,0,0,.5);
+/* residui del vecchio knob a 2 layer: la lancetta ora è disegnata dalla skin */
+.knob-hl, .knob-dot { display:none !important; }
+
+/* ── Skin E · zigrinata con cappuccio — knob SYNTH ── */
+.knob.k-e { --aw:3px; }
+.knob.k-e .k-body {
+  inset:12%; transform:rotate(var(--ang));
+  background:repeating-conic-gradient(from 0deg,#3a3d42 0 4deg,#1e2124 4deg 8deg);
+  box-shadow:0 2px 5px rgba(0,0,0,.38), inset 0 0 0 1px rgba(0,0,0,.6);
 }
-/* dot acid alla punta della lancetta */
-.knob-dot {
-  position:absolute;
-  width:8px; height:8px; border-radius:50%;
-  top:7%; left:50%; margin-left:-4px;
-  background: radial-gradient(circle at 38% 30%, #d6ff77, #86ee00 55%, #4a9e00);
-  box-shadow: 0 0 9px var(--acid-glow), 0 0 4px rgba(136,255,0,.9), inset 0 1px 1px rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.5);
-  pointer-events:none;
+.knob.k-e .k-cap {
+  inset:30%; background:linear-gradient(165deg,#f6f5f1,#d3d1c9);
+  box-shadow:0 1px 3px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.95);
 }
-.knob-dot.gray {
-  background: radial-gradient(circle at 38% 30%, #d3d7dd, #8a8f98 55%, #4c505a);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.5);
+.knob.k-e .knob-ind::before {
+  content:''; position:absolute; left:50%; top:32%; width:2.5px; height:15%;
+  margin-left:-1.25px; border-radius:1.5px; background:#2f322e;
 }
+
+/* ── Skin D · alluminio lavorato CNC — knob VOLUME ── */
+.knob.k-d { --aw:3px; }
+.knob.k-d .k-body {
+  inset:13%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%,rgba(255,255,255,.42) 0 1px,transparent 1px 3px),
+    conic-gradient(from 200deg,#f2f2ef,#a8a9a6 22%,#e9eae7 42%,#95968f 62%,#e4e5e2 82%,#f2f2ef);
+  box-shadow:0 2px 4px rgba(0,0,0,.28), inset 0 0 0 1px rgba(0,0,0,.20),
+             inset 0 1px 0 rgba(255,255,255,.85);
+}
+.knob.k-d .k-cap {
+  inset:37%; background:radial-gradient(circle at 38% 30%,#4a4d52,#232629);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 1px 2px rgba(0,0,0,.35);
+}
+.knob.k-d .knob-ind::before {
+  content:''; position:absolute; left:50%; top:15%; width:2px; height:22%;
+  margin-left:-1px; border-radius:1px; background:#2b2e31;
+  box-shadow:0 0 0 .5px rgba(255,255,255,.55);
+}
+
+/* ── Skin C · flat — knob FX ── */
+.knob.k-c { --aw:2.5px; }
+.knob.k-c .k-body {
+  inset:16%; background:#26282c;
+  box-shadow:0 1px 2px rgba(0,0,0,.30), inset 0 0 0 1px rgba(255,255,255,.10);
+}
+.knob.k-c .knob-ind::before {
+  content:''; position:absolute; left:50%; top:19%; width:3px; height:17%;
+  margin-left:-1.5px; border-radius:2px; background:var(--acid);
+}
+
 .knob-lbl { font-size:8px; letter-spacing:1.5px; color:var(--text-dim); text-align:center; text-transform:uppercase; }
 .knob-val { font-size:8px; color:var(--text-xs); text-align:center; }
 
-/* ═══════════════════════════════════════════════
-   2-LAYER KNOB — corpo plastica statico + dot acid ruotato
-   attorno al centro via JS (setKnobFrame). Sostituisce lo
-   spritesheet a 61 frame (che era vuoto oltre il frame 0).
-   .sprite-knob resta come alias innocuo così i chiamanti
-   esistenti (bridge JUCE, mountSpriteKnobs) continuano a girare.
-═══════════════════════════════════════════════ */
-.sprite-knob { /* sprite deprecato: nessun override, resta il dome CSS di .knob */ }
+/* .sprite-knob resta un alias innocuo: i chiamanti esistenti (bridge JUCE,
+   mountSpriteKnobs) continuano a girare senza modifiche. */
+.sprite-knob { }
 /* ── Toggle sorgente note a 3 posizioni ── */
 .srcmode{ position:relative; display:inline-flex; background:#1b1d20; border-radius:8px; padding:3px;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.55); }
@@ -301,10 +336,10 @@ body {
 .srcmode-opt.on{ color:#16200a; }
 /* ── Rack FX skeuomorfico ── */
 .fxrack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.fxunit{ position:relative; border-radius:12px; padding:15px 16px 12px;
-  background:linear-gradient(180deg,#f7f7f3 0%, #e8e8e3 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -2px 5px rgba(60,64,74,.08),
-              0 3px 8px rgba(60,64,74,.16), 0 0 0 1px rgba(0,0,0,.06);
+.fxunit{ position:relative; border-radius:10px; padding:14px 14px 11px;
+  background:#ffffff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,1),
+              0 2px 6px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.06);
   display:flex; flex-direction:column; gap:12px; transition:opacity .2s, filter .2s; }
 .fxunit.off{ opacity:.5; filter:saturate(.35); }
 .fxscrew{ position:absolute; width:9px; height:9px; border-radius:50%;
@@ -351,35 +386,31 @@ body {
 .btn {
   font-family:var(--mono); font-size:9px; font-weight:500;
   letter-spacing:1.5px; text-transform:uppercase;
-  padding:9px 14px; border-radius:5px;
+  padding:9px 14px; border-radius:6px;
   cursor:pointer; border:none; white-space:nowrap;
   color: var(--text-mid);
-  background: linear-gradient(to bottom, #fbfcfd 0%, #e4e9f0 52%, #ccd3dd 100%);
+  background: #f0f0ee;
   box-shadow:
-    0 4px 7px rgba(70,80,100,.26),
-    0 1px 2px rgba(70,80,100,.14),
-    inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -4px 7px rgba(120,130,150,.34),
-    0 0 0 1px rgba(150,160,175,.45);
+    0 1px 3px rgba(0,0,0,.12),
+    0 1px 1px rgba(0,0,0,.07),
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 0 0 1px rgba(0,0,0,.07);
   transition: all .08s;
   position:relative; top:0;
 }
 .btn:hover {
-  background: linear-gradient(to bottom, #ffffff 0%, #eef2f7 52%, #d6dce6 100%);
+  background: #f8f8f6;
   box-shadow:
-    0 6px 11px rgba(70,80,100,.3),
-    0 1px 2px rgba(70,80,100,.14),
-    inset 0 1px 0 rgba(255,255,255,.98),
-    inset 0 -4px 7px rgba(120,130,150,.34),
-    0 0 0 1px rgba(150,160,175,.45);
+    0 2px 5px rgba(0,0,0,.14),
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px rgba(0,0,0,.08);
 }
 .btn:active {
-  top:2px;
-  background: linear-gradient(to bottom, #ccd3dd 0%, #d8dee7 100%);
+  top:1px;
+  background: #e4e4e2;
   box-shadow:
-    inset 0 2px 5px rgba(90,100,120,.4),
-    inset 0 -1px 2px rgba(255,255,255,.5),
-    0 0 0 1px rgba(150,160,175,.45);
+    inset 0 1px 3px rgba(0,0,0,.10),
+    0 0 0 1px rgba(0,0,0,.07);
 }
 /* Varianti */
 .btn.acid {
@@ -388,6 +419,19 @@ body {
   box-shadow: var(--acid-btn-s);
 }
 .btn.acid:hover { filter:brightness(1.05); }
+/* Transport btn — STOP resting: outline verde; PLAY playing: dark selected */
+.btn.transport-btn { font-weight:600; border-radius:7px; }
+.btn.transport-btn.acid {
+  background: #f8fff0;
+  color: var(--acid-dark);
+  box-shadow: 0 0 0 1.5px var(--acid), 0 1px 4px rgba(136,255,0,.12),
+              inset 0 1px 0 rgba(255,255,255,.9);
+}
+.btn.transport-btn.transport-playing {
+  background: #1e2020 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.20), 0 0 0 1px rgba(0,0,0,.18) !important;
+}
 .btn.btn-red {
   color:#770000;
   background:linear-gradient(to bottom,#ffeeee,#ffcccc,#ffbbbb);
@@ -423,10 +467,11 @@ body {
 /* scanlines */
 .lcd::after {
   content:''; position:absolute; inset:0;
+  /* solo scanline orizzontali morbide: la retinatura a pois rendeva
+     illeggibili le cifre grandi, quindi è stata rimossa */
   background:
-    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0px, rgba(0,0,0,.10) 1px, transparent 1px, transparent 3px),
-    radial-gradient(rgba(0,0,0,.30) 0.8px, transparent 1.2px);
-  background-size: auto, 3px 3px;
+    repeating-linear-gradient(0deg, rgba(0,0,0,.075) 0px, rgba(0,0,0,.075) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at 50% 0%, rgba(120,255,40,.055), transparent 65%);
   pointer-events:none;
 }
 .lcd-l1 { font-size:12px;font-weight:600;color:var(--lcd-green);letter-spacing:1px;margin-bottom:5px;text-shadow:0 0 8px var(--acid-glow); }
@@ -583,44 +628,72 @@ body {
 /* ═══════════════════════════════════════════════
    LAYOUT GRIDS
 ═══════════════════════════════════════════════ */
-.grid-3 { display:grid;grid-template-columns:280px 1fr 200px;gap:12px; }
-.grid-3c{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px; }
-.grid-2 { display:grid;grid-template-columns:320px 1fr;gap:12px; }
-.grid-seq{display:grid;grid-template-columns:280px 1fr 240px;gap:12px; }
-.col    { display:flex;flex-direction:column;gap:12px; }
+.grid-3 { display:grid;grid-template-columns:260px 1fr 190px;gap:10px; }
+.grid-3c{ display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }
+.grid-2 { display:grid;grid-template-columns:300px 1fr;gap:10px; }
+.grid-seq{display:grid;grid-template-columns:260px 1fr 220px;gap:10px; }
+.col    { display:flex;flex-direction:column;gap:10px; }
 .row    { display:flex;gap:6px;flex-wrap:wrap;align-items:center; }
 .sep    { width:1px;height:20px;background:rgba(0,0,0,.12);flex-shrink:0;margin:0 4px; }
 .gap4   { gap:4px; }
 .mb8    { margin-bottom:8px; }
 .mb12   { margin-bottom:12px; }
 
-/* Transport keys — stato fisico puro, niente colore */
-.transport-key .keycap-base {
-  transition: box-shadow .06s, transform .06s;
+/* Pat buttons — selected dark (Meris style: no full green fill) */
+.pat-btn { position:relative; }
+.pat-btn.active {
+  background: #1e2020 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06),
+              0 0 0 1px rgba(0,0,0,.18) !important;
+  color: #ffffff;
 }
-/* RILASCIATO — tasto alto, ombra profonda */
-.transport-key .keycap-base {
+.pat-btn.active span:first-child { color: #ffffff !important; }
+.pat-led {
+  width:5px; height:5px; border-radius:50%;
+  background: #d8d8d6;
+  opacity: 0.35;
+}
+.pat-btn.active .pat-led {
+  background: var(--acid);
+  box-shadow: 0 0 4px var(--acid-glow);
+  opacity: 1;
+}
+
+/* Transport btn stato playing */
+.btn.transport-playing { color: #1a4400 !important; }
+
+/* Step resolution — active con bordo acid, no fill verde pieno */
+.res-btn {
+  width:100%; text-align:center; padding:7px 8px;
+  font-size:8px; letter-spacing:1.5px; border-radius:5px;
+}
+.res-btn.res-active {
+  background: #f8fff0;
+  color: var(--acid-dark);
+  font-weight: 600;
   box-shadow:
-    0 5px 0 #888884,
-    0 6px 8px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.5);
+    0 0 0 1.5px var(--acid),
+    0 1px 3px rgba(136,255,0,.15),
+    inset 0 1px 0 rgba(255,255,255,.9);
 }
-/* PREMUTO — tasto basso, ombra compressa, inset */
-.transport-key.pressed .keycap-base {
-  box-shadow:
-    0 1px 0 #888884,
-    0 2px 4px rgba(0,0,0,.2),
-    inset 0 1px 0 rgba(255,255,255,.3);
-  transform: translateY(3px);
+.res-btn.res-active:hover { background: #f0fde4; }
+
+/* Waveform selector — selected dark (Meris style) */
+.wave-btn {
+  flex:1; padding:8px 8px; text-align:center; border-radius:5px; cursor:pointer;
+  font-family:var(--mono); font-size:10px; letter-spacing:2px;
+  background: #f0f0ee;
+  border: none; color:var(--text-dim);
+  box-shadow: 0 1px 3px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 1px rgba(0,0,0,.07);
+  transition:all .1s;
 }
-.transport-key.pressed .keycap-top {
-  background: linear-gradient(160deg, #e4e4e0 0%, #d8d8d4 40%, #ccccca 100%);
-  box-shadow:
-    inset 0 2px 5px rgba(0,0,0,.15),
-    inset 0 1px 0 rgba(255,255,255,.4);
+.wave-btn.active {
+  background: #1e2020;
+  color: #ffffff; font-weight:600;
+  box-shadow: 0 1px 4px rgba(0,0,0,.20), 0 0 0 1px rgba(0,0,0,.18);
 }
-.transport-key .transport-icon { color: var(--text-mid); }
-.transport-key.pressed .transport-icon { color: var(--text); }
+.wave-btn:hover:not(.active) { background: #f8f8f6; }
+
 ::-webkit-scrollbar-track{background:rgba(0,0,0,.05)}
 ::-webkit-scrollbar-thumb{background:var(--panel-shad);border-radius:2px}
 
@@ -632,105 +705,38 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  aspect-ratio: 1;          /* tasti quadrati: la griglia non li stira in verticale */
 }
+/* ── Keycap Meris-style: flat white, sottile shadow, acid on active ── */
 .keycap-base {
-  background: linear-gradient(to bottom, #b8b8b4, #c8c8c4);
-  border-radius: 5px;
-  padding: 3px 3px 5px;
-  box-shadow:
-    0 4px 0 #888884,
-    0 5px 6px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.5);
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
   transition: all .06s;
 }
 .keycap-top {
-  background: linear-gradient(160deg, #fafaf6 0%, #eeecea 40%, #dcdad6 100%);
-  border-radius: 3px;
-  padding: 9px 4px 8px;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -1px 0 rgba(0,0,0,.08),
-    inset 1px 0 0 rgba(255,255,255,.6),
-    inset -1px 0 0 rgba(0,0,0,.05);
-  transition: all .06s;
-  position: relative; overflow: hidden;
-}
-.keycap-top::before {
-  content:''; position:absolute; top:3px; left:3px;
-  width:14px; height:7px; border-radius:3px;
-  background: radial-gradient(ellipse, rgba(255,255,255,.6), rgba(255,255,255,0));
-  pointer-events:none;
-}
-.keycap-num { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text); line-height:1; text-shadow:0 1px 0 rgba(255,255,255,.8); }
-.keycap-lbl { font-family:var(--mono); font-size:6px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
-.keycap.active .keycap-base {
-  background: linear-gradient(to bottom, #88cc00, #66aa00);
-  box-shadow: 0 2px 0 #3a6600, 0 3px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3);
-}
-.keycap.active .keycap-top {
-  background: linear-gradient(160deg, #aaff22 0%, #88dd00 50%, #66bb00 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,60,0,.2), 0 0 8px rgba(136,255,0,.25);
-}
-.keycap.active .keycap-num { color: #1a4400; text-shadow: 0 1px 0 rgba(255,255,255,.3); }
-.keycap.active .keycap-lbl { color: #2d5500; }
-.keycap:hover:not(.active) .keycap-top {
-  background: linear-gradient(160deg, #ffffff 0%, #f4f4f0 40%, #e4e4e0 100%);
-}
-.keycap:active .keycap-base { box-shadow: 0 1px 0 #888884, 0 2px 3px rgba(0,0,0,.3); transform: translateY(2px); }
-.keycap:active .keycap-top { box-shadow: inset 0 1px 3px rgba(0,0,0,.12); }
-═══════════════════════════════════════════════ */
-.keycap {
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-}
-/* base (housing incassato) */
-.keycap-base {
-  background: linear-gradient(to bottom, #b8b8b4, #c8c8c4);
-  border-radius: 5px;
-  padding: 3px 3px 5px;
-  box-shadow:
-    0 4px 0 #888884,
-    0 5px 6px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.5);
-}
-/* superficie tasto */
-.keycap-top {
-  background: linear-gradient(160deg, #fafaf6 0%, #eeecea 40%, #dcdad6 100%);
-  border-radius: 3px;
+  background: #f0f0ee;
+  border-radius: 8px;
   padding: 8px 4px 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -1px 0 rgba(0,0,0,.08),
-    inset 1px 0 0 rgba(255,255,255,.6),
-    inset -1px 0 0 rgba(0,0,0,.05);
-  transition: all .06s;
-  position: relative;
-  overflow: hidden;
+    0 1px 3px rgba(0,0,0,.12),
+    0 1px 1px rgba(0,0,0,.07),
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 0 0 1px rgba(0,0,0,.07);
+  transition: all .08s;
 }
-/* highlight angolo */
-.keycap-top::before {
-  content:'';
-  position:absolute; top:3px; left:3px;
-  width:14px; height:7px; border-radius:3px;
-  background: radial-gradient(ellipse, rgba(255,255,255,.6), rgba(255,255,255,0));
-  pointer-events:none;
-}
-/* numero grande */
+.keycap-top::before { display:none; }
 .keycap-num {
   font-family: var(--mono);
   font-size: 14px; font-weight: 600;
   color: var(--text);
   line-height: 1;
-  text-shadow: 0 1px 0 rgba(255,255,255,.8);
 }
-/* label piccola sotto */
 .keycap-lbl {
   font-family: var(--mono);
   font-size: 7px; font-weight: 400;
@@ -738,34 +744,30 @@ body {
   color: var(--text-dim);
   text-transform: uppercase;
 }
-/* stato ACTIVE — pressed + acid */
-.keycap.active .keycap-base {
-  box-shadow:
-    0 2px 0 #4a7a00,
-    0 3px 4px rgba(0,0,0,.3),
-    inset 0 1px 0 rgba(255,255,255,.3);
-  background: linear-gradient(to bottom, #88cc00, #66aa00);
-}
+/* ACTIVE — acid clean */
+.keycap.active .keycap-base { background: transparent; box-shadow: none; }
 .keycap.active .keycap-top {
-  background: linear-gradient(160deg, #aaff22 0%, #88dd00 50%, #66bb00 100%);
+  background: var(--acid-btn-t);
   box-shadow:
+    0 2px 8px rgba(136,255,0,.3),
+    0 1px 2px rgba(0,0,0,.10),
     inset 0 1px 0 rgba(255,255,255,.5),
-    inset 0 -1px 0 rgba(0,60,0,.15),
-    0 0 8px rgba(136,255,0,.3);
+    0 0 0 1px rgba(80,140,0,.3);
 }
-.keycap.active .keycap-num { color: #1a4400; text-shadow: 0 1px 0 rgba(255,255,255,.4); }
-.keycap.active .keycap-lbl { color: #2a5500; }
+.keycap.active .keycap-num { color: #1a4400; }
+.keycap.active .keycap-lbl { color: #2d5500; }
 /* hover */
-.keycap:hover .keycap-top {
-  background: linear-gradient(160deg, #ffffff 0%, #f4f4f0 40%, #e4e4e0 100%);
+.keycap:hover:not(.active) .keycap-top {
+  background: #f8f8f6;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.13),
+    inset 0 1px 0 rgba(255,255,255,1),
+    0 0 0 1px rgba(0,0,0,.08);
 }
 /* press */
-.keycap:active .keycap-base {
-  box-shadow: 0 1px 0 #888884, 0 2px 3px rgba(0,0,0,.3);
-  transform: translateY(2px);
-}
 .keycap:active .keycap-top {
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.4);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.06);
+  transform: translateY(1px);
 }
 
 </style>
@@ -804,23 +806,13 @@ body {
           <div class="card">
             <div class="card-hdr"><span class="card-hdr-txt">Transport</span></div>
             <div class="card-body" style="padding:12px 14px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="keycap transport-key" id="play-key" onclick="togglePlay()" style="flex:1;">
-                  <div class="keycap-base">
-                    <div class="keycap-top" style="padding:16px 4px 14px;flex-direction:row;gap:8px;justify-content:center;">
-                      <span class="transport-icon" style="font-size:12px;">▶</span>
-                      <span class="keycap-num" style="font-size:13px;letter-spacing:2px;">PLAY</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="keycap transport-key pressed" id="stop-key" onclick="doStop()" style="flex:1;">
-                  <div class="keycap-base">
-                    <div class="keycap-top" style="padding:16px 4px 14px;flex-direction:row;gap:8px;justify-content:center;">
-                      <span class="transport-icon" style="font-size:11px;">■</span>
-                      <span class="keycap-num" style="font-size:13px;letter-spacing:2px;">STOP</span>
-                    </div>
-                  </div>
-                </div>
+              <div class="transport-row" style="display:flex;align-items:center;gap:10px;">
+                <button class="btn transport-btn" id="play-key" onclick="togglePlay()" style="flex:1;padding:14px 8px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <span style="font-size:11px;">▶</span> PLAY
+                </button>
+                <button class="btn transport-btn acid" id="stop-key" onclick="doStop()" style="flex:1;padding:14px 8px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <span style="font-size:10px;">■</span> STOP
+                </button>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
                   <div style="font-family:var(--mono);font-size:7px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;">MIDI</div>
                   <div id="midi-switch" onclick="toggleMidi(this)" style="width:44px;height:24px;border-radius:12px;background:linear-gradient(to bottom,#b8b8b4,#c8c8c4);box-shadow:inset 0 2px 5px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1),0 1px 0 rgba(255,255,255,.6);position:relative;cursor:pointer;transition:background .2s;border:1px solid rgba(0,0,0,.15);">
@@ -845,7 +837,7 @@ body {
           <div class="card" style="flex:1;">
             <div class="card-hdr"><span class="card-hdr-txt">Pattern Select</span></div>
             <div class="card-body" style="padding:12px 10px;">
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;" id="pat-btns"></div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;" id="pat-btns"></div>
             </div>
           </div>
 
@@ -928,10 +920,6 @@ body {
             <div class="card-body">
               <div class="knobs-row" style="justify-content:space-around;">
                 <div class="knob-wrap">
-                  <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot" style="width:8px;height:8px;top:9px;"></div></div>
-                  <div class="knob-lbl">Volume</div><div class="knob-val">0.80</div>
-                </div>
-                <div class="knob-wrap">
                   <div class="knob" style="width:62px;height:62px;"><div class="knob-hl"></div><div class="knob-dot gray" style="width:8px;height:8px;top:9px;"></div></div>
                   <div class="knob-lbl">Distort</div><div class="knob-val">0.00</div>
                 </div>
@@ -955,15 +943,15 @@ body {
           <div class="card">
             <div class="card-hdr blue"><span class="card-hdr-txt">Step Resolution</span></div>
             <div class="card-body col gap4">
-              <button class="btn">1/4 Note</button>
-              <button class="btn">1/8 Note</button>
-              <button class="btn acid">1/16 Note</button>
+              <button class="btn res-btn" onclick="setResUI(this,1)">1/4 NOTE</button>
+              <button class="btn res-btn" onclick="setResUI(this,2)">1/8 NOTE</button>
+              <button class="btn res-btn res-active" onclick="setResUI(this,4)">1/16 NOTE</button>
             </div>
           </div>
 
           <div class="card" style="flex:1;">
             <div class="card-hdr"><span class="card-hdr-txt">Output Level</span></div>
-            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:18px 14px;">
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 11px;">
               <div class="knob-wrap" style="flex:none;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim);">0</span>
@@ -997,22 +985,12 @@ body {
           <div class="card-hdr"><span class="card-hdr-txt">Sequencer Controls</span></div>
           <div class="card-body" style="padding:10px 14px;">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <div class="keycap transport-key" id="play-key2" onclick="togglePlay2()" style="min-width:90px;">
-                <div class="keycap-base">
-                  <div class="keycap-top" style="padding:12px 8px;flex-direction:row;gap:7px;justify-content:center;">
-                    <span style="font-size:11px;color:var(--text-mid);">▶</span>
-                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">PLAY</span>
-                  </div>
-                </div>
-              </div>
-              <div class="keycap transport-key pressed" id="stop-key2" onclick="doStop2()" style="min-width:90px;">
-                <div class="keycap-base">
-                  <div class="keycap-top" style="padding:12px 8px;flex-direction:row;gap:7px;justify-content:center;">
-                    <span style="font-size:10px;color:var(--text-mid);">■</span>
-                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">STOP</span>
-                  </div>
-                </div>
-              </div>
+              <button class="btn transport-btn" id="play-key2" onclick="togglePlay2()" style="min-width:90px;padding:10px 12px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:7px;">
+                <span style="font-size:11px;">▶</span> PLAY
+              </button>
+              <button class="btn transport-btn acid" id="stop-key2" onclick="doStop2()" style="min-width:90px;padding:10px 12px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:7px;">
+                <span style="font-size:10px;">■</span> STOP
+              </button>
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
               <button class="btn sm">LENGTH</button>
               <button class="btn sm">SHUFFLE</button>
@@ -1110,15 +1088,15 @@ body {
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="delayTime" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="delayTime" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Time</div><div class="knob-val">375ms</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="delayFeedback" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="delayFeedback" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Fdbk</div><div class="knob-val">35%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="delayMix" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="delayMix" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Mix</div><div class="knob-val">35%</div>
             </div>
           </div>
@@ -1131,15 +1109,15 @@ body {
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="reverbSize" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="reverbSize" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Size</div><div class="knob-val">50%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="reverbDamp" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="reverbDamp" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Damp</div><div class="knob-val">50%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="reverbMix" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="reverbMix" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Mix</div><div class="knob-val">25%</div>
             </div>
           </div>
@@ -1152,15 +1130,15 @@ body {
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="distortion" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="distortion" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Drive</div><div class="knob-val">0%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" style="width:46px;height:46px;"></div>
+              <div class="knob" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Tone</div><div class="knob-val">50%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" style="width:46px;height:46px;"></div>
+              <div class="knob" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Level</div><div class="knob-val">100%</div>
             </div>
           </div>
@@ -1173,15 +1151,15 @@ body {
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="chorusRate" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="chorusRate" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Rate</div><div class="knob-val">30%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="chorusDepth" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="chorusDepth" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Depth</div><div class="knob-val">40%</div>
             </div>
             <div class="knob-wrap fxk">
-              <div class="knob" data-fx="chorusMix" style="width:46px;height:46px;"></div>
+              <div class="knob" data-fx="chorusMix" style="width:58px;height:58px;"></div>
               <div class="knob-lbl">Mix</div><div class="knob-val">0%</div>
             </div>
           </div>
@@ -1307,22 +1285,12 @@ body {
 
             <!-- PLAY / STOP — keycap fisici -->
             <div style="display:flex;gap:8px;">
-              <div class="keycap transport-key" id="play-key3" onclick="togglePlay()" style="flex:1;">
-                <div class="keycap-base">
-                  <div class="keycap-top" style="padding:14px 4px;flex-direction:row;gap:6px;justify-content:center;">
-                    <span style="font-size:11px;color:var(--text-mid);">▶</span>
-                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">PLAY</span>
-                  </div>
-                </div>
-              </div>
-              <div class="keycap transport-key pressed" id="stop-key3" onclick="doStop()" style="flex:1;">
-                <div class="keycap-base">
-                  <div class="keycap-top" style="padding:14px 4px;flex-direction:row;gap:6px;justify-content:center;">
-                    <span style="font-size:10px;color:var(--text-mid);">■</span>
-                    <span class="keycap-num" style="font-size:12px;letter-spacing:2px;">STOP</span>
-                  </div>
-                </div>
-              </div>
+              <button class="btn transport-btn" id="play-key3" onclick="togglePlay()" style="flex:1;padding:12px 8px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:11px;">▶</span> PLAY
+              </button>
+              <button class="btn transport-btn acid" id="stop-key3" onclick="doStop()" style="flex:1;padding:12px 8px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span style="font-size:10px;">■</span> STOP
+              </button>
             </div>
 
           </div>
@@ -1479,14 +1447,14 @@ function updatePlayInd() {
     ind.style.background = playing ? 'var(--lcd-green)' : '#0f2006';
     ind.style.boxShadow  = playing ? '0 0 8px var(--acid-glow)' : 'none';
   }
-  // tutti i transport keycap sincronizzati
-  ['play-key','play-key3'].forEach(id=>{
+  // transport buttons: playing → PLAY acid, stopped → STOP acid
+  ['play-key','play-key2','play-key3'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.classList.toggle('pressed', playing);
+    if(el) { el.classList.toggle('acid', playing); el.classList.toggle('transport-playing', playing); }
   });
-  ['stop-key','stop-key3'].forEach(id=>{
+  ['stop-key','stop-key2','stop-key3'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.classList.toggle('pressed', !playing);
+    if(el) { el.classList.toggle('acid', !playing); }
   });
 }
 
@@ -1543,21 +1511,22 @@ function buildKeycaps() {
   const grid = document.getElementById('pat-btns');
   if(!grid) return;
   grid.innerHTML = '';
-  grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  // 4 colonne × 2 righe: gli 8 pattern riempiono la griglia senza celle orfane
+  grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+  grid.style.height = '100%';
+  grid.style.alignContent = 'center';   /* lo spazio libero va attorno, non dentro i tasti */
   grid.style.gap = '7px';
 
-  for(let i = 0; i < 9; i++) {
-    const key = document.createElement('div');
-    key.className = 'keycap' + (i === 0 ? ' active' : '');
+  for(let i = 0; i < 8; i++) {
+    const key = document.createElement('button');
+    key.className = 'btn pat-btn' + (i === 0 ? ' active' : '');
+    key.style.cssText = 'padding:18px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;border-radius:8px;';
     key.innerHTML = `
-      <div class="keycap-base">
-        <div class="keycap-top" style="padding:22px 4px 20px;">
-          <div class="keycap-num" style="font-size:20px;">${i + 1}</div>
-        </div>
-      </div>
+      <span style="font-size:18px;font-weight:600;color:var(--text);line-height:1;">${i + 1}</span>
+      <span class="pat-led"></span>
     `;
     key.onclick = () => {
-      grid.querySelectorAll('.keycap').forEach(k => k.classList.remove('active'));
+      grid.querySelectorAll('.pat-btn').forEach(k => k.classList.remove('active'));
       key.classList.add('active');
     };
     grid.appendChild(key);
@@ -1766,18 +1735,40 @@ const fxOn   = { delay:true, reverb:true, dist:false, chorus:false };
 
 // Disegna knob via canvas — niente position:absolute instabile
 // ── Sprite-knob helper (shared with JUCE bridge overlay) ──────────────────
+// ── Knob helper condiviso (usato anche dall'overlay JUCE) ─────────────────
+// Tre skin: k-e zigrinata (synth) · k-d alluminio CNC (volume) · k-c flat (FX).
+// La skin si deduce dal contesto del knob e viene montata una sola volta.
+function knobSkinFor(el){
+  if(el.hasAttribute('data-fx') || el.closest('.fxk')) return 'k-c';
+  const wrap = el.closest('.knob-wrap');
+  const lbl  = wrap && wrap.querySelector('.knob-lbl');
+  const name = lbl ? (lbl.textContent || '').trim().toLowerCase() : '';
+  return name === 'volume' ? 'k-d' : 'k-e';
+}
+
+function skinKnob(el){
+  if(el.dataset.knobSkin) return el.dataset.knobSkin;
+  const skin  = knobSkinFor(el);
+  const parts = skin === 'k-c' ? ['k-trk','k-arc','k-body']
+                               : ['k-trk','k-arc','k-body','k-cap'];
+  const frag = document.createDocumentFragment();
+  parts.forEach(c=>{ const d=document.createElement('div'); d.className=c; frag.appendChild(d); });
+  el.classList.add(skin);
+  el.insertBefore(frag, el.firstChild);   // l'indicatore resta in coda, sopra a tutto
+  el.dataset.knobSkin = skin;
+  return skin;
+}
+
 function setKnobFrame(el, norm){
   if(!el) return;
   const n = Math.max(0, Math.min(1, norm));
-  // Knob a 2 layer: ruota il dot (dentro .knob-ind) attorno al centro.
-  // Sweep -135°..+135° (270°). Il corpo .knob e la luce .knob-hl restano fissi.
+  skinKnob(el);
+  // --v guida l'arco di valore; l'indicatore ruota su 270° (-135°..+135°).
+  el.style.setProperty('--v', n.toFixed(4));
   let ind = el.querySelector('.knob-ind');
   if(!ind){
     ind = document.createElement('div');
     ind.className = 'knob-ind';
-    let dot = el.querySelector('.knob-dot');
-    if(!dot){ dot = document.createElement('div'); dot.className = 'knob-dot'; }
-    ind.appendChild(dot);            // sposta il dot esistente nel wrapper ruotante
     el.appendChild(ind);
   }
   ind.style.transform = `rotate(${(-135 + n * 270).toFixed(2)}deg)`;
@@ -1785,11 +1776,14 @@ function setKnobFrame(el, norm){
 }
 window.setKnobFrame = setKnobFrame;
 
-// Convert the SYNTH .knob divs into sprite knobs. In standalone preview there
-// are no live values, so seed sensible defaults; in the plugin the JUCE overlay
-// drives each knob to its real parameter value.
+// Monta la skin su tutti i knob. In preview browser non ci sono valori vivi,
+// quindi si parte da metà corsa; nel plugin è l'overlay JUCE a portare ogni
+// knob sul valore reale del parametro.
 function mountSpriteKnobs(){
-  document.querySelectorAll('.knob').forEach(k=>k.classList.add('sprite-knob'));
+  document.querySelectorAll('.knob').forEach(k=>{
+    k.classList.add('sprite-knob');
+    skinKnob(k);
+  });
   if(typeof window.__JUCE__ === 'undefined'){
     document.querySelectorAll('.knob-wrap').forEach(w=>{
       const k=w.querySelector('.knob');
@@ -1931,6 +1925,7 @@ setTimeout(()=>{ mountSpriteKnobs(); initFXKnobs(); drawFXCanvas(); },150);
 
 function setWave(el){document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function setPat(el){document.querySelectorAll('#pat-btns .btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setResUI(el,r){document.querySelectorAll('.res-btn').forEach(b=>b.classList.remove('res-active'));el.classList.add('res-active');const lbl=document.getElementById('res-lcd');if(lbl)lbl.textContent='1/'+r;}
 
 // Init preset page
 setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
@@ -2161,8 +2156,15 @@ class TB303Processor extends AudioWorkletProcessor {
     this.slideCoeff=Math.pow(0.001,1/(0.070*sr)); this.waveform=0; this.tuningCents=0;
     this.stage=[0,0,0,0]; this.stageT=[0,0,0,0]; this.prevIn=0; this.dcX=0; this.dcY=0;
     this.baseCutoff=800; this.resonance=0.5; this.envMod=0.5; this.accentMod=0.5;
+    // env del FILTRO, pilotato dal knob DECAY
     this.nVal=0; this.nState=0; this.nAtt=Math.exp(-1/(0.003*sr)); this.nDec=Math.exp(-1/(0.3*sr));
+    // env dell'ACCENTO
     this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.003*sr)); this.aDec=Math.exp(-1/(0.2*sr));
+    // env del VCA, separato: sul 303 l'ampiezza segue il gate della nota, non
+    // il decay del filtro. Tenerli uniti mozzava le note appena si accorciava
+    // il decay, ed era il motivo principale del suono sottile.
+    this.vVal=0; this.vState=0; this.vAtt=Math.exp(-1/(0.002*sr)); this.vRel=Math.exp(-1/(0.012*sr));
+    this.gateLeft=0;
     this.volume=0.8; this.distortion=0.0; this.dX=0; this.dY=0;
     this.pattern=[]; this.len=16; this.bpm=160; this.res=4;
     this.playing=false; this.step=0; this.counter=0; this.firstBeat=false;
@@ -2172,8 +2174,8 @@ class TB303Processor extends AudioWorkletProcessor {
   onMsg(d){
     if(d.type==='param') this.setParam(d.id,d.value);
     else if(d.type==='pattern'){ this.pattern=d.steps; this.len=d.steps.length||16; }
-    else if(d.type==='transport'){ if(d.playing) this.start(); else this.playing=false; }
-    else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note); }
+    else if(d.type==='transport'){ if(d.playing) this.start(); else { this.playing=false; this.gateLeft=0; if(this.vState!==0) this.vState=3; } }
+    else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note,this.sr*0.25); }
   }
   setParam(id,v){
     if(id==='cutoff') this.baseCutoff=v;
@@ -2192,9 +2194,23 @@ class TB303Processor extends AudioWorkletProcessor {
   noteToHz(n,c){ return 440*Math.pow(2,(n-69+c/100)/12); }
   setNote(n){ this.tgtFreq=this.noteToHz(n,this.tuningCents); if(!this.sliding) this.curFreq=this.tgtFreq; }
   setSlide(en,from,to){ this.sliding=en; this.curFreq=this.noteToHz(from,this.tuningCents); this.tgtFreq=this.noteToHz(to,this.tuningCents); }
-  noteOn(n,acc,sl,prev){ if(sl){ this.setSlide(true,prev,n);} else { this.setSlide(false,n,n); this.setNote(n);} this.nState=1; if(acc) this.aState=1; }
-  sendStep(step){ const s=this.pattern[step]; if(!s||!s.gate) return; let n=s.note+(s.octave||0)*12; if(n<0)n=0; if(n>127)n=127; this.noteOn(n,!!s.accent,this.prevSlide,this.prevNote); this.prevNote=n; this.prevSlide=!!s.slide; }
-  advance(){ this.step=(this.step+1)%this.len; this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); }
+  noteOn(n,acc,sl,prev,gate){
+    if(sl){ this.setSlide(true,prev,n); } else { this.setSlide(false,n,n); this.setNote(n); }
+    this.nState=1; if(acc) this.aState=1;
+    // legato: su una nota legata il VCA non riparte, il suono resta tenuto
+    if(!(sl && this.vVal>0.01)) this.vState=1;
+    this.gateLeft=gate|0;
+  }
+  sendStep(step,spp){
+    const s=this.pattern[step]; if(!s||!s.gate) return;
+    let n=s.note+(s.octave||0)*12; if(n<0)n=0; if(n>127)n=127;
+    // uno step con slide tiene il gate per tutto lo step (nota legata),
+    // gli altri suonano poco più di metà passo
+    const gate = s.slide ? spp : spp*0.58;
+    this.noteOn(n,!!s.accent,this.prevSlide,this.prevNote,gate);
+    this.prevNote=n; this.prevSlide=!!s.slide;
+  }
+  advance(spp){ this.step=(this.step+1)%this.len; this.sendStep(this.step,spp); this.port.postMessage({type:'step',step:this.step}); }
   polyBlep(t,dt){ if(t<dt){t/=dt; return t+t-t*t-1;} else if(t>1-dt){t=(t-1)/dt; return t*t+t+t+1;} return 0; }
   vcoTick(){
     if(this.sliding){ const diff=this.tgtFreq-this.curFreq; if(Math.abs(diff)<0.01){this.curFreq=this.tgtFreq; this.sliding=false;} else { this.curFreq+=(this.tgtFreq-this.curFreq)*(1-this.slideCoeff);} }
@@ -2212,31 +2228,36 @@ class TB303Processor extends AudioWorkletProcessor {
     if(this.aState===0) this.aVal=0;
     else if(this.aState===1){ this.aVal=1-(1-this.aVal)*this.aAtt; if(this.aVal>=0.999){this.aVal=1; this.aState=2;} }
     else { this.aVal*=this.aDec; if(this.aVal<1e-6){this.aVal=0; this.aState=0;} }
+    // VCA: attacco, tenuta per la durata del gate, rilascio breve anti-click
+    if(this.vState===1){ this.vVal=1-(1-this.vVal)*this.vAtt; if(this.vVal>=0.999){this.vVal=1; this.vState=2;} }
+    else if(this.vState===3){ this.vVal*=this.vRel; if(this.vVal<1e-5){this.vVal=0; this.vState=0;} }
   }
   cutG(hz){ const sr2=this.sr*2; let f=Math.min(Math.max(hz,20),sr2*0.49); const g=Math.tan(Math.PI*f/sr2); return g/(1+g); }
-  fStep(input,g,res4){ const fb=Math.tanh((input-res4*this.stage[3])*0.5); for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const v=g*(si-this.stageT[i]); const ns=v+this.stage[i]; this.stage[i]=ns+v; this.stageT[i]=Math.tanh(this.stage[i]*0.5);} }
+  fStep(input,g,res4){ const fb=Math.tanh((input-res4*this.stage[3])*0.6); for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const v=g*(si-this.stageT[i]); const ns=v+this.stage[i]; this.stage[i]=ns+v; this.stageT[i]=Math.tanh(this.stage[i]*0.5);} }
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
-    let mod=Math.pow(2,logC+this.envMod*3*env+this.accentMod*1.5*acc); mod=Math.min(Math.max(mod,20),this.sr*0.45);
-    let res=this.resonance+acc*this.accentMod*0.15; res=Math.min(Math.max(res,0),0.99);
+    let mod=Math.pow(2,logC+this.envMod*4*env+this.accentMod*2*acc); mod=Math.min(Math.max(mod,20),this.sr*0.45);
+    let res=this.resonance+acc*this.accentMod*0.2; res=Math.min(Math.max(res,0),0.985);
     const g=this.cutG(mod), res4=res*4;
     const mid=0.5*(this.prevIn+input); this.fStep(mid,g,res4); this.fStep(input,g,res4); this.prevIn=input;
     const xn=this.stageT[3]*2; const yn=xn-this.dcX+0.9995*this.dcY; this.dcX=xn; this.dcY=yn; return yn;
   }
-  vca(input){ let amp=this.nVal+this.aVal; if(amp>2)amp=2; return Math.tanh(input*amp*this.volume); }
+  vca(input){ const amp=this.vVal*(1+this.aVal)*this.volume; return input*amp; }
   dist(x){ if(this.distortion<1e-4) return x; const dr=1+this.distortion*9; const t=Math.tanh(dr); const o=Math.tanh(x*dr)/t; const yn=o-this.dX+0.9995*this.dY; this.dX=o; this.dY=yn; return yn; }
   process(inputs,outputs){
     const out=outputs[0]; const chL=out[0], chR=out[1]||out[0]; const N=chL.length;
     const spp=60/this.bpm/this.res*this.sr;
     for(let i=0;i<N;i++){
       if(this.playing){
-        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp; }
+        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step,spp); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp; }
         this.counter-=1;
-        if(this.counter<=0) this.advance();
+        if(this.counter<=0) this.advance(spp);
       }
+      if(this.gateLeft>0){ this.gateLeft--; if(this.gateLeft<=0 && this.vState!==0 && this.vState!==3) this.vState=3; }
       this.envTick();
       let s=0;
-      if(this.playing || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal); s=this.dist(this.vca(b)); }
+      if(this.vVal>1e-5 || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal); s=this.dist(this.vca(b)); }
+      s=Math.tanh(s*1.2)*0.82;   // limiter morbido in coda, evita il clipping duro
       chL[i]=s; if(chR!==chL) chR[i]=s;
     }
     return true;
@@ -2362,10 +2383,28 @@ registerProcessor('tb303-processor', TB303Processor);
   window.doStop     = function(){ uiStop(); };
   window.doStop2    = function(){ uiStop(); };
 
+  // Spazio = start/stop. Si escludono solo i campi di testo: prima erano
+  // esclusi anche BUTTON e SELECT e, siccome i tab e il trasporto sono
+  // <button>, dopo il primo click il focus restava lì e la barra spaziatrice
+  // non faceva più niente.
   window.addEventListener('keydown',ev=>{
     if(ev.code!=='Space' && ev.key!==' ') return;
-    const t=ev.target||{}; if(/INPUT|TEXTAREA|BUTTON|SELECT/.test(t.tagName||'') || t.isContentEditable) return;
-    ev.preventDefault(); window.togglePlay();
+    if(ev.repeat) return;
+    if(window.__JUCE__) return;            // nel plugin ci pensa il bridge
+    const t=ev.target||{}, tag=(t.tagName||'').toUpperCase();
+    if(tag==='INPUT' || tag==='TEXTAREA' || t.isContentEditable) return;
+    ev.preventDefault();                   // niente scroll e niente ri-click del bottone a fuoco
+    const ae=document.activeElement; if(ae && ae.blur) ae.blur();
+    window.togglePlay();
+  });
+
+  // Sblocco audio al primo gesto, qualunque esso sia: il browser tiene
+  // l'AudioContext sospeso finché non c'è un'interazione vera, quindi senza
+  // questo chi usa solo la tastiera non sentirebbe mai niente.
+  ['pointerdown','keydown','touchstart'].forEach(evt=>{
+    window.addEventListener(evt,()=>{
+      ensureAudio().then(()=>{ if(ctx && ctx.state==='suspended') ctx.resume(); });
+    },{once:true,capture:true});
   });
   window.setSrcMode=function(m){
     srcMode=m;

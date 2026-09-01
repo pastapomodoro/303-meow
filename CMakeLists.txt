@@ -1,4 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
+
+# macOS: binario universale. Ableton Live 12 e' universale, e su Apple Silicon
+# riconosce solo plug-in compilati per l'architettura con cui sta girando —
+# arm64 se nativo, x86_64 se aperto con Rosetta. Compilando entrambe il plug-in
+# viene visto in tutti e due i casi.
+# Deve stare PRIMA di project(): dopo, JUCE e le dipendenze sono gia' configurate.
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
+endif()
+
 project(TB303Clone VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -24,7 +34,7 @@ juce_add_plugin(TB303Clone
     NEEDS_MIDI_OUTPUT       FALSE
     IS_MIDI_EFFECT          FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD FALSE
+    COPY_PLUGIN_AFTER_BUILD FALSE   # il VST3 lo installiamo in fondo, vedi sotto
     PLUGIN_MANUFACTURER_CODE Manu
     PLUGIN_CODE             Tb03
     FORMATS                 VST3 Standalone
@@ -40,7 +50,7 @@ if(APPLE)
         NEEDS_MIDI_OUTPUT       FALSE
         IS_MIDI_EFFECT          FALSE
         EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-        COPY_PLUGIN_AFTER_BUILD FALSE
+        COPY_PLUGIN_AFTER_BUILD TRUE
         PLUGIN_MANUFACTURER_CODE Manu
         PLUGIN_CODE             Tb04
         FORMATS                 AU
@@ -53,6 +63,7 @@ juce_add_binary_data(TB303Assets
     SOURCES
         Resources/ui.html
         acidlab-knob-61f-128px.png
+        Resources/panel_texture.png
 )
 
 set(SOURCE_FILES
@@ -119,6 +130,16 @@ if(APPLE)
 endif()
 
 # Steinberg moduleinfotool can emit trailing commas; strict hosts reject invalid JSON.
+#
+# L'installazione del VST3 e' in coda a QUESTA catena e non su
+# COPY_PLUGIN_AFTER_BUILD: quello step lo registra juce_add_plugin, quindi
+# girerebbe prima della normalizzazione e in ~/Library finirebbe il bundle con
+# il JSON rotto e il sigillo invalidato. Cosi' invece si installa solo il
+# bundle gia' sistemato e ri-firmato.
+if(APPLE)
+    set(VST3_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3/AcidLab.vst3")
+endif()
+
 if(Python3_FOUND)
     add_custom_command(
         TARGET TB303Clone_VST3 POST_BUILD
@@ -130,4 +151,16 @@ if(Python3_FOUND)
             "$<TARGET_FILE_DIR:TB303Clone_VST3>/../.."
         COMMENT "Normalize VST3 moduleinfo.json and re-seal bundle"
         VERBATIM)
+
+    if(APPLE)
+        add_custom_command(
+            TARGET TB303Clone_VST3 POST_BUILD
+            # rm prima della copia: senza, un bundle vecchio piu' grande lascia
+            # file orfani dentro a quello nuovo
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${VST3_INSTALL_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "$<TARGET_FILE_DIR:TB303Clone_VST3>/../.." "${VST3_INSTALL_DIR}"
+            COMMENT "Install VST3 to ${VST3_INSTALL_DIR}"
+            VERBATIM)
+    endif()
 endif()

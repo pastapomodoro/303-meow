@@ -107,6 +107,41 @@ static juce::WebBrowserComponent::Options makeOptions(TB303Editor* e,
                 if(!args.isEmpty()) e->processor.setMidiMode((bool)args[0]);
                 c(juce::var{});
             })
+        .withNativeFunction("clearPattern",
+            [e](const juce::Array<juce::var>&, juce::WebBrowserComponent::NativeFunctionCompletion c){
+                auto& seq = e->processor.getSequencer();
+                auto& pat = seq.getPattern(seq.getCurrentPatternIndex());
+                for(int i=0;i<16;++i){ auto s=pat.getStep(i); s.gate=false; pat.setStep(i,s); }
+                juce::Array<juce::var> arr;
+                for(int i=0;i<16;++i){ const auto& s=pat.getStep(i);
+                    juce::DynamicObject::Ptr o=new juce::DynamicObject();
+                    o->setProperty("gate",s.gate); o->setProperty("note",s.note);
+                    o->setProperty("accent",s.accent); o->setProperty("slide",s.slide);
+                    o->setProperty("octave",s.octave); arr.add(juce::var(o.get())); }
+                c(juce::var(arr));
+            })
+        .withNativeFunction("randomPattern",
+            [e](const juce::Array<juce::var>&, juce::WebBrowserComponent::NativeFunctionCompletion c){
+                auto& seq = e->processor.getSequencer();
+                auto& pat = seq.getPattern(seq.getCurrentPatternIndex());
+                static const int scale[] = {48,50,51,53,55,58,60,62,63};
+                juce::Random rnd;
+                for(int i=0;i<16;++i){
+                    auto s=pat.getStep(i);
+                    bool g = rnd.nextFloat() < 0.70f;
+                    s.gate=g;
+                    if(g){ s.note=scale[rnd.nextInt(9)]; s.octave=0;
+                           s.accent=rnd.nextFloat()<0.28f; s.slide=rnd.nextFloat()<0.18f; }
+                    pat.setStep(i,s);
+                }
+                juce::Array<juce::var> arr;
+                for(int i=0;i<16;++i){ const auto& s=pat.getStep(i);
+                    juce::DynamicObject::Ptr o=new juce::DynamicObject();
+                    o->setProperty("gate",s.gate); o->setProperty("note",s.note);
+                    o->setProperty("accent",s.accent); o->setProperty("slide",s.slide);
+                    o->setProperty("octave",s.octave); arr.add(juce::var(o.get())); }
+                c(juce::var(arr));
+            })
         // ── Resource provider: serve ui.html ─────────────────────
         .withResourceProvider(
             [e](const juce::String& url) { return e->getResource(url); });
@@ -240,5 +275,17 @@ TB303Editor::getResource(const juce::String& url)
             std::move(vec), "image/png"
         };
     }
+
+    // Serve the panel texture (brushed/plastic background for the chassis)
+    if(url == "/assets/panel.png")
+    {
+        const auto* data = reinterpret_cast<const std::byte*>(BinaryData::panel_texture_png);
+        std::vector<std::byte> vec(data, data + BinaryData::panel_texture_pngSize);
+
+        return juce::WebBrowserComponent::Resource{
+            std::move(vec), "image/png"
+        };
+    }
+
     return {};
 }

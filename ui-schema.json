@@ -1,0 +1,656 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12",
+  "id": "acidlab-ui-schema",
+  "version": "1.0.0",
+  "file": "index.html",
+  "description": "Machine-readable schema of the AcidLab 303 Meow UI — all tabs, components, parameters and JS state",
+
+  "navigation": {
+    "mechanism": "css-class-toggle",
+    "activeClass": "active",
+    "pageSelector": ".page",
+    "tabSelector": ".tab",
+    "jsFunction": "nav(id, el)",
+    "tabs": [
+      { "id": "synth",    "pageId": "page-synth",    "label": "SYNTH",     "line": 1724, "default": true },
+      { "id": "seq",      "pageId": "page-seq",      "label": "SEQUENCER", "line": 2001 },
+      { "id": "fx",       "pageId": "page-fx",       "label": "FX",        "line": 2117 },
+      { "id": "preset",   "pageId": "page-preset",   "label": "PRESET",    "line": 2229 },
+      { "id": "settings", "pageId": "page-settings", "label": "SETTINGS",  "line": 2381 }
+    ]
+  },
+
+  "knobSystem": {
+    "type": "css-conic-gradient",
+    "valueVar": "--v",
+    "rangeDegreesMin": -135,
+    "rangeDegreesMax": 135,
+    "totalDegrees": 270,
+    "skins": [
+      { "class": "k-e", "description": "zigrinata nera, cappuccio bianco", "usedFor": "SYNTH knobs" },
+      { "class": "k-d", "description": "alluminio CNC, cappuccio scuro",   "usedFor": "Volume" },
+      { "class": "k-c", "description": "flat nera, dot acid green",         "usedFor": "FX knobs" }
+    ],
+    "dragSensitivity": "150px per full range",
+    "jsFunction": "setKnobFrame(canvas, value)"
+  },
+
+  "parameters": {
+    "cutoff":        { "apvts": "cutoff",      "min": 20,    "max": 20000, "default": 620,  "unit": "Hz",   "skew": 0.25 },
+    "resonance":     { "apvts": "resonance",   "min": 0,     "max": 1,     "default": 0.55, "unit": "norm", "skew": 1 },
+    "envMod":        { "apvts": "envMod",       "min": 0,     "max": 1,     "default": 0.50, "unit": "norm", "skew": 1 },
+    "decay":         { "apvts": "decay",        "min": 0.05,  "max": 2.0,   "default": 0.32, "unit": "s",    "skew": 0.4 },
+    "accent":        { "apvts": "accent",       "min": 0,     "max": 1,     "default": 0.50, "unit": "norm", "skew": 1 },
+    "volume":        { "apvts": "volume",       "min": 0,     "max": 1,     "default": 0.80, "unit": "norm", "skew": 1 },
+    "distortion":    { "apvts": "distortion",   "min": 0,     "max": 1,     "default": 0.0,  "unit": "norm", "skew": 1 },
+    "tuning":        { "apvts": "tuning",       "min": -12,   "max": 12,    "default": 0,    "unit": "semitones", "skew": 1 },
+    "waveform":      { "apvts": "waveform",     "min": 0,     "max": 1,     "default": 0,    "unit": "binary", "values": { "0": "SAW", "1": "SQR" } },
+    "tempo":         { "apvts": "tempo",        "min": 40,    "max": 220,   "default": 130,  "unit": "BPM" },
+    "delayTime":     { "apvts": "delayTime",    "min": 0.02,  "max": 0.75,  "default": 0.375,"unit": "s" },
+    "delayFeedback": { "apvts": "delayFeedback","min": 0,     "max": 0.90,  "default": 0.35, "unit": "norm" },
+    "delayMix":      { "apvts": "delayMix",     "min": 0,     "max": 1,     "default": 0.0,  "unit": "norm" },
+    "reverbSize":    { "apvts": "reverbSize",   "min": 0,     "max": 1,     "default": 0.5,  "unit": "norm" },
+    "reverbMix":     { "apvts": "reverbMix",    "min": 0,     "max": 1,     "default": 0.0,  "unit": "norm" },
+    "reverbDamp":    { "apvts": "reverbDamp",   "min": 0,     "max": 1,     "default": 0.5,  "unit": "norm" }
+  },
+
+  "_screenshotInventory": {
+    "directory": "scratchpad/screens/",
+    "files": [
+      { "file": "synth_full.png",            "tab": "synth",     "scope": "full-page" },
+      { "file": "synth_voice_knobs.png",     "tab": "synth",     "scope": "VOICE knobs" },
+      { "file": "synth_lcd.png",             "tab": "synth",     "scope": "LCD display" },
+      { "file": "synth_control.png",         "tab": "synth",     "scope": "CONTROL panel" },
+      { "file": "synth_output.png",          "tab": "synth",     "scope": "OUTPUT LEVEL" },
+      { "file": "synth_sequencer_bar.png",   "tab": "synth",     "scope": "SEQUENCES bar" },
+      { "file": "seq_full.png",              "tab": "sequencer", "scope": "full-page" },
+      { "file": "seq_pianoroll_full.png",    "tab": "sequencer", "scope": "piano roll + keys" },
+      { "file": "seq_controls.png",          "tab": "sequencer", "scope": "controls bar" },
+      { "file": "seq_bottom_row.png",        "tab": "sequencer", "scope": "slide+accent rows" },
+      { "file": "fx_full.png",               "tab": "fx",        "scope": "full-page" },
+      { "file": "fx_delay.png",              "tab": "fx",        "scope": "Delay module" },
+      { "file": "fx_reverb.png",             "tab": "fx",        "scope": "Reverb module" },
+      { "file": "fx_distortion.png",         "tab": "fx",        "scope": "Distortion module" },
+      { "file": "fx_chorus.png",             "tab": "fx",        "scope": "Chorus module" },
+      { "file": "preset_full.png",           "tab": "preset",    "scope": "full-page" },
+      { "file": "preset_factory_detail.png", "tab": "preset",    "scope": "factory detail + pattern preview" },
+      { "file": "preset_actions.png",        "tab": "preset",    "scope": "actions panel" },
+      { "file": "settings_full.png",         "tab": "settings",  "scope": "full-page" },
+      { "file": "settings_tempo.png",        "tab": "settings",  "scope": "Tempo card" },
+      { "file": "settings_playback_mode.png","tab": "settings",  "scope": "Playback Mode card" },
+      { "file": "settings_feel.png",         "tab": "settings",  "scope": "Feel card" },
+      { "file": "settings_keyboard_live_play.png","tab":"settings","scope": "Keyboard Live Play card" },
+      { "file": "settings_about.png",        "tab": "settings",  "scope": "About card" }
+    ]
+  },
+
+  "pages": {
+
+    "synth": {
+      "id": "page-synth",
+      "layout": "grid-3-cols + seqbay",
+      "sections": {
+
+        "control": {
+          "type": "card",
+          "label": "Control",
+          "subsections": {
+            "transport": {
+              "components": [
+                { "id": "play-key",   "type": "button", "label": "PLAY",  "action": "togglePlay()" },
+                { "id": "stop-key",   "type": "button", "label": "STOP",  "action": "doStop()" },
+                { "id": "midi-switch","type": "toggle", "label": "MIDI",  "action": "toggleMidi(this)", "states": ["OFF", "ON"] }
+              ]
+            },
+            "tempo": {
+              "components": [
+                { "id": "bpm-osc",   "type": "display", "label": "BPM display", "shows": "current BPM" },
+                { "id": "bpm-wheel", "type": "thumbwheel", "label": "BPM wheel", "action": "changeBPM(delta)", "interaction": "vertical-drag" }
+              ]
+            },
+            "pattern": {
+              "components": [
+                {
+                  "id": "pat-btns",
+                  "type": "button-grid",
+                  "label": "Pattern Select",
+                  "count": 8,
+                  "layout": "3-cols keycap",
+                  "action": "loadPatternButton(index)",
+                  "indexRange": [0, 7]
+                }
+              ]
+            }
+          }
+        },
+
+        "voice": {
+          "type": "card",
+          "label": "Voice",
+          "knobs": [
+            { "label": "Cutoff",    "param": "cutoff",     "knobSkin": "k-e", "group": "VCF/Filter", "sizePx": 56 },
+            { "label": "Resonance", "param": "resonance",  "knobSkin": "k-e", "group": "VCF/Filter", "sizePx": 56 },
+            { "label": "Env Mod",   "param": "envMod",     "knobSkin": "k-e", "group": "VCF/Filter", "sizePx": 56 },
+            { "label": "Decay",     "param": "decay",      "knobSkin": "k-e", "group": "EG/Amp",     "sizePx": 56 },
+            { "label": "Accent",    "param": "accent",     "knobSkin": "k-e", "group": "Voice",      "sizePx": 56 },
+            { "label": "Distort",   "param": "distortion", "knobSkin": "k-e", "group": "Drive",      "sizePx": 56 }
+          ],
+          "lcd": {
+            "id": "lcd-wrap",
+            "type": "lcd-display",
+            "style": "green-on-black phosphor",
+            "subcomponents": {
+              "header": { "shows": ["brand:ACIDLAB", "pat:PAT 01", "bpm:BPM", "wave:WAVE SAW/SQR"] },
+              "scope": { "id": "scope", "type": "canvas", "label": "Oscilloscope", "readOnly": true },
+              "presetNav": {
+                "components": [
+                  { "id": "pnav-prev", "type": "button", "label": "◀", "action": "_setPresetIdx(current-1)" },
+                  { "id": "lcd-preset","type": "text",   "label": "Preset name display" },
+                  { "id": "pnav-next", "type": "button", "label": "▶", "action": "_setPresetIdx(current+1)" }
+                ]
+              },
+              "readouts": [
+                { "id": "lcd-cut", "param": "cutoff",    "format": "Hz" },
+                { "id": "lcd-res", "param": "resonance", "format": "0.00" },
+                { "id": "lcd-env", "param": "envMod",    "format": "0.00" },
+                { "id": "lcd-dec", "param": "decay",     "format": "0.00s" },
+                { "id": "lcd-acc", "param": "accent",    "format": "0.00" }
+              ]
+            }
+          }
+        },
+
+        "output": {
+          "type": "card",
+          "label": "Output Level",
+          "components": [
+            { "id": "gauge-mount", "type": "analog-gauge", "label": "Pressure gauge", "cssVar": "--psi", "tracks": "cutoff" },
+            { "id": "vol-fader",   "type": "fader-vertical", "label": "Volume fader", "param": "volume", "action": "send('volume',v)", "interaction": "vertical-drag" },
+            { "id": "vol-fill",    "type": "fader-fill",    "label": "Fader fill visual" },
+            { "id": "vol-cap",     "type": "fader-cap",     "label": "Fader cap handle" },
+            { "id": "led-meter",   "type": "vu-meter-vertical", "label": "Output level meter", "readOnly": true, "scaleDB": [0, -3, -6] }
+          ]
+        },
+
+        "seqbay": {
+          "type": "section",
+          "label": "Sequences",
+          "note": "Always visible at bottom of SYNTH page",
+          "components": [
+            {
+              "id": "seq-pads",
+              "type": "step-pad-row",
+              "count": 16,
+              "indexRange": [0, 15],
+              "perStep": {
+                "gate":   { "type": "toggle", "action": "toggleStep(index)" },
+                "accent": { "type": "dot-indicator", "action": "toggleAccent(index)" },
+                "slide":  { "type": "dot-indicator", "action": "toggleSlide(index)" }
+              }
+            },
+            { "id": "seq-step", "type": "display", "shows": "current step (1-16)" },
+            { "id": "seq-gate", "type": "display", "shows": "gate state" },
+            { "id": "seq-pat",  "type": "display", "shows": "current pattern (1-8)" },
+            {
+              "type": "resolution-selector",
+              "class": "res3-sel",
+              "options": [
+                { "value": 1, "label": "1/4" },
+                { "value": 2, "label": "1/8" },
+                { "value": 4, "label": "1/16" }
+              ],
+              "action": "setResolution(value)"
+            }
+          ]
+        }
+      }
+    },
+
+    "sequencer": {
+      "id": "page-seq",
+      "layout": "two-cards",
+      "sections": {
+
+        "controls": {
+          "type": "card",
+          "label": "Sequencer Controls",
+          "components": [
+            { "id": "play-key2",  "type": "button", "action": "togglePlay2()" },
+            { "id": "stop-key2",  "type": "button", "action": "doStop2()" },
+            { "type": "button-group", "label": "Edit actions", "buttons": ["LENGTH", "SHUFFLE", "RANDOM", "CLEAR"] },
+            {
+              "type": "resolution-selector",
+              "options": [
+                { "value": 1, "label": "1/4" },
+                { "value": 2, "label": "1/8" },
+                { "value": 4, "label": "1/16" }
+              ]
+            },
+            {
+              "type": "scale-selector",
+              "components": [
+                { "id": "scale-sw",   "type": "toggle",  "label": "Scale enable" },
+                { "id": "scale-root", "type": "select",  "label": "Root note" },
+                { "id": "scale-type", "type": "select",  "label": "Scale type" }
+              ]
+            },
+            {
+              "id": "srcmode",
+              "type": "3-way-selector",
+              "label": "Source mode",
+              "options": ["midi", "seq", "preset"],
+              "action": "setSrcMode(value)",
+              "default": "seq"
+            },
+            { "id": "slcd",     "type": "display", "shows": "current step" },
+            { "id": "bpm-lcd2", "type": "display", "shows": "BPM" }
+          ]
+        },
+
+        "pianoRoll": {
+          "type": "card",
+          "label": "Piano Roll — Pattern 01",
+          "components": [
+            {
+              "id": "piano-keys",
+              "type": "piano-keyboard-sidebar",
+              "noteRange": { "low": "C3", "high": "B4", "midiLow": 48, "midiHigh": 71 },
+              "rows": 24,
+              "generatedBy": "JS",
+              "naturalNoteRows": "light grey-green with label",
+              "sharpFlatRows": "near-black, no label"
+            },
+            {
+              "id": "piano-roll-canvas",
+              "type": "canvas",
+              "cols": 16,
+              "rows": 24,
+              "noteMapping": {
+                "row0":  { "note": "B4",  "midi": 71 },
+                "row1":  { "note": "A#4", "midi": 70 },
+                "row2":  { "note": "A4",  "midi": 69 },
+                "row3":  { "note": "G#4", "midi": 68 },
+                "row4":  { "note": "G4",  "midi": 67 },
+                "row5":  { "note": "F#4", "midi": 66 },
+                "row6":  { "note": "F4",  "midi": 65 },
+                "row7":  { "note": "E4",  "midi": 64 },
+                "row8":  { "note": "D#4", "midi": 63 },
+                "row9":  { "note": "D4",  "midi": 62 },
+                "row10": { "note": "C#4", "midi": 61 },
+                "row11": { "note": "C4",  "midi": 60 },
+                "row12": { "note": "B3",  "midi": 59 },
+                "row13": { "note": "A#3", "midi": 58 },
+                "row14": { "note": "A3",  "midi": 57 },
+                "row15": { "note": "G#3", "midi": 56 },
+                "row16": { "note": "G3",  "midi": 55 },
+                "row17": { "note": "F#3", "midi": 54 },
+                "row18": { "note": "F3",  "midi": 53 },
+                "row19": { "note": "E3",  "midi": 52 },
+                "row20": { "note": "D#3", "midi": 51 },
+                "row21": { "note": "D3",  "midi": 50 },
+                "row22": { "note": "C#3", "midi": 49 },
+                "row23": { "note": "C3",  "midi": 48 }
+              },
+              "interaction": {
+                "activateNote": "mousedown on cell → sets gate=true for that step+note",
+                "deactivate":   "click same cell again → toggle off",
+                "highlight":    "active column highlighted during playback via stateUpdate event"
+              }
+            },
+            { "id": "slide-row",  "type": "toggle-row", "count": 16, "action": "toggleSlide(index)",  "cellSizePx": "47x14", "effect": "portamento/glide from previous pitch" },
+            { "id": "accent-row", "type": "toggle-row", "count": 16, "action": "toggleAccent(index)", "cellSizePx": "10x14", "effect": "VCA boost + aggressive attack envelope" }
+          ],
+          "scaleFilter": {
+            "id": "scale-sw",
+            "type": "toggle",
+            "default": "on",
+            "defaultRoot": "A",
+            "defaultType": "Minor",
+            "rootOptions": ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+            "typeOptions": ["Minor","Phrygian","Harm Minor","Pentatonic","Major","Chromatic"],
+            "effect": "hides non-scale rows in piano roll; highlights scale notes"
+          }
+        }
+      }
+    },
+
+    "fx": {
+      "id": "page-fx",
+      "layout": "fxrack-4-units",
+      "decorative": { "type": "rack-screws", "count": 4, "position": "outer-rack" },
+      "units": [
+
+        {
+          "id": "fxunit-delay",
+          "type": "fx-unit",
+          "label": "Delay",
+          "tag": "Stereo · BBD echo",
+          "defaultPowerOn": true,
+          "power": { "class": "fxpower", "action": "fxToggle('delay')" },
+          "dsp": { "readoutId": "dsp-delayMix", "barId": "bar-delayMix" },
+          "knobs": [
+            { "dataFx": "delayTime",     "label": "Time",    "param": "delayTime",     "sizePx": 48, "knobSkin": "k-c", "rangeMs": [20, 750],   "formula": "20ms + norm*730ms", "default": 375 },
+            { "dataFx": "delayFeedback", "label": "Fdbk",   "param": "delayFeedback", "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100],   "default": 22 },
+            { "dataFx": "delayMix",      "label": "Mix",     "param": "delayMix",      "sizePx": 64, "knobSkin": "k-d", "role": "master", "rangePct": [0, 100], "default": 16 }
+          ]
+        },
+
+        {
+          "id": "fxunit-reverb",
+          "type": "fx-unit",
+          "label": "Reverb",
+          "tag": "Convolution hall",
+          "defaultPowerOn": true,
+          "power": { "class": "fxpower", "action": "fxToggle('reverb')" },
+          "dsp": { "readoutId": "dsp-reverbMix", "barId": "bar-reverbMix" },
+          "knobs": [
+            { "dataFx": "reverbSize", "label": "Size", "param": "reverbSize", "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100], "formula": "impulse 0.4+norm*2.6s", "default": 42 },
+            { "dataFx": "reverbDamp", "label": "Damp", "param": "reverbDamp", "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100], "default": 55 },
+            { "dataFx": "reverbMix",  "label": "Mix",  "param": "reverbMix",  "sizePx": 64, "knobSkin": "k-d", "role": "master", "rangePct": [0, 100], "default": 12 }
+          ]
+        },
+
+        {
+          "id": "fxunit-dist",
+          "type": "fx-unit",
+          "label": "Distortion",
+          "tag": "tanh drive · DC block",
+          "defaultPowerOn": false,
+          "power": { "class": "fxpower", "action": "fxToggle('dist')" },
+          "dsp": { "readoutId": "dsp-distortion", "barId": "bar-distortion" },
+          "knobs": [
+            { "dataFx": "distTone",   "label": "Tone",  "param": "distTone",   "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100], "default": 50 },
+            { "dataFx": "distLevel",  "label": "Level", "param": "distLevel",  "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100], "default": 50 },
+            { "dataFx": "distortion", "label": "Drive", "param": "distortion", "sizePx": 64, "knobSkin": "k-d", "role": "master", "rangePct": [0, 100], "default": 0, "sharedWith": "SYNTH/Distort", "algorithm": "tanh(drive*x)/tanh(drive), drive=1+norm*9" }
+          ]
+        },
+
+        {
+          "id": "fxunit-chorus",
+          "type": "fx-unit",
+          "label": "Chorus",
+          "tag": "BBD · 2-voice",
+          "defaultPowerOn": false,
+          "power": { "class": "fxpower", "action": "fxToggle('chorus')" },
+          "dsp": { "readoutId": "dsp-chorusMix", "barId": "bar-chorusMix" },
+          "knobs": [
+            { "dataFx": "chorusRate",  "label": "Rate",  "param": "chorusRate",  "sizePx": 48, "knobSkin": "k-c", "rangeHz": [0.2, 4.2], "formula": "0.2+norm*4Hz", "default": 30 },
+            { "dataFx": "chorusDepth", "label": "Depth", "param": "chorusDepth", "sizePx": 48, "knobSkin": "k-c", "rangePct": [0, 100],   "default": 40 },
+            { "dataFx": "chorusMix",   "label": "Mix",   "param": "chorusMix",   "sizePx": 64, "knobSkin": "k-d", "role": "master", "rangePct": [0, 100], "default": 0 }
+          ]
+        }
+      ]
+    },
+
+    "preset": {
+      "id": "page-preset",
+      "layout": "grid-3-cols",
+      "sections": {
+
+        "factoryPreset": {
+          "type": "card",
+          "label": "Factory Pattern Preset",
+          "components": [
+            {
+              "id": "factory-select",
+              "type": "select",
+              "action": "onFactorySelect(this)",
+              "options": [
+                { "index": 0, "label": "Classic Acid" },
+                { "index": 1, "label": "Deep Squelch" },
+                { "index": 2, "label": "Funky Groove" },
+                { "index": 3, "label": "Dub Delay" },
+                { "index": 4, "label": "Space Acid" },
+                { "index": 5, "label": "Dark Techno" },
+                { "index": 6, "label": "Rave Acid" },
+                { "index": 7, "label": "Square Pulse" }
+              ]
+            },
+            {
+              "type": "dsp-panel",
+              "paramDisplays": [
+                { "id": "fp-tempo", "shows": "Tempo" },
+                { "id": "fp-wave",  "shows": "Waveform" },
+                { "id": "fp-cut",   "shows": "Cutoff" },
+                { "id": "fp-res",   "shows": "Resonance" }
+              ]
+            },
+            {
+              "id": "fp-preview",
+              "type": "pattern-preview-grid",
+              "cells": 16,
+              "legend": ["gate", "accent", "slide"],
+              "action": "renderPatternPreview(presetIndex)"
+            }
+          ]
+        },
+
+        "synthPreset": {
+          "type": "card",
+          "label": "Synth Preset",
+          "components": [
+            {
+              "id": "synth-select",
+              "type": "select",
+              "action": "onSynthSelect(this)",
+              "options": [
+                { "index": 0,  "label": "Acid Saw" },
+                { "index": 1,  "label": "TB Squelch" },
+                { "index": 2,  "label": "Deep Sub" },
+                { "index": 3,  "label": "Jungle Bass" },
+                { "index": 4,  "label": "Ambient Cloud" },
+                { "index": 5,  "label": "Echo Acid" },
+                { "index": 6,  "label": "Square Stomp" },
+                { "index": 7,  "label": "Overdrive" },
+                { "index": 8,  "label": "Wobble Bass" },
+                { "index": 9,  "label": "Warm Pad" },
+                { "index": 10, "label": "Scream" },
+                { "index": 11, "label": "Hybrid FX" }
+              ]
+            },
+            {
+              "id": "synth-bars",
+              "type": "parameter-bar-display",
+              "shows": "visual bars of synth param values"
+            }
+          ]
+        },
+
+        "actions": {
+          "type": "card",
+          "label": "Actions",
+          "components": [
+            { "id": "loaded-name", "type": "display", "shows": "name of loaded preset" },
+            { "id": "loaded-type", "type": "display", "shows": "type: factory|synth" },
+            { "type": "button", "label": "▶ LOAD PRESET", "action": "loadPreset()" },
+            { "id": "play-key3", "type": "button", "label": "PLAY", "action": "togglePlay()" },
+            { "id": "stop-key3", "type": "button", "label": "STOP", "action": "doStop()" }
+          ]
+        }
+      }
+    },
+
+    "settings": {
+      "id": "page-settings",
+      "layout": "settings-grid-4 + settings-wide-2",
+      "sections": {
+
+        "tempo": {
+          "type": "card",
+          "label": "Tempo",
+          "components": [
+            { "id": "bpm-display", "type": "display-editable", "label": "BPM value", "contenteditable": true, "clampMin": 40, "clampMax": 220 },
+            { "type": "button-group", "label": "Nudge BPM", "buttons": [
+              { "label": "+", "action": "changeBPM(+1)" },
+              { "label": "-", "action": "changeBPM(-1)" }
+            ]},
+            { "type": "button-group", "label": "Step BPM", "buttons": [
+              { "id": "bs1",  "label": "+1",  "action": "changeBPM(+1)" },
+              { "id": "bs5",  "label": "+5",  "action": "changeBPM(+5)" },
+              { "id": "bs10", "label": "+10", "action": "changeBPM(+10)" }
+            ]},
+            { "id": "tap-btn", "type": "button", "label": "TAP TEMPO", "action": "tapTempo()" }
+          ]
+        },
+
+        "playbackMode": {
+          "type": "card",
+          "label": "Playback Mode",
+          "components": [
+            { "id": "mode-filter", "type": "button", "label": "FILTER",  "action": "setMode('filter')", "semantics": "VCF active — filter in audio chain" },
+            { "id": "mode-note",   "type": "button", "label": "NOTE",    "action": "setMode('note')",   "semantics": "VCF bypass — oscillator only, no filter" },
+            { "id": "mode-midi",   "type": "button", "label": "MIDI IN", "action": "setMode('midi')",   "semantics": "Sequencer bypass — responds to external MIDI" }
+          ],
+          "default": "filter",
+          "style": "mutually-exclusive pill buttons"
+        },
+
+        "feel": {
+          "type": "card",
+          "label": "Feel",
+          "components": [
+            { "id": "swing-range",  "type": "range", "label": "Shuffle/Swing", "min": 0, "max": 100, "default": 0,  "unit": "%", "effect": "delays even-numbered steps (2,4,6...) forward in time — classic swing groove" },
+            { "id": "swing-val",    "type": "display", "shows": "swing %" },
+            { "id": "accamt-range", "type": "range", "label": "Accent Amt",    "min": 0, "max": 100, "default": 75, "unit": "%", "effect": "difference in volume/intensity between accented and normal notes" },
+            { "id": "accamt-val",   "type": "display", "shows": "accent amount %" }
+          ]
+        },
+
+        "audioEngine": {
+          "type": "card",
+          "label": "Audio Engine",
+          "note": "AudioContext requires user gesture (first PLAY) — browser security constraint",
+          "stack": [
+            { "layer": "AudioWorklet",       "value": "ready" },
+            { "layer": "ENGINE",             "value": "TB-303 DSP" },
+            { "layer": "VCF",                "value": "Huovilainen ladder" },
+            { "layer": "VCO",                "value": "PolyBLEP saw/sqr" },
+            { "layer": "OUTPUT",             "value": "Stereo" }
+          ],
+          "components": [
+            { "id": "audio-status", "type": "display", "shows": "engine ready/error state" }
+          ]
+        },
+
+        "keyboard": {
+          "type": "card",
+          "label": "Keyboard — Live Play",
+          "layout": "settings-wide",
+          "activeIn": "MIDI mode only",
+          "modifier": "Shift = add accent to note",
+          "keymap": {
+            "A": "C",  "W": "C#", "S": "D",  "E": "D#",
+            "D": "E",  "F": "F",  "T": "F#", "G": "G",
+            "Y": "G#", "H": "A",  "U": "A#", "J": "B",
+            "K": "C (next octave)"
+          },
+          "layout_logic": "ASDFGHJK = white keys C-D-E-F-G-A-B-C; WETYU = black keys C#-D#-F#-G#-A# (standard DAW mapping)"
+        },
+
+        "about": {
+          "type": "card",
+          "label": "About",
+          "layout": "settings-wide",
+          "content": {
+            "name":    "ACIDLAB",
+            "subtitle":"BASS SYNTHESIZER",
+            "version": "v1.0.0",
+            "description": "Clone software del Roland TB-303. DSP C++/JUCE · UI WebView HTML. Engine WebAudio nel browser.",
+            "author":  "Eugenio Bellini",
+            "institute":"NABA UI/UX 2026"
+          }
+        }
+      }
+    }
+  },
+
+  "jsState": {
+    "core": {
+      "stepOn":    { "type": "Set<number>",   "description": "Indices 0-15 of active gates", "default": "[0,3,5,8,11,14]" },
+      "notes":     { "type": "string[]",      "description": "Note name per step (length 16)", "example": "['C3','D3',...]" },
+      "curStep":   { "type": "number",        "description": "Current playing step (0-15)",   "default": 0 },
+      "playing":   { "type": "boolean",       "description": "Transport state",               "default": false },
+      "iv":        { "type": "IntervalHandle","description": "setInterval handle for demo playback" }
+    },
+    "settings": {
+      "bpm":         { "type": "number",  "default": 125,      "clamp": [40, 220] },
+      "bpmStep":     { "type": "number",  "default": 1,        "description": "+/- step size" },
+      "tapTimes":    { "type": "number[]","default": "[]",     "description": "Timestamps for tap tempo" },
+      "currentMode": { "type": "string",  "default": "filter", "enum": ["filter", "note", "midi"] }
+    },
+    "fx": {
+      "fxVals":     { "type": "object",  "default": {"delay":45,"reverb":50,"dist":0,"chorus":0}, "range": "0-100" },
+      "fxDragging": { "type": "string|null", "default": null }
+    },
+    "audio": {
+      "ctx":        { "type": "AudioContext|null",     "default": null },
+      "node":       { "type": "AudioWorkletNode|null", "default": null },
+      "ready":      { "type": "boolean",               "default": false },
+      "starting":   { "type": "boolean",               "default": false },
+      "webPlaying": { "type": "boolean",               "default": false }
+    },
+    "preset": {
+      "srcMode":   { "type": "string", "default": "seq", "enum": ["midi", "seq", "preset"] },
+      "presetIdx": { "type": "number", "default": 0,     "range": [0, 7] }
+    },
+    "defaults": {
+      "cutoff": 620, "resonance": 0.55, "envMod": 0.50, "decay": 0.32,
+      "accent": 0.50, "volume": 0.80, "distortion": 0.0, "tuning": 0,
+      "waveform": 0, "tempo": 130, "resolution": 4
+    }
+  },
+
+  "juceBridge": {
+    "available": "window.__JUCE__ !== undefined",
+    "nativeFunctions": [
+      { "name": "selectPattern", "args": ["index:0-7"],          "action": "sequencer.selectPattern(index)" },
+      { "name": "toggleStep",    "args": ["step:0-15"],          "action": "inverts step.gate" },
+      { "name": "setStepNote",   "args": ["step:0-15","note:MIDI48-71"], "action": "set note+gate; same note = toggle off" },
+      { "name": "setStepAccent", "args": ["step:0-15","on:bool"],"action": "step.accent = on" },
+      { "name": "setStepSlide",  "args": ["step:0-15","on:bool"],"action": "step.slide = on" },
+      { "name": "setResolution", "args": ["r:1|2|4"],            "action": "processor.setStepResolution(r)" },
+      { "name": "loadPreset",    "args": ["index:0-7"],          "action": "load factory preset (synth+FX+pattern)" },
+      { "name": "loadSynthPreset","args":["index:0-11"],         "action": "load synth-only preset" },
+      { "name": "setMidiMode",   "args": ["on:bool"],            "action": "enable/disable MIDI mode" }
+    ],
+    "sliderRelays": [
+      "cutoff","resonance","envMod","decay","accent","volume","distortion",
+      "tuning","delayTime","delayFeedback","delayMix","reverbSize","reverbMix","reverbDamp"
+    ],
+    "toggleRelays": ["play", "waveform"],
+    "incomingEvent": {
+      "name": "stateUpdate",
+      "payload": {
+        "step":    "number (0-15)",
+        "playing": "boolean",
+        "pattern": "number (0-7)",
+        "steps": {
+          "type": "array[16]",
+          "item": { "gate": "boolean", "note": "number(MIDI)", "accent": "boolean", "slide": "boolean" }
+        }
+      }
+    }
+  },
+
+  "designTokens": {
+    "colors": {
+      "--body-bg":    "#909296",
+      "--panel-face": "#f5f5f3",
+      "--panel-hi":   "#ffffff",
+      "--panel-mid":  "#e8e8e6",
+      "--panel-shad": "#ccccca",
+      "--panel-edge": "#b0b0ae",
+      "--inset-bg":   "#eaeae8",
+      "--inset-deep": "#dededd",
+      "--acid":       "#88ff00",
+      "--lcd-bg":     "#070e03",
+      "--lcd-text":   "#88ff00",
+      "--text":       "#2a2a28",
+      "--text-dim":   "#888882"
+    },
+    "typography": {
+      "primary": "IBM Plex Mono",
+      "weights": [300, 400, 500, 600]
+    }
+  }
+}
