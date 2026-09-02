@@ -1866,7 +1866,7 @@ body {
                       <div class="lcd-side-k">Preset</div>
                       <div class="preset-nav">
                         <button class="pnav" id="pnav-prev" title="Preset precedente" aria-label="Preset precedente">◀</button>
-                        <div class="preset-name" id="lcd-preset">Nightshade Run</div>
+                        <div class="preset-name" id="lcd-preset">Basic Acid</div>
                         <button class="pnav" id="pnav-next" title="Preset successivo" aria-label="Preset successivo">▶</button>
                       </div>
                       <div class="lcd-side-rows">
@@ -2244,16 +2244,16 @@ body {
                 border:1px solid var(--panel-shad);border-radius:5px;
                 box-shadow:0 2px 5px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.08);
                 appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
-                <option value="0">01 — Nightshade Run</option>
-                <option value="1">02 — Copper Coil</option>
-                <option value="2">03 — Glass Meridian</option>
-                <option value="3">04 — Ferrite Bloom</option>
-                <option value="4">05 — Undertow</option>
-                <option value="5">06 — Static Prayer</option>
-                <option value="6">07 — Lithium Dawn</option>
-                <option value="7">08 — Verdigris</option>
-                <option value="8">09 — Solvent Trails</option>
-                <option value="9">10 — Obsidian Pulse</option>
+                <option value="0">01 — Basic Acid</option>
+                <option value="1">02 — Root Drone</option>
+                <option value="2">03 — Glide Pair</option>
+                <option value="3">04 — Octave Ladder</option>
+                <option value="4">05 — Sparse Groove</option>
+                <option value="5">06 — Half Loop</option>
+                <option value="6">07 — Phrygian Three</option>
+                <option value="7">08 — Accent Storm</option>
+                <option value="8">09 — Deep Slow</option>
+                <option value="9">10 — Rave Sixteen</option>
               </select>
               <div style="pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);">
                 <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2349,7 +2349,7 @@ body {
               <div class="dsp-k" style="margin-bottom:5px;">Selected</div>
               <div style="font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.5px;
                           color:var(--lcd-green);text-shadow:0 0 9px var(--acid-glow);margin-bottom:4px;"
-                   id="loaded-name">Nightshade Run</div>
+                   id="loaded-name">Basic Acid</div>
               <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:#44aa00;"
                    id="loaded-type">Factory Pattern</div>
               <div style="display:flex;align-items:center;gap:6px;margin-top:9px;">
@@ -3072,16 +3072,16 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
-  {name:'Nightshade Run',tempo:132, wave:'SAW', cut:'620Hz', res:0.82, env:0.62, dec:0.42},
-  {name:'Copper Coil',   tempo:128, wave:'SQR', cut:'480Hz', res:0.90, env:0.74, dec:0.55},
-  {name:'Glass Meridian',tempo:138, wave:'SAW', cut:'880Hz', res:0.68, env:0.55, dec:0.30},
-  {name:'Ferrite Bloom', tempo:126, wave:'SQR', cut:'360Hz', res:0.92, env:0.80, dec:0.68},
-  {name:'Undertow',      tempo:122, wave:'SAW', cut:'540Hz', res:0.76, env:0.58, dec:0.95},
-  {name:'Static Prayer', tempo:140, wave:'SQR', cut:'700Hz', res:0.94, env:0.70, dec:0.35},
-  {name:'Lithium Dawn',  tempo:145, wave:'SAW', cut:'1150Hz', res:0.64, env:0.50, dec:0.24},
-  {name:'Verdigris',     tempo:130, wave:'SQR', cut:'580Hz', res:0.86, env:0.66, dec:0.48},
-  {name:'Solvent Trails',tempo:118, wave:'SAW', cut:'420Hz', res:0.58, env:0.48, dec:1.20},
-  {name:'Obsidian Pulse',tempo:136, wave:'SQR', cut:'320Hz', res:0.88, env:0.78, dec:0.40},
+  {name:'Basic Acid',    tempo:130, wave:'SAW', cut:'700Hz', res:0.55, env:0.55, dec:0.35},
+  {name:'Root Drone',    tempo:128, wave:'SAW', cut:'380Hz', res:0.90, env:0.88, dec:0.55},
+  {name:'Glide Pair',    tempo:122, wave:'SAW', cut:'620Hz', res:0.84, env:0.62, dec:0.50},
+  {name:'Octave Ladder', tempo:134, wave:'SQR', cut:'780Hz', res:0.68, env:0.58, dec:0.22},
+  {name:'Sparse Groove', tempo:124, wave:'SAW', cut:'900Hz', res:0.62, env:0.50, dec:0.28},
+  {name:'Half Loop',     tempo:132, wave:'SQR', cut:'560Hz', res:0.76, env:0.65, dec:0.30},
+  {name:'Phrygian Three',tempo:126, wave:'SQR', cut:'520Hz', res:0.80, env:0.70, dec:0.45},
+  {name:'Accent Storm',  tempo:138, wave:'SAW', cut:'660Hz', res:0.72, env:0.60, dec:0.25},
+  {name:'Deep Slow',     tempo:118, wave:'SAW', cut:'340Hz', res:0.48, env:0.45, dec:1.15},
+  {name:'Rave Sixteen',  tempo:145, wave:'SQR', cut:'1200Hz', res:0.78, env:0.66, dec:0.18},
 ];
 const SYNTH_DATA = [
   {name:'Acid Saw',     cut:0.65,res:0.75,env:0.70,dec:0.20,acc:0.75},
@@ -3314,19 +3314,18 @@ function setMode(mode){
 <script>
 (function(){
 
-  // ── Pattern di default "Nightshade Run" (stesso del preset C++ n.0) ──
+  // ── Pattern di default "Basic Acid" (stesso del preset C++ n.0) ──
   // Scritto sulla root C3 = 48, come StepSequencer::PATTERN_ROOT.
   const S=(note,gate,accent,slide,octave)=>({note,gate:!!gate,accent:!!accent,slide:!!slide,octave});
   const DEFAULT_PATTERN=[
-    S(48,1,1,0,0),S(60,1,0,1,0),S(58,1,0,0,0),S(55,1,0,0,0),
-    S(51,1,0,0,0),S(48,1,0,0,0),S(55,1,0,1,0),S(58,1,0,0,0),
-    S(60,1,1,0,0),S(58,1,0,0,0),S(55,1,0,0,0),S(53,1,0,1,0),
-    S(51,1,0,0,0),S(50,1,0,0,0),S(49,1,0,0,0),S(48,1,0,0,0)
+    S(48,1,1,0,0),S(48,1,0,0,0),S(48,1,0,0,0),S(60,1,0,0,0),
+    S(48,1,0,0,0),S(48,1,0,0,0),S(55,1,0,0,0),S(48,1,0,0,0),
+    S(48,1,1,0,0),S(48,1,0,0,0),S(48,1,0,0,0),S(60,1,0,0,0),
+    S(48,1,0,0,0),S(55,1,0,1,0),S(48,1,0,0,0),S(48,1,0,0,0)
   ];
-  // Valori di "Nightshade Run", tarati sul profilo statistico di Acid V:
-  // risonanza piu' alta e distortion realmente in uso rispetto a prima.
-  const DEFAULTS={cutoff:620,resonance:0.82,envMod:0.62,decay:0.42,accent:0.78,
-                  volume:0.82,distortion:0.28,tuning:0,waveform:0,tempo:132,resolution:4};
+  // Valori di "Basic Acid", il preset di riferimento.
+  const DEFAULTS={cutoff:700,resonance:0.55,envMod:0.55,decay:0.35,accent:0.70,
+                  volume:0.82,distortion:0.10,tuning:0,waveform:0,tempo:130,resolution:4};
 
   // ── Codice dell'AudioWorkletProcessor (porting fedele dei .cpp) ──
   const WORKLET_CODE = `
@@ -3417,8 +3416,11 @@ class TB303Processor extends AudioWorkletProcessor {
     let mod=Math.pow(2,logC+this.envMod*3*env+this.accentMod*1.5*acc); mod=Math.min(Math.max(mod,20),this.sr*0.45);
     let res=this.resonance+acc*this.accentMod*0.15; res=Math.min(Math.max(res,0),0.99);
     const g=this.cutG(mod), res4=res*4;
-    const mid=0.5*(this.prevIn+input); this.fStep(mid,g,res4); this.fStep(input,g,res4); this.prevIn=input;
-    const xn=this.stageT[3]*2; const yn=xn-this.dcX+0.9995*this.dcY; this.dcX=xn; this.dcY=yn; return yn;
+    // compensazione risonanza, come in VCF::processSample
+    const inG=1+res*0.5, inF=input*inG;
+    const mid=0.5*(this.prevIn+inF); this.fStep(mid,g,res4); this.fStep(inF,g,res4); this.prevIn=inF;
+    // stageT[2] = terzo polo: 18 dB/ott come il TB-303, non 24 come il Moog
+    const xn=this.stageT[2]*2; const yn=xn-this.dcX+0.9995*this.dcY; this.dcX=xn; this.dcY=yn; return yn;
   }
   // Antiderivative anti-aliasing di primo ordine su tanh. Porting di
   // Source/DSP/Saturation.h: integrando la curva tra due campioni invece di
@@ -3650,16 +3652,16 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Sorgente note + modalità (MIDI / SEQ / PRESET) ──
   const _P=a=>a.map(x=>({note:x[0],gate:!!x[1],accent:!!x[2],slide:!!x[3],octave:x[4]||0}));
   const FACTORY_PATTERNS=[
-    _P([[48,1,1,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[58,1,0,0,0],[60,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[53,1,0,1,0],[51,1,0,0,0],[50,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[56,1,0,0,0],[55,1,0,0,0],[53,1,0,0,0],[51,1,0,1,0],[48,1,1,0,0],[60,1,0,0,0],[59,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[50,1,0,0,0],[51,1,0,0,0],[55,1,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[63,1,0,0,0],[60,1,0,0,0],[58,1,1,0,0],[55,1,0,0,0],[51,1,0,1,0],[50,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[53,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[48,1,0,0,0],[55,1,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[53,1,1,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[50,1,0,1,0],[51,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0]]),
-    _P([[60,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[55,1,0,0,0],[58,1,0,0,0],[60,1,1,0,0],[63,1,0,0,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[55,1,0,0,0],[60,1,0,0,0],[55,1,0,0,0],[51,1,0,1,0],[58,1,0,0,0],[63,1,0,1,0],[58,1,0,0,0],[48,1,1,0,0],[55,1,0,0,0],[60,1,0,0,0],[67,1,0,0,0],[60,1,0,1,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[53,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[58,1,1,0,0],[56,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0]]),
-    _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[51,1,1,0,0],[48,1,0,0,0],[58,1,0,1,0],[55,1,0,0,0],[51,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0],[60,1,0,0,0]])
+    _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,1,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0]]),
+    _P([[48,1,0,0,0],[60,1,0,1,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[60,1,0,1,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[60,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[60,1,0,1,0],[48,0,0,0,0],[48,0,0,0,0]]),
+    _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[55,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[51,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[55,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[51,1,0,0,0]]),
+    _P([[48,1,1,0,0],[49,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0],[60,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,1,0,0],[48,1,0,0,0],[48,1,1,0,0],[55,1,0,0,0],[60,1,1,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[60,1,1,0,0],[48,1,0,0,0],[55,1,1,0,0],[48,1,0,0,0],[60,1,1,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),
+    _P([[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[55,1,0,0,0],[48,1,0,0,0],[51,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0]])
   ];
   window.FACTORY_PATTERNS_JS=FACTORY_PATTERNS;
   let srcMode='seq', presetIdx=0;
@@ -3771,7 +3773,7 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Knob draggabili + registry per preset/automazione ──
   let curRes=DEFAULTS.resolution;
   const RANGES={
-    'Cutoff':{p:'cutoff',min:20,max:20000,skew:0.25,fmt:v=>Math.round(v)+'Hz'},
+    'Cutoff':{p:'cutoff',min:120,max:8000,skew:0.4,fmt:v=>Math.round(v)+'Hz'},
     'Resonance':{p:'resonance',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
     'Env Mod':{p:'envMod',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
     'Decay':{p:'decay',min:0.05,max:2,skew:0.4,fmt:v=>v.toFixed(2)+'s'},

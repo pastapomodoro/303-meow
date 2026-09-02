@@ -8,7 +8,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TB303Processor::createParame
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "cutoff", "Cutoff",
-        juce::NormalisableRange<float>(20.0f, 20000.0f, 0.01f, 0.25f), 800.0f));
+        // Il TB-303 spazza circa 200 Hz - 5 kHz. Con 20 Hz - 20 kHz mezza corsa
+        // del knob stava sopra i 6 kHz, dove su una linea di basso non c'e' piu'
+        // nulla da filtrare: la manopola sembrava morta e il punto utile era
+        // schiacciato in fondo. 120 Hz - 8 kHz copre il 303 con un margine, e
+        // con skew 0.4 la corsa diventa 366 Hz a 1/4, 1.5 kHz a meta', 4 kHz a 3/4.
+        juce::NormalisableRange<float>(120.0f, 8000.0f, 0.01f, 0.4f), 700.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "resonance", "Resonance",
@@ -104,7 +109,7 @@ TB303Processor::TB303Processor()
     pReverbMix     = apvts.getRawParameterValue("reverbMix");
 
     // Default 303 preset così il plugin apre già su un punto di partenza
-    // musicale ("Nightshade Run"). Il tempo del preset viene sovrascritto a
+    // musicale ("Basic Acid"). Il tempo del preset viene sovrascritto a
     // 160 BPM come richiesto.
     loadPreset(0);
     if (auto* t = apvts.getParameter("tempo"))
@@ -162,7 +167,7 @@ void TB303Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     // Partenza sui valori correnti, altrimenti la prima nota dopo il load
     // arriva mentre i parametri stanno ancora rampando dal default.
-    smCutoff    .setCurrentAndTargetValue(juce::jmax(20.0f, pCutoff->load()));
+    smCutoff    .setCurrentAndTargetValue(juce::jmax(120.0f, pCutoff->load()));
     smResonance .setCurrentAndTargetValue(pResonance->load());
     smEnvMod    .setCurrentAndTargetValue(pEnvMod->load());
     smAccent    .setCurrentAndTargetValue(pAccent->load());
@@ -187,7 +192,7 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     // ── Update synth parameters ───────────────────────────────────────────
     // I continui passano dallo smoothing e vengono letti campione per campione
     // nel loop di render; qui si fissa solo il bersaglio.
-    smCutoff    .setTargetValue(juce::jmax(20.0f, pCutoff->load()));
+    smCutoff    .setTargetValue(juce::jmax(120.0f, pCutoff->load()));
     smResonance .setTargetValue(pResonance->load());
     smEnvMod    .setTargetValue(pEnvMod->load());
     smAccent    .setTargetValue(pAccent->load());

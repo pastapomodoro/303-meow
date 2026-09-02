@@ -95,5 +95,11 @@ float VCF::processSample(float input, float envInput, float accentInput)
     filterStep(inputF, g, res4);
     prevInput = inputF;
 
-    return dcBlock(static_cast<float>(stageTanh[3] * 2.0));
+    // Uscita presa al TERZO polo, non al quarto: il VCF del TB-303 e' un
+    // diode ladder a 18 dB/ottava, non i 24 dB/ottava del ladder Moog. E' la
+    // ragione principale del suo timbro piu' aperto e nasale — a 24 dB/ott le
+    // armoniche sopra il taglio spariscono troppo, e la linea non "buca".
+    // Il feedback resta preso da stage[3], quindi la risonanza conserva la
+    // rotazione di fase dei quattro stadi.
+    return dcBlock(static_cast<float>(stageTanh[2] * 2.0));
 }
