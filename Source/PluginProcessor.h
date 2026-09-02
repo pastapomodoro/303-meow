@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include <array>
 #include "Synth/TB303Engine.h"
 #include "Sequencer/StepSequencer.h"
 #include "FX/Delay.h"
@@ -51,17 +52,46 @@ public:
     void setStepResolution(int r)  { sequencer.setStepResolution(r); }
     int  getStepResolution() const { return sequencer.getStepResolution(); }
 
-    // MIDI input mode: bypasses sequencer, plays directly from MIDI keyboard
+    // MIDI mode: la nota in arrivo diventa la root del pattern e il sequencer
+    // parte finche' la nota resta premuta — comportamento "pattern player" di
+    // Acid V/Phoscyon dentro un DAW. Fuori da MIDI mode il MIDI suona note
+    // singole sopra il sequencer, come prima.
     void setMidiMode(bool on) { midiMode.store(on); }
     bool getMidiMode() const  { return midiMode.load(); }
 
 private:
     std::atomic<bool> midiMode { false };
+
+    // ── Note tenute in MIDI mode (priorita' all'ultima premuta) ───────────
+    static constexpr int kMaxHeld = 16;
+    std::array<int, kMaxHeld> heldNotes {};
+    int  heldCount = 0;
+    bool lastPatternMode = false;
+
+    void handleMidiEvent(const juce::MidiMessage& msg, bool patternMode);
+    void releaseAllHeld();
     juce::AudioProcessorValueTreeState apvts;
     TB303Engine   engine;
     StepSequencer sequencer;
     Delay         delay;
     juce::dsp::Reverb reverb;
+
+    // ── Stadio di uscita ─────────────────────────────────────────────────
+    // Il VCF in autooscillazione piu' l'accent che somma +6 dB arrivano
+    // tranquillamente sopra 0 dBFS: senza niente in fondo alla catena e' il
+    // convertitore del DAW a troncare, ed e' la distorsione peggiore che ci
+    // sia. Il limiter sta a -1 dBFS e lavora solo sui picchi.
+    juce::dsp::Limiter<float> limiter;
+
+    // Smoothing dei parametri che, se saltano a inizio blocco, si sentono:
+    // il cutoff perche' rifa' i coefficienti del ladder, gli altri perche'
+    // moltiplicano direttamente il segnale.
+    // Il cutoff e' moltiplicativo: una rampa lineare da 20 Hz a 20 kHz
+    // passerebbe quasi tutto il tempo sopra i 10 kHz, mentre in frequenza
+    // l'orecchio ragiona in ottave.
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> smCutoff;
+    juce::SmoothedValue<float> smResonance, smEnvMod, smAccent, smVolume,
+                               smDistortion, smTuning;
 
     int           currentPresetIndex      = -1;
     int           currentSynthPresetIndex = -1;

@@ -84,7 +84,7 @@ void StepSequencer::sendStepEvents(TB303Engine& engine, int step)
         return;
     }
 
-    int midiNote  = juce::jlimit(0, 127, s.note + s.octave * 12);
+    int midiNote  = juce::jlimit(0, 127, s.note + s.octave * 12 + transpose);
     bool doSlide  = previousSlide;
 
     engine.noteOn(midiNote, s.accent, doSlide, previousNote);

@@ -10,6 +10,11 @@ class StepSequencer
 public:
     static constexpr int NUM_PATTERNS = 8;
 
+    // Root su cui sono scritti i pattern factory (C2). In MIDI mode la nota
+    // in arrivo diventa la nuova root e il pattern viene trasposto di
+    // (nota - PATTERN_ROOT) semitoni, come fa Acid V dentro Ableton.
+    static constexpr int PATTERN_ROOT = 36;
+
     StepSequencer();
 
     void prepare(double sampleRate);
@@ -38,6 +43,10 @@ public:
     void setStepResolution(int r);
     int  getStepResolution() const { return stepResolution; }
 
+    // Trasposizione del pattern in semitoni (audio thread only)
+    void setTranspose(int semitones) { transpose = semitones; }
+    int  getTranspose() const        { return transpose; }
+
 private:
     std::array<Pattern, NUM_PATTERNS> patterns;
 
@@ -50,6 +59,7 @@ private:
     int previousNote       = 36;
     bool previousSlide     = false;
     int  stepResolution    = 4;        // 1=quarter, 2=eighth, 4=sixteenth
+    int  transpose         = 0;        // semitoni, impostato dalla nota MIDI
     bool playing           = false;
     bool firstBeat         = false;   // fires step 0 on first processBlock call
 

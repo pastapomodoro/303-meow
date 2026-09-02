@@ -217,41 +217,47 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     bool shouldPlay  = pPlay->load() > 0.5f;
     bool isMidiMode  = midiMode.load();
 
+    // Cambio di modalita': azzera le note tenute, altrimenti una nota rimasta
+    // giu' al momento dello switch lascerebbe il sequencer in trasposizione.
+    if (isMidiMode != lastPatternMode)
+    {
+        releaseAllHeld();
+        sequencer.setTranspose(0);
+        sequencer.stop();
+        lastPatternMode = isMidiMode;
+    }
+
     if (!isMidiMode)
     {
+        // Sequencer mode: transport dal pulsante Play, nessuna trasposizione
         if (shouldPlay && !sequencer.isPlaying())  sequencer.play();
         else if (!shouldPlay && sequencer.isPlaying()) sequencer.stop();
     }
-    else
-    {
-        if (sequencer.isPlaying()) sequencer.stop();
-    }
+    // In MIDI mode il transport lo guidano i note on/off, gestiti nel loop
+    // per-campione qui sotto.
 
     double bpm = static_cast<double>(pTempo->load());
 
-    // ── MIDI input ────────────────────────────────────────────────────────
-    for (const auto midiMeta : midiMessages)
-    {
-        auto msg = midiMeta.getMessage();
-        if (msg.isNoteOn())
-            engine.noteOn(msg.getNoteNumber(), msg.getVelocity() > 100, false,
-                          msg.getNoteNumber());
-        else if (msg.isNoteOff())
-            engine.noteOff();
-    }
-
     // ── Sync sequencer BPM once per block ────────────────────────────────
-    if (!isMidiMode)
-        sequencer.syncBpm(getPlayHead(), bpm);
+    sequencer.syncBpm(getPlayHead(), bpm);
 
-    // ── Per-sample loop: sequencer interleaved with audio rendering ───────
+    // ── Per-sample loop: MIDI + sequencer interleaved with audio rendering ─
     auto* left  = buffer.getWritePointer(0);
     auto* right = buffer.getWritePointer(1);
 
+    auto midiIt = midiMessages.cbegin();
+
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
-        if (!isMidiMode)
-            sequencer.advanceSample(engine);
+        // Gli eventi MIDI scattano al loro samplePosition, non a inizio blocco:
+        // stesso motivo per cui il sequencer ora avanza campione per campione.
+        while (midiIt != midiMessages.cend() && (*midiIt).samplePosition <= i)
+        {
+            handleMidiEvent((*midiIt).getMessage(), isMidiMode);
+            ++midiIt;
+        }
+
+        sequencer.advanceSample(engine);
 
         engine.setCutoff     (smCutoff.getNextValue());
         engine.setResonance  (smResonance.getNextValue());
@@ -285,6 +291,72 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
         auto* d = buffer.getWritePointer(ch);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
             d[i] = juce::jlimit(-1.0f, 1.0f, d[i]);
+    }
+}
+
+// ── MIDI ──────────────────────────────────────────────────────────────────────
+void TB303Processor::releaseAllHeld()
+{
+    heldCount = 0;
+}
+
+void TB303Processor::handleMidiEvent(const juce::MidiMessage& msg, bool patternMode)
+{
+    if (msg.isNoteOn())
+    {
+        const int note = msg.getNoteNumber();
+
+        if (!patternMode)
+        {
+            engine.noteOn(note, msg.getVelocity() > 100, false, note);
+            return;
+        }
+
+        const bool wasSilent = (heldCount == 0);
+
+        if (heldCount < kMaxHeld)
+            heldNotes[static_cast<size_t>(heldCount++)] = note;
+
+        sequencer.setTranspose(note - StepSequencer::PATTERN_ROOT);
+
+        // Un attacco da fermo riparte da step 0; premere una seconda nota
+        // mentre la prima e' giu' ritraspone senza resettare la posizione,
+        // cosi' il legato nel piano roll scivola di tonalita' a tempo.
+        if (wasSilent)
+            sequencer.play();
+    }
+    else if (msg.isNoteOff())
+    {
+        if (!patternMode)
+        {
+            engine.noteOff();
+            return;
+        }
+
+        const int note = msg.getNoteNumber();
+
+        for (int i = 0; i < heldCount; ++i)
+        {
+            if (heldNotes[static_cast<size_t>(i)] == note)
+            {
+                for (int j = i; j < heldCount - 1; ++j)
+                    heldNotes[static_cast<size_t>(j)] = heldNotes[static_cast<size_t>(j + 1)];
+                --heldCount;
+                break;
+            }
+        }
+
+        if (heldCount == 0)
+            sequencer.stop();
+        else
+            sequencer.setTranspose(heldNotes[static_cast<size_t>(heldCount - 1)]
+                                   - StepSequencer::PATTERN_ROOT);
+    }
+    else if (msg.isAllNotesOff() || msg.isAllSoundOff())
+    {
+        releaseAllHeld();
+        if (patternMode) sequencer.stop();
+        else             engine.noteOff();
     }
 }
 
