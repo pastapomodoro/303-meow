@@ -78,7 +78,11 @@ void StepSequencer::sendStepEvents(TB303Engine& engine, int step)
     const Pattern& pat = patterns[static_cast<size_t>(currentPatternIdx)];
     const Step&    s   = pat.getStep(step);
 
-    if (!s.gate) return;
+    if (!s.gate)
+    {
+        previousSlide = false;
+        return;
+    }
 
     int midiNote  = juce::jlimit(0, 127, s.note + s.octave * 12);
     bool doSlide  = previousSlide;
@@ -99,14 +103,10 @@ void StepSequencer::advanceStep(TB303Engine& engine, double /*bpm*/)
     sendStepEvents(engine, currentStep);
 }
 
-void StepSequencer::processBlock(TB303Engine& engine,
-                                  juce::AudioPlayHead* playHead,
-                                  int numSamples,
-                                  double bpm)
+void StepSequencer::syncBpm(juce::AudioPlayHead* playHead, double fallbackBpm)
 {
-    if (!playing) return;
+    double bpm = fallbackBpm;
 
-    // Use host transport BPM if available
     if (playHead != nullptr)
     {
         juce::AudioPlayHead::CurrentPositionInfo pos;
@@ -117,26 +117,26 @@ void StepSequencer::processBlock(TB303Engine& engine,
         }
     }
 
-    // Step duration in samples (resolution: 1=quarter, 2=eighth, 4=sixteenth)
     double stepSec = 60.0 / bpm / static_cast<double>(stepResolution);
     samplesPerStep = stepSec * sampleRate;
+}
 
-    for (int i = 0; i < numSamples; ++i)
+void StepSequencer::advanceSample(TB303Engine& engine)
+{
+    if (!playing) return;
+
+    if (sampleCounter <= 0.0)
     {
-        if (sampleCounter <= 0.0)
+        if (firstBeat)
         {
-            // Fire step 0 immediately on first processBlock after play()
-            if (firstBeat)
-            {
-                sendStepEvents(engine, currentStep);
-                firstBeat = false;
-            }
-            sampleCounter += samplesPerStep;
+            sendStepEvents(engine, currentStep);
+            firstBeat = false;
         }
-
-        sampleCounter -= 1.0;
-
-        if (sampleCounter <= 0.0)
-            advanceStep(engine, bpm);
+        sampleCounter += samplesPerStep;
     }
+
+    sampleCounter -= 1.0;
+
+    if (sampleCounter <= 0.0)
+        advanceStep(engine, 0.0);
 }

@@ -13,6 +13,11 @@ void TB303Engine::prepare(double sampleRate, int blockSize)
     noteEnv.prepare(sampleRate);
     accentEnv.prepare(sampleRate);
 
+    // 13 kHz: sopra la banda utile del 303 (il VCF arriva a 20k ma il timbro
+    // vive sotto i 5) e sotto la zona in cui il waveshaper concentra la sua
+    // sporcizia residua. Abbastanza alto da non sentirsi come un filtro.
+    toneShaper.prepare(sampleRate, 13000.0);
+
     noteEnv.setDecay(0.3f);
     reset();
 }
@@ -23,8 +28,9 @@ void TB303Engine::reset()
     vcf.reset();
     noteEnv.reset();
     accentEnv.reset();
+    vca.reset();
+    toneShaper.reset();
     noteActive  = false;
-    distDcX = distDcY = 0.0;
 }
 
 void TB303Engine::setCutoff(float hz)       { vcf.setCutoff(hz);       }
@@ -52,10 +58,12 @@ void TB303Engine::noteOn(int midiNote, bool accent, bool slide, int previousNote
         vco.setNote(midiNote, tuningCents);
     }
 
-    noteEnv.trigger();
-
-    if (accent)
-        accentEnv.trigger();
+    if (!slide)
+    {
+        noteEnv.trigger();
+        if (accent)
+            accentEnv.trigger();
+    }
 
     lastNote   = midiNote;
     noteActive = true;
@@ -68,35 +76,16 @@ void TB303Engine::noteOff()
     noteActive = false;
 }
 
-float TB303Engine::applyDistortion(float input) const
-{
-    if (distortion < 1e-4f)
-        return input;
-    float drive = 1.0f + distortion * 9.0f;
-    float tanhDrive = std::tanh(drive);
-    return std::tanh(input * drive) / tanhDrive;
-}
-
-float TB303Engine::distDcBlock(float input)
-{
-    double xn = static_cast<double>(input);
-    double yn = xn - distDcX + 0.9995 * distDcY;
-    distDcX = xn;
-    distDcY = yn;
-    return static_cast<float>(yn);
-}
-
 float TB303Engine::processSample()
 {
     float envOut    = noteEnv.processSample();
     float accentOut = accentEnv.processSample();
 
-    float vcoOut = vco.processSample();
-    float vcfOut = vcf.processSample(vcoOut, envOut, accentOut);
-    float vcaOut = vca.processSample(vcfOut, envOut, accentOut);
-
-    float out = applyDistortion(vcaOut);
-    out = distDcBlock(out);
+    float vcoOut  = vco.processSample();
+    float driven  = vcoOut * (1.0f + distortion * 2.0f);   // drive VCF input
+    float vcfOut  = vcf.processSample(driven, envOut, accentOut);
+    float vcaOut  = vca.processSample(vcfOut, envOut, accentOut, accentLevel);
+    float out     = toneShaper.process(vcaOut);
 
     return out;
 }

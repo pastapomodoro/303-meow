@@ -3,6 +3,7 @@
 #include "VCF.h"
 #include "VCA.h"
 #include "Envelope.h"
+#include "../DSP/Saturation.h"
 
 class TB303Engine
 {
@@ -44,9 +45,7 @@ private:
     int  lastNote      = 36;
     bool noteActive    = false;
 
-    float applyDistortion(float input) const;
-
-    // DC blocker for post-distortion
-    double distDcX = 0.0, distDcY = 0.0;
-    float distDcBlock(float input);
+    // Post-VCA tone shaper: taglia la cresta a 13kHz che il filter drive
+    // lascia comunque, senza toccare la banda utile del 303.
+    OnePoleLP toneShaper;
 };

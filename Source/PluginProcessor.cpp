@@ -133,6 +133,35 @@ void TB303Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     spec.numChannels      = 2;
     reverb.prepare(spec);
     reverb.reset();
+
+    limiter.prepare(spec);
+    limiter.setThreshold(-1.0f);   // dBFS: un dB di margine sotto il fondo scala
+    // 60 ms: a 160 BPM i sedicesimi distano 94 ms, quindi un rilascio piu' lungo
+    // trascinerebbe la riduzione di guadagno di un accento sulla nota dopo e si
+    // sentirebbe come pompaggio. Piu' corto invece inizierebbe a seguire la
+    // forma d'onda del basso e distorcerebbe.
+    limiter.setRelease(60.0f);
+    limiter.reset();
+
+    // 20 ms su tutto tranne il cutoff, che ne prende 30: e' quello che si
+    // sente di piu' quando salta, ed e' anche quello che si muove di piu'.
+    smCutoff    .reset(sampleRate, 0.030);
+    smResonance .reset(sampleRate, 0.020);
+    smEnvMod    .reset(sampleRate, 0.020);
+    smAccent    .reset(sampleRate, 0.020);
+    smVolume    .reset(sampleRate, 0.020);
+    smDistortion.reset(sampleRate, 0.020);
+    smTuning    .reset(sampleRate, 0.020);
+
+    // Partenza sui valori correnti, altrimenti la prima nota dopo il load
+    // arriva mentre i parametri stanno ancora rampando dal default.
+    smCutoff    .setCurrentAndTargetValue(juce::jmax(20.0f, pCutoff->load()));
+    smResonance .setCurrentAndTargetValue(pResonance->load());
+    smEnvMod    .setCurrentAndTargetValue(pEnvMod->load());
+    smAccent    .setCurrentAndTargetValue(pAccent->load());
+    smVolume    .setCurrentAndTargetValue(pVolume->load());
+    smDistortion.setCurrentAndTargetValue(pDistortion->load());
+    smTuning    .setCurrentAndTargetValue(pTuning->load());
 }
 
 void TB303Processor::releaseResources() {}
@@ -149,26 +178,37 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
 
     // ── Update synth parameters ───────────────────────────────────────────
-    engine.setCutoff     (pCutoff->load());
-    engine.setResonance  (pResonance->load());
-    engine.setEnvMod     (pEnvMod->load());
-    engine.setDecay      (pDecay->load());
-    engine.setAccentLevel(pAccent->load());
-    engine.setVolume     (pVolume->load());
-    engine.setTuning     (pTuning->load() * 100.0f);  // semitones → cents
-    engine.setWaveform   (pWaveform->load() > 0.5f ? 1 : 0);
-    engine.setDistortion (pDistortion->load());
+    // I continui passano dallo smoothing e vengono letti campione per campione
+    // nel loop di render; qui si fissa solo il bersaglio.
+    smCutoff    .setTargetValue(juce::jmax(20.0f, pCutoff->load()));
+    smResonance .setTargetValue(pResonance->load());
+    smEnvMod    .setTargetValue(pEnvMod->load());
+    smAccent    .setTargetValue(pAccent->load());
+    smVolume    .setTargetValue(pVolume->load());
+    smDistortion.setTargetValue(pDistortion->load());
+    smTuning    .setTargetValue(pTuning->load());
+
+    // Decay e waveform non moltiplicano il segnale: il primo cambia solo la
+    // costante di tempo dell'inviluppo, il secondo agisce al prossimo ciclo
+    // dell'oscillatore. Nessuno dei due produce uno scalino.
+    engine.setDecay    (pDecay->load());
+    engine.setWaveform (pWaveform->load() > 0.5f ? 1 : 0);
 
     // ── Update FX parameters ─────────────────────────────────────────────
     delay.setTime    (pDelayTime->load());
     delay.setFeedback(pDelayFeedback->load());
     delay.setMix     (pDelayMix->load());
 
+    // dryLevel restava a 1.0 mentre il wet saliva: il riverbero non miscelava,
+    // sommava, e a mix alto la somma usciva sopra fondo scala prima ancora di
+    // arrivare all'uscita. Qui e' un crossfade, quindi il livello resta stabile
+    // su tutta la corsa del knob.
+    const float revMix = pReverbMix->load();
     juce::dsp::Reverb::Parameters reverbParams;
     reverbParams.roomSize   = pReverbSize->load();
-    reverbParams.damping    = 0.5f;
-    reverbParams.wetLevel   = pReverbMix->load();
-    reverbParams.dryLevel   = 1.0f;
+    reverbParams.damping    = 0.55f;   // code un filo meno brillanti
+    reverbParams.wetLevel   = revMix;
+    reverbParams.dryLevel   = 1.0f - revMix;
     reverbParams.width      = 0.85f;
     reverbParams.freezeMode = 0.0f;
     reverb.setParameters(reverbParams);
@@ -200,16 +240,27 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
             engine.noteOff();
     }
 
-    // ── Advance sequencer (only when not in MIDI mode) ────────────────────
+    // ── Sync sequencer BPM once per block ────────────────────────────────
     if (!isMidiMode)
-        sequencer.processBlock(engine, getPlayHead(), buffer.getNumSamples(), bpm);
+        sequencer.syncBpm(getPlayHead(), bpm);
 
-    // ── Render audio ──────────────────────────────────────────────────────
+    // ── Per-sample loop: sequencer interleaved with audio rendering ───────
     auto* left  = buffer.getWritePointer(0);
     auto* right = buffer.getWritePointer(1);
 
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
+        if (!isMidiMode)
+            sequencer.advanceSample(engine);
+
+        engine.setCutoff     (smCutoff.getNextValue());
+        engine.setResonance  (smResonance.getNextValue());
+        engine.setEnvMod     (smEnvMod.getNextValue());
+        engine.setAccentLevel(smAccent.getNextValue());
+        engine.setVolume     (smVolume.getNextValue());
+        engine.setDistortion (smDistortion.getNextValue());
+        engine.setTuning     (smTuning.getNextValue() * 100.0f);  // semitoni → cent
+
         float mono  = engine.processSample();
         float mixed = delay.processSample(mono);
         left[i]  = mixed;
@@ -220,6 +271,21 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::dsp::AudioBlock<float>           block(buffer);
     juce::dsp::ProcessContextReplacing<float> ctx(block);
     reverb.process(ctx);
+
+    // ── Stadio di uscita ──────────────────────────────────────────────────
+    // Il limiter prende i picchi che restano — autooscillazione del filtro,
+    // accenti, code di delay che si sommano — e li tiene sotto -1 dBFS.
+    limiter.process(ctx);
+
+    // Rete di sicurezza. Il limiter ha un attacco finito, quindi un transiente
+    // abbastanza ripido puo' passare prima che il gain reduction lo prenda;
+    // meglio un clamp che un campione fuori scala nel buffer dell'host.
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        auto* d = buffer.getWritePointer(ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            d[i] = juce::jlimit(-1.0f, 1.0f, d[i]);
+    }
 }
 
 juce::AudioProcessorEditor* TB303Processor::createEditor()

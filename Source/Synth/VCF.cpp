@@ -82,13 +82,18 @@ float VCF::processSample(float input, float envInput, float accentInput)
     double g    = computeCutoffG(modCutoff);
     double res4 = res * 4.0;
 
+    // Compensazione risonanza: ad alta res il feedback aspira energia dal
+    // fondamentale. +0.5 per unita' di res compensa il calo di livello.
+    double inputGain = 1.0 + res * 0.5;
+    double inputF    = static_cast<double>(input) * inputGain;
+
     // First pass: use midpoint between previous and current sample
-    double mid = 0.5 * (prevInput + static_cast<double>(input));
+    double mid = 0.5 * (prevInput + inputF);
     filterStep(mid, g, res4);
 
     // Second pass: actual sample
-    filterStep(static_cast<double>(input), g, res4);
-    prevInput = static_cast<double>(input);
+    filterStep(inputF, g, res4);
+    prevInput = inputF;
 
     return dcBlock(static_cast<float>(stageTanh[3] * 2.0));
 }

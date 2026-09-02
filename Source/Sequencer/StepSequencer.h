@@ -14,12 +14,10 @@ public:
 
     void prepare(double sampleRate);
 
-    // Called from processBlock — advances sequencer for each sample
-    // Returns nothing; fires events directly into the engine
-    void processBlock(TB303Engine& engine,
-                      juce::AudioPlayHead* playHead,
-                      int numSamples,
-                      double bpm);
+    // Call once per audio block to sync BPM from host playhead
+    void syncBpm(juce::AudioPlayHead* playHead, double fallbackBpm);
+    // Call once per sample inside the audio loop — fires noteOn when step changes
+    void advanceSample(TB303Engine& engine);
 
     // Transport
     void play();

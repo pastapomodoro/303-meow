@@ -7,10 +7,7 @@ void VCO::prepare(double sr)
 {
     sampleRate = sr;
     phase = 0.0;
-    // Slide time ~70ms => coefficient per sample
-    double slideTimeSec = 0.070;
-    int    slideSamples = static_cast<int>(slideTimeSec * sampleRate);
-    slideCoeff = std::pow(0.001, 1.0 / slideSamples); // approach within 60dB
+    slideCoeff = std::exp(-1.0 / (0.025 * sampleRate));   // τ = 25ms
 }
 
 void VCO::reset()
