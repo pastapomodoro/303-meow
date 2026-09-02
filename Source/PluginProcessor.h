@@ -108,6 +108,7 @@ private:
     std::atomic<float>* pDistortion    = nullptr;
     std::atomic<float>* pTempo         = nullptr;
     std::atomic<float>* pPlay          = nullptr;
+    std::atomic<float>* pSwing         = nullptr;
     std::atomic<float>* pDelayTime     = nullptr;
     std::atomic<float>* pDelayFeedback = nullptr;
     std::atomic<float>* pDelayMix      = nullptr;

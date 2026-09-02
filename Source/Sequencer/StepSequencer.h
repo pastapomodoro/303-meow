@@ -10,10 +10,11 @@ class StepSequencer
 public:
     static constexpr int NUM_PATTERNS = 8;
 
-    // Root su cui sono scritti i pattern factory (C2). In MIDI mode la nota
+    // Root su cui sono scritti i pattern factory (C3 = riga piu' bassa
+    // del piano roll, che copre C3..B4). In MIDI mode la nota
     // in arrivo diventa la nuova root e il pattern viene trasposto di
     // (nota - PATTERN_ROOT) semitoni, come fa Acid V dentro Ableton.
-    static constexpr int PATTERN_ROOT = 36;
+    static constexpr int PATTERN_ROOT = 48;
 
     StepSequencer();
 
@@ -47,6 +48,14 @@ public:
     void setTranspose(int semitones) { transpose = semitones; }
     int  getTranspose() const        { return transpose; }
 
+    // Swing: allunga gli step pari e accorcia i dispari della stessa quantita',
+    // cosi' la durata di ogni coppia resta invariata e il tempo non deriva.
+    // 0.0 = griglia dritta. Limitato a 0.45 per non azzerare lo step dispari.
+    void setSwing(float amount)
+    {
+        swing = juce::jlimit(0.0, 0.45, static_cast<double>(amount));
+    }
+
 private:
     std::array<Pattern, NUM_PATTERNS> patterns;
 
@@ -59,7 +68,8 @@ private:
     int previousNote       = 36;
     bool previousSlide     = false;
     int  stepResolution    = 4;        // 1=quarter, 2=eighth, 4=sixteenth
-    int  transpose         = 0;        // semitoni, impostato dalla nota MIDI
+    int    transpose       = 0;        // semitoni, impostato dalla nota MIDI
+    double swing           = 0.0;      // 0..0.45
     bool playing           = false;
     bool firstBeat         = false;   // fires step 0 on first processBlock call
 

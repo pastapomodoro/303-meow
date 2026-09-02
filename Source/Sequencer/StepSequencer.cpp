@@ -132,7 +132,12 @@ void StepSequencer::advanceSample(TB303Engine& engine)
             sendStepEvents(engine, currentStep);
             firstBeat = false;
         }
-        sampleCounter += samplesPerStep;
+
+        // Il refill avviene dopo advanceStep(), quindi currentStep e' già lo
+        // step che sta partendo: la sua parita' decide se allungarlo o
+        // accorciarlo.
+        const double sw = (currentStep % 2 == 0) ? swing : -swing;
+        sampleCounter += samplesPerStep * (1.0 + sw);
     }
 
     sampleCounter -= 1.0;

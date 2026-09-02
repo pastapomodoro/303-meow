@@ -46,6 +46,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TB303Processor::createParame
         "tempo", "Tempo",
         juce::NormalisableRange<float>(60.0f, 200.0f, 0.1f), 160.0f));
 
+    // Swing 0..75%: 0 = griglia dritta. Diviso 200 diventa lo scostamento
+    // frazionario applicato agli step pari (75% -> 0.375 di step).
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        "swing", "Shuffle",
+        juce::NormalisableRange<float>(0.0f, 75.0f, 0.1f), 0.0f));
+
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "play", "Play",
         juce::NormalisableRange<float>(0.0f, 1.0f, 1.0f), 0.0f));
@@ -90,15 +96,16 @@ TB303Processor::TB303Processor()
     pDistortion    = apvts.getRawParameterValue("distortion");
     pTempo         = apvts.getRawParameterValue("tempo");
     pPlay          = apvts.getRawParameterValue("play");
+    pSwing         = apvts.getRawParameterValue("swing");
     pDelayTime     = apvts.getRawParameterValue("delayTime");
     pDelayFeedback = apvts.getRawParameterValue("delayFeedback");
     pDelayMix      = apvts.getRawParameterValue("delayMix");
     pReverbSize    = apvts.getRawParameterValue("reverbSize");
     pReverbMix     = apvts.getRawParameterValue("reverbMix");
 
-    // Default 303 preset così il plugin apre già su un punto di partenza musicale
-    // ("Classic Acid" = 303 classico, non aggressivo). Il tempo del preset (130)
-    // viene sovrascritto a 160 BPM come richiesto.
+    // Default 303 preset così il plugin apre già su un punto di partenza
+    // musicale ("Nightshade Run"). Il tempo del preset viene sovrascritto a
+    // 160 BPM come richiesto.
     loadPreset(0);
     if (auto* t = apvts.getParameter("tempo"))
         t->setValueNotifyingHost(t->convertTo0to1(160.0f));
@@ -239,6 +246,7 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     double bpm = static_cast<double>(pTempo->load());
 
     // ── Sync sequencer BPM once per block ────────────────────────────────
+    sequencer.setSwing(pSwing->load() / 200.0f);
     sequencer.syncBpm(getPlayHead(), bpm);
 
     // ── Per-sample loop: MIDI + sequencer interleaved with audio rendering ─

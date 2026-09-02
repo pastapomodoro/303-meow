@@ -1776,7 +1776,7 @@ body {
 
             <div class="ctrl-sec ctrl-grow">
               <div class="ctrl-lbl">Pattern</div>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;" id="pat-btns"></div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;" id="pat-btns"></div>
             </div>
 
             </div>
@@ -2014,7 +2014,7 @@ body {
               </button>
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
               <button class="btn sm">LENGTH</button>
-              <button class="btn sm">SHUFFLE</button>
+              <button class="btn sm" id="shuffle-btn" onclick="window.toggleShuffle&&window.toggleShuffle()">SHUFFLE</button>
               <button class="btn sm" onclick="window._prRandom&&window._prRandom()">RANDOM</button>
               <button class="btn sm btn-red" onclick="window._prClear&&window._prClear()">CLEAR</button>
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
@@ -2425,7 +2425,7 @@ body {
               <span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text-mid);">SHUFFLE</span>
               <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acid-dark);" id="swing-val">0%</span>
             </div>
-            <input type="range" min="0" max="75" value="0" class="acid-range" id="swing-range" style="--p:0%;" oninput="this.style.setProperty('--p',(this.value/75*100)+'%');document.getElementById('swing-val').textContent=this.value+'%';">
+            <input type="range" min="0" max="75" value="0" class="acid-range" id="swing-range" style="--p:0%;" oninput="window.setSwing&&window.setSwing(this.value)">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 6px;">
               <span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text-mid);">ACCENT AMT</span>
               <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--acid-dark);" id="accamt-val">75%</span>
@@ -2456,7 +2456,7 @@ body {
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Keyboard — Pattern Transpose</span></div>
           <div class="card-body" style="padding:14px;">
-            <div class="set-hint" style="margin-bottom:10px;">In <b style="color:var(--acid-dark);">MIDI mode</b> (toggle nel SEQUENCER) la nota non suona da sola: diventa la <b>root del pattern</b>. Tieni premuto e la bassline gira in quella tonalità — <b>A</b> = C2, il pattern come è scritto:</div>
+            <div class="set-hint" style="margin-bottom:10px;">In <b style="color:var(--acid-dark);">MIDI mode</b> (toggle nel SEQUENCER) la nota non suona da sola: diventa la <b>root del pattern</b>. Tieni premuto e la bassline gira in quella tonalità — <b>A</b> = C3, il pattern come è scritto:</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;"><div class="kbdkey"><b>A</b><span>C</span></div><div class="kbdkey"><b>W</b><span>C#</span></div><div class="kbdkey"><b>S</b><span>D</span></div><div class="kbdkey"><b>E</b><span>D#</span></div><div class="kbdkey"><b>D</b><span>E</span></div><div class="kbdkey"><b>F</b><span>F</span></div><div class="kbdkey"><b>T</b><span>F#</span></div><div class="kbdkey"><b>G</b><span>G</span></div><div class="kbdkey"><b>Y</b><span>G#</span></div><div class="kbdkey"><b>H</b><span>A</span></div><div class="kbdkey"><b>U</b><span>A#</span></div><div class="kbdkey"><b>J</b><span>B</span></div><div class="kbdkey"><b>K</b><span>C</span></div></div></div>
         </div>
         <div class="card">
@@ -2596,11 +2596,14 @@ function buildKeycaps() {
   const grid = document.getElementById('pat-btns');
   if(!grid) return;
   grid.innerHTML = '';
-  // 4×2 di tasti quadrati: compatto, nessuna cella orfana
-  grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  // 4×2 di tasti quadrati: compatto, nessuna cella orfana.
+  // Sono 8 perche' tanti sono gli slot pattern del sequencer
+  // (StepSequencer::NUM_PATTERNS) e tanti ne dichiara il display "BANK nn/08".
+  // I 10 preset factory restano raggiungibili dalla pagina PRESET.
+  grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
   grid.style.gap = '5px';
 
-  for(let i = 0; i < 9; i++) {
+  for(let i = 0; i < 8; i++) {
     const key = document.createElement('div');
     key.className = 'keycap pat-btn' + (i === 0 ? ' active' : '');
     key.innerHTML = `<div class="keycap-base"><div class="keycap-top"><span class="keycap-num">${i + 1}</span><span class="keycap-led"></span></div></div>`;
@@ -3312,13 +3315,13 @@ function setMode(mode){
 (function(){
 
   // ── Pattern di default "Nightshade Run" (stesso del preset C++ n.0) ──
-  // Scritto sulla root C2 = 36, come StepSequencer::PATTERN_ROOT.
+  // Scritto sulla root C3 = 48, come StepSequencer::PATTERN_ROOT.
   const S=(note,gate,accent,slide,octave)=>({note,gate:!!gate,accent:!!accent,slide:!!slide,octave});
   const DEFAULT_PATTERN=[
-    S(36,1,1,0,0),S(48,1,0,1,0),S(46,1,0,0,0),S(43,1,0,0,0),
-    S(39,1,0,0,0),S(36,1,0,0,0),S(43,1,0,1,0),S(46,1,0,0,0),
-    S(48,1,1,0,0),S(46,1,0,0,0),S(43,1,0,0,0),S(41,1,0,1,0),
-    S(39,1,0,0,0),S(38,1,0,0,0),S(37,1,0,0,0),S(36,1,0,0,0)
+    S(48,1,1,0,0),S(60,1,0,1,0),S(58,1,0,0,0),S(55,1,0,0,0),
+    S(51,1,0,0,0),S(48,1,0,0,0),S(55,1,0,1,0),S(58,1,0,0,0),
+    S(60,1,1,0,0),S(58,1,0,0,0),S(55,1,0,0,0),S(53,1,0,1,0),
+    S(51,1,0,0,0),S(50,1,0,0,0),S(49,1,0,0,0),S(48,1,0,0,0)
   ];
   // Valori di "Nightshade Run", tarati sul profilo statistico di Acid V:
   // risonanza piu' alta e distortion realmente in uso rispetto a prima.
@@ -3342,6 +3345,7 @@ class TB303Processor extends AudioWorkletProcessor {
     this.playing=false; this.step=0; this.counter=0; this.firstBeat=false;
     this.prevNote=36; this.prevSlide=false;
     this.transpose=0;   // semitoni, come StepSequencer::transpose
+    this.swing=0;       // 0..0.45, come StepSequencer::swing
     this.port.onmessage=(e)=>this.onMsg(e.data);
   }
   onMsg(d){
@@ -3350,6 +3354,7 @@ class TB303Processor extends AudioWorkletProcessor {
     else if(d.type==='transport'){ if(d.playing) this.start(); else this.playing=false; }
     else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note); }
     else if(d.type==='transpose'){ this.transpose=d.semis|0; }
+    else if(d.type==='swing'){ this.swing=Math.max(0,Math.min(0.45,+d.amount||0)); }
   }
   setParam(id,v){
     if(id==='cutoff') this.baseCutoff=v;
@@ -3418,7 +3423,10 @@ class TB303Processor extends AudioWorkletProcessor {
     const spp=60/this.bpm/this.res*this.sr;
     for(let i=0;i<N;i++){
       if(this.playing){
-        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp; }
+        // Swing: lo step pari si allunga e il dispari si accorcia della
+        // stessa frazione, quindi ogni coppia dura sempre 2*spp e il tempo
+        // non deriva. Il refill usa this.step, che advance() ha già aggiornato.
+        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp*(1+((this.step&1)?-this.swing:this.swing)); }
         this.counter-=1;
         if(this.counter<=0) this.advance();
       }
@@ -3613,16 +3621,16 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Sorgente note + modalità (MIDI / SEQ / PRESET) ──
   const _P=a=>a.map(x=>({note:x[0],gate:!!x[1],accent:!!x[2],slide:!!x[3],octave:x[4]||0}));
   const FACTORY_PATTERNS=[
-    _P([[36,1,1,0,0],[48,1,0,1,0],[46,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[43,1,0,1,0],[46,1,0,0,0],[48,1,1,0,0],[46,1,0,0,0],[43,1,0,0,0],[41,1,0,1,0],[39,1,0,0,0],[38,1,0,0,0],[37,1,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[39,1,0,0,0],[36,1,0,0,0],[43,1,0,1,0],[44,1,0,0,0],[43,1,0,0,0],[41,1,0,0,0],[39,1,0,1,0],[36,1,1,0,0],[48,1,0,0,0],[47,1,0,1,0],[46,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[37,1,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[38,1,0,0,0],[39,1,0,0,0],[43,1,0,0,0],[46,1,0,1,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[46,1,1,0,0],[43,1,0,0,0],[39,1,0,1,0],[38,1,0,0,0],[36,1,0,0,0],[43,1,0,1,0],[39,1,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[36,0,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[36,0,0,0,0],[43,1,0,1,0],[41,1,0,0,0],[36,1,0,0,0],[36,1,1,0,0],[36,0,0,0,0],[46,1,0,0,0],[43,1,0,0,0],[36,0,0,0,0],[39,1,0,1,0],[37,1,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[36,1,0,0,0],[43,1,0,0,0],[46,1,0,1,0],[48,1,0,0,0],[46,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[41,1,1,0,0],[43,1,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[38,1,0,1,0],[39,1,0,0,0],[43,1,0,1,0],[36,1,0,0,0]]),
-    _P([[48,1,1,0,0],[46,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[36,1,0,1,0],[39,1,0,0,0],[43,1,0,0,0],[46,1,0,0,0],[48,1,1,0,0],[51,1,0,0,0],[48,1,0,0,0],[46,1,0,0,0],[43,1,0,1,0],[39,1,0,0,0],[37,1,0,1,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[43,1,0,0,0],[48,1,0,0,0],[43,1,0,0,0],[39,1,0,1,0],[46,1,0,0,0],[51,1,0,1,0],[46,1,0,0,0],[36,1,1,0,0],[43,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,0,1,0],[43,1,0,0,0],[39,1,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[39,1,0,0,0],[37,1,0,0,0],[36,1,0,0,0],[43,1,0,1,0],[41,1,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[46,1,1,0,0],[44,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[48,1,0,1,0],[46,1,0,0,0],[43,1,0,1,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[36,0,0,0,0],[43,1,0,0,0],[36,0,0,0,0],[46,1,0,1,0],[48,1,0,0,0],[36,0,0,0,0],[46,1,0,0,0],[43,1,1,0,0],[36,0,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[36,0,0,0,0],[43,1,0,1,0],[36,0,0,0,0],[36,1,0,0,0]]),
-    _P([[36,1,1,0,0],[36,1,0,0,0],[48,1,0,1,0],[46,1,0,0,0],[43,1,0,0,0],[39,1,0,0,0],[36,1,0,0,0],[43,1,0,0,0],[39,1,1,0,0],[36,1,0,0,0],[46,1,0,1,0],[43,1,0,0,0],[39,1,0,0,0],[37,1,0,1,0],[36,1,0,0,0],[48,1,0,0,0]])
+    _P([[48,1,1,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[58,1,0,0,0],[60,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[53,1,0,1,0],[51,1,0,0,0],[50,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[56,1,0,0,0],[55,1,0,0,0],[53,1,0,0,0],[51,1,0,1,0],[48,1,1,0,0],[60,1,0,0,0],[59,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[50,1,0,0,0],[51,1,0,0,0],[55,1,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[63,1,0,0,0],[60,1,0,0,0],[58,1,1,0,0],[55,1,0,0,0],[51,1,0,1,0],[50,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[53,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,1,0,0,0],[55,1,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[53,1,1,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[50,1,0,1,0],[51,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0]]),
+    _P([[60,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[55,1,0,0,0],[58,1,0,0,0],[60,1,1,0,0],[63,1,0,0,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[55,1,0,0,0],[60,1,0,0,0],[55,1,0,0,0],[51,1,0,1,0],[58,1,0,0,0],[63,1,0,1,0],[58,1,0,0,0],[48,1,1,0,0],[55,1,0,0,0],[60,1,0,0,0],[67,1,0,0,0],[60,1,0,1,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,0,0,0],[55,1,0,1,0],[53,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[58,1,1,0,0],[56,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,1,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[60,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0]]),
+    _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[51,1,1,0,0],[48,1,0,0,0],[58,1,0,1,0],[55,1,0,0,0],[51,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0],[60,1,0,0,0]])
   ];
   window.FACTORY_PATTERNS_JS=FACTORY_PATTERNS;
   let srcMode='seq', presetIdx=0;
@@ -3691,8 +3699,8 @@ registerProcessor('tb303-processor', TB303Processor);
   // Come Acid V in Ableton: la nota non suona da sola, diventa la root del
   // pattern. Tenendola premuta la bassline gira in quella tonalita'; premendo
   // una seconda nota si ritraspone a tempo senza ripartire da capo.
-  // 'a' = C2 = PATTERN_ROOT, quindi suona il pattern come e' scritto.
-  const PATTERN_ROOT=36;
+  // 'a' = C3 = PATTERN_ROOT, la riga piu' bassa del piano roll.
+  const PATTERN_ROOT=48;
   const KEYMAP={a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12,o:13,l:14};
   const held=[];
   function heldPush(n){ if(held.indexOf(n)<0) held.push(n); }
@@ -3830,12 +3838,32 @@ registerProcessor('tb303-processor', TB303Processor);
   const SD=()=>(typeof SYNTH_DATA!=='undefined')?SYNTH_DATA:[];
   window.onFactorySelect=function(sel){ _ofs&&_ofs(sel); applyFactory(FD()[sel.value], +sel.value); };
   window.onSynthSelect  =function(sel){ _oss&&_oss(sel); applySynth(SD()[sel.value]); };
+  // LOAD PRESET carica il factory selezionato: pattern + timbro + tempo.
+  // Prima chiamava anche applySynth() di seguito, e siccome entrambe le select
+  // esistono sempre nel DOM il synth preset sovrascriveva subito i parametri
+  // appena caricati. Il synth preset si applica dalla sua select (onSynthSelect).
   window.loadPreset     =function(){
     _lp&&_lp();
-    const fs=document.getElementById('factory-select'), ss=document.getElementById('synth-select');
+    const fs=document.getElementById('factory-select');
     if(fs) applyFactory(FD()[fs.value], +fs.value);
-    if(ss) applySynth(SD()[ss.value]);
   };
+
+  // ── Shuffle / swing ───────────────────────────────────────────────────
+  // Lo slider e il pulsante SHUFFLE erano decorativi: aggiornavano solo la
+  // targhetta. Qui passano entrambi da window.setSwing, che è l'unico punto
+  // che parla col worklet, così i due controlli non possono divergere.
+  let swingPct=0;
+  window.setSwing=function(pct){
+    swingPct=Math.max(0,Math.min(75,Math.round(+pct||0)));
+    post({type:'swing',amount:swingPct/200});   // 75% -> 0.375 di step
+    const sl=document.getElementById('swing-range');
+    if(sl){ sl.value=swingPct; sl.style.setProperty('--p',(swingPct/75*100)+'%'); }
+    setTxt('swing-val', swingPct+'%');
+    const b=document.getElementById('shuffle-btn');
+    if(b) b.classList.toggle('acid', swingPct>0);
+  };
+  // Il pulsante fa da scorciatoia: dritto <-> swing medio.
+  window.toggleShuffle=function(){ window.setSwing(swingPct>0?0:50); };
 
   // ── BPM da tastiera: campo editabile ──
   function wireBpmKeyboard(){
