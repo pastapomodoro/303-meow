@@ -20,7 +20,7 @@ public:
 
     void prepare(double sampleRate);
 
-    // Call once per audio block to sync BPM from host playhead
+    // Call once per audio block to sync BPM + phase from host playhead
     void syncBpm(juce::AudioPlayHead* playHead, double fallbackBpm);
     // Call once per sample inside the audio loop — fires noteOn when step changes
     void advanceSample(TB303Engine& engine);
@@ -72,6 +72,8 @@ private:
     double swing           = 0.0;      // 0..0.45
     bool playing           = false;
     bool firstBeat         = false;   // fires step 0 on first processBlock call
+    bool needsHostResync   = false;   // phase-lock to host on first block after play()
+    double lastPpqPos      = -1.0;    // previous block ppqPosition, for loop detection
 
     std::atomic<int> currentStepAtomic { 0 };
 

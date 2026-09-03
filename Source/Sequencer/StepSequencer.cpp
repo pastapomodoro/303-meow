@@ -15,11 +15,12 @@ void StepSequencer::prepare(double sr)
 
 void StepSequencer::play()
 {
-    playing       = true;
-    currentStep   = 0;
-    sampleCounter = 0.0;
-    previousSlide = false;
-    firstBeat     = true;   // step 0 fires on the first processBlock call
+    playing          = true;
+    currentStep      = 0;
+    sampleCounter    = 0.0;
+    previousSlide    = false;
+    firstBeat        = true;   // step 0 fires on the first processBlock call
+    needsHostResync  = true;   // align to DAW grid on first block
     currentStepAtomic.store(0, std::memory_order_relaxed);
 }
 
@@ -106,19 +107,49 @@ void StepSequencer::advanceStep(TB303Engine& engine, double /*bpm*/)
 void StepSequencer::syncBpm(juce::AudioPlayHead* playHead, double fallbackBpm)
 {
     double bpm = fallbackBpm;
+    bool ppqValid = false;
+    double ppqPos = 0.0;
 
     if (playHead != nullptr)
     {
         juce::AudioPlayHead::CurrentPositionInfo pos;
         if (playHead->getCurrentPosition(pos))
         {
-            if (pos.isPlaying && pos.bpm > 0.0)
+            if (pos.bpm > 0.0)
                 bpm = pos.bpm;
+            ppqPos   = pos.ppqPosition;
+            ppqValid = (ppqPos >= 0.0);
         }
     }
 
     double stepSec = 60.0 / bpm / static_cast<double>(stepResolution);
     samplesPerStep = stepSec * sampleRate;
+
+    if (!playing || !ppqValid || samplesPerStep <= 0.0)
+    {
+        lastPpqPos = ppqPos;
+        return;
+    }
+
+    // Detect DAW loop/jump: if ppq jumped backward, re-arm phase lock
+    if (lastPpqPos >= 0.0 && ppqPos < lastPpqPos - 0.1)
+        needsHostResync = true;
+    lastPpqPos = ppqPos;
+
+    // Phase-lock: snap step + sampleCounter to host grid on first block after play()
+    // (and after any DAW loop/jump)
+    if (needsHostResync)
+    {
+        double stepsPerQN = static_cast<double>(stepResolution);
+        const Pattern& pat = patterns[static_cast<size_t>(currentPatternIdx)];
+        int len    = pat.getLength();
+        int newStep = static_cast<int>(std::floor(ppqPos * stepsPerQN)) % len;
+
+        currentStep = newStep;
+        currentStepAtomic.store(currentStep, std::memory_order_relaxed);
+        sampleCounter   = 0.0;  // firstBeat (set by play()) will fire the step note
+        needsHostResync = false;
+    }
 }
 
 void StepSequencer::advanceSample(TB303Engine& engine)

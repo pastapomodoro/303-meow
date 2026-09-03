@@ -65,7 +65,7 @@ La separazione netta tra **DSP** (C++) e **UI** (HTML/JS) è una scelta architet
 └── Source/
     ├── PluginProcessor.h / .cpp       — AudioProcessor: audio thread, APVTS, FX chain
     ├── PluginEditor.h / .cpp          — AudioProcessorEditor: WebView host, relay system
-    ├── Presets.h                      — Dati preset inline (10 factory + 12 synth)
+    ├── Presets.h                      — 6 banchi × 8 variazioni + 12 synth preset
     ├── Synth/
     │   ├── VCO.h / .cpp              — Oscillatore PolyBLEP (SAW/SQR) + portamento
     │   ├── VCF.h / .cpp              — Filtro Huovilainen diode ladder, tap a 18 dB/ott
@@ -383,38 +383,57 @@ apvts.getParameter("cutoff")->setValueNotifyingHost(normalizedValue);
 
 ## 7. SISTEMA PRESET
 
-### Factory Presets — 10 preset completi
+### Factory Presets — 6 banchi × 8 variazioni
 
-Ogni preset include: tutti i parametri synth + FX + pattern completo 16-step.
+Ogni banco contiene: parametri synth + FX + **8 variazioni** della stessa linea.
+Caricare un banco riempie **tutti gli slot pattern del sequencer**, quindi i
+tasti Pattern 1–8 non sono memorie slegate: sono variazioni della stessa idea
+nella stessa tonalità. Si passa da un tasto all'altro mentre suona e il pezzo
+si costruisce.
 
-Uno per **archetipo**, non uno per "atmosfera". Gli archetipi vengono
-dall'analisi dei 154 pattern factory di Arturia Acid V, che smentisce
-l'intuizione: le linee acid vere non sono melodicamente affollate. Mediana di
-**3 sole classi di altezza** (99 su 154 ne usano ≤3, 29 stanno su una nota
-sola), root al **69%** delle note, span mediano 22 semitoni. La varietà non sta
-nelle note: sta in ritmo, densità dei gate (da 2 a 16), accenti (0–14), slide
-(0–14) e salti d'ottava. Dieci linee con sette note ciascuna nella stessa scala
-suonano tutte uguali — errore commesso e poi corretto.
+**Tutte le linee sono in Do minore sulla root C3 = 48**
+(`StepSequencer::PATTERN_ROOT`, anche la riga più bassa del piano roll). È la
+ragione per cui qualunque sequenza di tasti — e qualunque salto fra banchi —
+resta consonante.
 
-| # | Nome | Classi | Gate | Acc | Slide | Carattere |
-|---|------|--------|------|-----|-------|-----------|
-| 0 | Basic Acid | 2 | 16 | 2 | 1 | Riferimento: root + quinta + ottava, res 0.55 |
-| 1 | Root Drone | 1 | 16 | 4 | 0 | Una nota sola: muove tutto il filtro |
-| 2 | Glide Pair | 2 | 16 | 2 | 8 | Due note, legato continuo |
-| 3 | Octave Ladder | 1 | 16 | 2 | 2 | Salto d'ottava a ogni step |
-| 4 | Sparse Groove | 2 | 6 | 2 | 1 | Il groove sta nelle pause |
-| 5 | Half Loop | 3 | 16 | 4 | 2 | Figura di 8 step ripetuta |
-| 6 | Phrygian Three | 3 | 16 | 2 | 2 | Root, b2, m3 — la scala più scura |
-| 7 | Accent Storm | 2 | 16 | 8 | 0 | Pompa a sedicesimi alterni |
-| 8 | Deep Slow | 4 | 5 | 1 | 1 | Decay 1.15 s, note sovrapposte |
-| 9 | Rave Sixteen | 3 | 16 | 4 | 1 | Denso e veloce, 145 BPM |
+| # | Banco | Linea del tasto 1 | Note | BPM | Onda |
+|---|-------|-------------------|------|-----|------|
+| 0 | Robot Funk | `C · C Eb · G · Bb  C · C Eb F · G Bb` | 5 | 124 | SAW |
+| 1 | Rollin Acid | `C C C4 Bb G Eb C4 C  C C C4 Bb G F Eb C` | 6 | 132 | SAW |
+| 2 | Basic Acid | `C · C G C4 · Bb G  C · C Eb G · F C` | 6 | 130 | SAW |
+| 3 | Night Drive | `G F Eb C Eb F G Bb  C4 Bb G F Eb C Eb C` | 6 | 118 | SAW |
+| 4 | Deep Squelch | `C · Eb · G Ab · G  C · Bb · Ab G · Eb` | 5 | 126 | SQR |
+| 5 | Phrygian Drive | `C Db C Eb F Db C F  C Db Eb Db C4 Bb Db C` | 6 | 128 | SQR |
 
-**Tutti scritti sulla root C3 = 48** (`StepSequencer::PATTERN_ROOT`), che è anche
-la riga più bassa del piano roll. Scriverli più in basso li rendeva non
-editabili e la UI li riavvolgeva di un'ottava, appiattendo i salti.
+Robot Funk e Rollin Acid sono scritti nell'idioma **french house** — groove
+sincopato, salti d'ottava, pentatonica minore. Sono linee originali: lo stile
+non è protetto, le linee altrui sì.
 
-I pattern e i nomi sono originali: di Acid V si è usato solo il profilo
-statistico, che è un dato di fatto e non un'opera creativa.
+**Le 8 variazioni** (uguali per tutti i banchi, generate dalla linea base):
+
+| Tasto | Variazione | Cosa cambia |
+|-------|-----------|-------------|
+| 1 | base | la linea piena — è quella che suona all'apertura |
+| 2 | scheletro | solo i quarti, tutto sulla root: intro |
+| 3 | ottavi | metà dei gate, la figura si semplifica |
+| 4 | figura sulla root | il ritmo della base, una nota sola: si sente il groove |
+| 5 | registro alto | tutto tranne la root sale di un'ottava |
+| 6 | accenti controtempo | accenti sui dispari: feel opposto alla base |
+| 7 | legato | slide su ogni nota che ne ha una dopo |
+| 8 | picco | 16 gate, ottava sugli offbeat, accenti sui quarti |
+
+L'ordine non è casuale: il tasto 1 è la linea migliore (serve che suoni bene
+subito), poi 2→8 è un arco di energia crescente. Ogni coppia di variazioni
+differisce per almeno 4 step su 16, verificato: senza quel vincolo, sui banchi
+a 16 gate le variazioni "registro alto" e "picco" collassavano sulla base e i
+tasti 1, 5 e 8 suonavano identici.
+
+**Perché non un preset per archetipo statistico.** Una versione precedente
+tarava i pattern sul profilo dei 154 factory di Acid V (mediana 3 classi di
+altezza, root al 69%, fino a un pattern su una nota sola). Statisticamente
+fedele, musicalmente sterile: dieci linee quasi monotonali suonano tutte uguali
+all'ascolto. Il profilo resta utile per **calibrare i parametri** (risonanza,
+decay, drive) ma non per scrivere le melodie.
 
 ### Synth Presets — 12 preset solo timbrici
 
@@ -605,7 +624,7 @@ Il file originale è un prototipo standalone completamente funzionale nel browse
 - Canvas SVG per il pannello visivo
 
 #### PRESET
-- Dropdown factory preset (10 voci)
+- Dropdown factory preset (6 voci)
 - Dropdown synth preset (12 voci)
 - Pulsante Load
 
@@ -898,7 +917,8 @@ document.addEventListener("mousemove", (e) => {
    - Workflow design-to-plugin senza ricompilazioni C++
 
 4. **Preset system completo:**
-   - 10 factory preset (synth + sequencer), uno per archetipo di pattern
+   - 6 banchi factory × 8 variazioni: i tasti Pattern sono variazioni
+     della stessa linea nella stessa tonalità, non memorie slegate
    - 12 synth preset
    - Persistenza dello stato via XML / ValueTree
 

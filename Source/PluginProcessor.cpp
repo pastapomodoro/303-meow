@@ -239,18 +239,42 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
         lastPatternMode = isMidiMode;
     }
 
+    // Legge il transport dell'host PRIMA di chiamare syncBpm, cosi' play()
+    // viene chiamato prima di syncBpm e la phase-lock trova playing=true.
+    bool hostIsPlaying = false;
+    if (auto* ph = getPlayHead())
+    {
+        juce::AudioPlayHead::CurrentPositionInfo pos;
+        if (ph->getCurrentPosition(pos))
+            hostIsPlaying = pos.isPlaying;
+    }
+
     if (!isMidiMode)
     {
-        // Sequencer mode: transport dal pulsante Play, nessuna trasposizione
-        if (shouldPlay && !sequencer.isPlaying())  sequencer.play();
-        else if (!shouldPlay && sequencer.isPlaying()) sequencer.stop();
+        if (getPlayHead() != nullptr)
+        {
+            // DAW: il sequencer segue il transport dell'host.
+            // shouldPlay e' il pulsante "arm": se non e' premuto il sequencer
+            // resta fermo anche se il DAW gira (es. durante il setup del progetto).
+            const bool shouldRun = shouldPlay && hostIsPlaying;
+            if (shouldRun && !sequencer.isPlaying())       sequencer.play();
+            else if (!shouldRun && sequencer.isPlaying())  sequencer.stop();
+        }
+        else
+        {
+            // Standalone: transport guidato dal pulsante Play interno.
+            if (shouldPlay && !sequencer.isPlaying())        sequencer.play();
+            else if (!shouldPlay && sequencer.isPlaying())   sequencer.stop();
+        }
     }
     // In MIDI mode il transport lo guidano i note on/off, gestiti nel loop
     // per-campione qui sotto.
 
     double bpm = static_cast<double>(pTempo->load());
 
-    // ── Sync sequencer BPM once per block ────────────────────────────────
+    // ── Sync BPM + phase once per block ──────────────────────────────────
+    // Chiamato DOPO play/stop: se play() e' appena stato invocato, syncBpm
+    // trova playing=true e aggiorna currentStep dalla ppqPosition dell'host.
     sequencer.setSwing(pSwing->load() / 200.0f);
     sequencer.syncBpm(getPlayHead(), bpm);
 
@@ -408,21 +432,27 @@ void TB303Processor::loadPreset(int index)
     setParam("reverbSize",    p.reverbSize);
     setParam("reverbMix",     p.reverbMix);
 
-    // Load pattern into currently selected pattern slot
-    int patIdx = sequencer.getCurrentPatternIndex();
-    Pattern& pat = sequencer.getPattern(patIdx);
-    pat.setLength(p.patternLength);
-
-    for (int s = 0; s < Pattern::MAX_STEPS; ++s)
+    // Riempie TUTTI gli slot pattern con le 8 variazioni del banco: i tasti
+    // Pattern 1..8 diventano le variazioni della stessa linea, non memorie
+    // indipendenti. Il tasto 1 e' la linea piena, i successivi vanno da
+    // scheletro a picco, e restano tutti nella stessa tonalita'.
+    for (int v = 0; v < StepSequencer::NUM_PATTERNS; ++v)
     {
-        Step step;
-        step.note   = p.steps[s].note;
-        step.gate   = p.steps[s].gate;
-        step.accent = p.steps[s].accent;
-        step.slide  = p.steps[s].slide;
-        step.octave = p.steps[s].octave;
-        pat.setStep(s, step);
+        Pattern& pat = sequencer.getPattern(v);
+        pat.setLength(p.patternLength);
+
+        for (int s = 0; s < Pattern::MAX_STEPS; ++s)
+        {
+            Step step;
+            step.note   = p.variations[v][s].note;
+            step.gate   = p.variations[v][s].gate;
+            step.accent = p.variations[v][s].accent;
+            step.slide  = p.variations[v][s].slide;
+            step.octave = p.variations[v][s].octave;
+            pat.setStep(s, step);
+        }
     }
+    sequencer.selectPattern(0);
 
     currentPresetIndex      = index;
     currentSynthPresetIndex = -1;  // full preset overrides synth-only
