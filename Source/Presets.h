@@ -11,6 +11,7 @@ struct PresetData
     float accent, volume, distortion, tuning;
     float tempo;
     int   waveform;
+    float subOsc;                     // 0..1, ottava sotto
     float delayTime, delayFeedback, delayMix;
     float reverbSize, reverbMix;
     int   patternLength;
@@ -33,6 +34,7 @@ struct SynthPresetData
     float cutoff, resonance, envMod, decay;
     float accent, volume, distortion, tuning;
     int   waveform;
+    float subOsc;
     float delayTime, delayFeedback, delayMix;
     float reverbSize, reverbMix;
 };
@@ -63,11 +65,11 @@ struct SynthPresetData
 // ─────────────────────────────────────────────────────────────────────────────
 static const std::array<PresetData, 6> FACTORY_PRESETS = {{
     // name            cut     res   env   dec   acc   vol   dis   tun  tempo wf
-    //                 dlyT  dlyF  dlyM  rvbS  rvbM  len
+    //                 sub   dlyT  dlyF  dlyM  rvbS  rvbM  len
 
     // 1 — french house sincopato: pulsazione e risposta pentatonica
     {"Robot Funk",       850.f,.62f,.55f,.28f,.78f,.82f,.18f,.0f,124.f,0,
-     .375f,.36f,.10f,.45f,.05f, 16,
+     .55f,  .375f,.36f,.10f,.45f,.05f, 16,
      {
       // tasto 1 — base
       {{48,1,1,0,0},{48,0,0,0,0},{48,1,0,0,0},{51,1,0,0,0},{48,0,0,0,0},{55,1,0,0,0},{48,0,0,0,0},{58,1,0,1,0},
@@ -97,7 +99,7 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 
     // 2 — sedicesimi incessanti che scendono dall'ottava
     {"Rollin Acid",      520.f,.88f,.75f,.20f,.84f,.80f,.35f,.0f,132.f,0,
-     .250f,.40f,.08f,.40f,.04f, 16,
+     .40f,  .250f,.40f,.08f,.40f,.04f, 16,
      {
       // tasto 1 — base
       {{48,1,1,0,0},{48,1,0,0,0},{60,1,0,0,0},{58,1,0,0,0},{55,1,1,0,0},{51,1,0,0,0},{60,1,0,0,0},{48,1,0,0,0},
@@ -127,7 +129,7 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 
     // 3 — riferimento: linea semplice ma cantabile
     {"Basic Acid",       700.f,.55f,.55f,.35f,.70f,.82f,.10f,.0f,130.f,0,
-     .375f,.35f,.00f,.50f,.00f, 16,
+     .30f,  .375f,.35f,.00f,.50f,.00f, 16,
      {
       // tasto 1 — base
       {{48,1,1,0,0},{48,0,0,0,0},{48,1,0,0,0},{55,1,0,0,0},{60,1,1,0,0},{48,0,0,0,0},{58,1,0,0,0},{55,1,0,0,0},
@@ -157,7 +159,7 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 
     // 4 — linea cantabile: scende alla root, risale all'ottava
     {"Night Drive",      900.f,.58f,.50f,.40f,.72f,.82f,.12f,.0f,118.f,0,
-     .500f,.44f,.18f,.60f,.14f, 16,
+     .45f,  .500f,.44f,.18f,.60f,.14f, 16,
      {
       // tasto 1 — base
       {{55,1,1,0,0},{53,1,0,0,0},{51,1,0,0,0},{48,1,0,0,0},{51,1,0,0,0},{53,1,0,0,0},{55,1,0,1,0},{58,1,0,0,0},
@@ -187,7 +189,7 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 
     // 5 — rado e scuro, il m6 a dare tensione
     {"Deep Squelch",     380.f,.90f,.82f,.55f,.82f,.80f,.28f,.0f,126.f,1,
-     .250f,.46f,.16f,.60f,.12f, 16,
+     .70f,  .250f,.46f,.16f,.60f,.12f, 16,
      {
       // tasto 1 — base
       {{48,1,1,0,0},{48,0,0,0,0},{51,1,0,0,0},{48,0,0,0,0},{55,1,0,0,0},{56,1,0,1,0},{48,0,0,0,0},{55,1,0,0,0},
@@ -217,7 +219,7 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 
     // 6 — root, b2 e m3: la scala piu' scura dell'acid
     {"Phrygian Drive",   560.f,.80f,.70f,.42f,.78f,.80f,.30f,.0f,128.f,1,
-     .333f,.42f,.14f,.55f,.10f, 16,
+     .50f,  .333f,.42f,.14f,.55f,.10f, 16,
      {
       // tasto 1 — base
       {{48,1,1,0,0},{49,1,0,0,0},{48,1,0,0,0},{51,1,0,0,0},{53,1,0,0,0},{49,1,0,1,0},{48,1,0,0,0},{53,1,0,0,0},
@@ -252,16 +254,16 @@ static const std::array<PresetData, 6> FACTORY_PRESETS = {{
 // ─────────────────────────────────────────────────────────────────────────────
 static const std::array<SynthPresetData, 12> SYNTH_PRESETS = {{
     // name            cut    res   env   dec   acc   vol   dis   tun   wf  dlyT  dlyF  dlyM  rvbS  rvbM
-    {"Acid Saw",       600.f,.75f,.70f,.20f,.75f,.80f,.00f,.0f,  0, .375f,.35f,.00f,.50f,.00f},
-    {"TB Squelch",     200.f,.95f,.90f,.40f,.85f,.75f,.00f,.0f,  0, .250f,.30f,.00f,.50f,.00f},
-    {"Deep Sub",       120.f,.18f,.20f,.80f,.60f,.85f,.00f,.0f,  0, .375f,.20f,.00f,.40f,.10f},
-    {"Jungle Bass",    900.f,.50f,.50f,.15f,.70f,.82f,.05f,.0f,  0, .375f,.30f,.10f,.30f,.05f},
-    {"Ambient Cloud",  350.f,.40f,.50f,1.0f,.55f,.72f,.00f,.0f,  0, .750f,.50f,.20f,.80f,.50f},
-    {"Echo Acid",      700.f,.65f,.65f,.25f,.70f,.78f,.00f,.0f,  0, .375f,.55f,.45f,.40f,.15f},
-    {"Square Stomp",   550.f,.62f,.60f,.18f,.75f,.80f,.08f,.0f,  1, .188f,.30f,.00f,.30f,.00f},
-    {"Overdrive",      800.f,.40f,.45f,.20f,.70f,.78f,.75f,.0f,  0, .188f,.20f,.00f,.30f,.00f},
-    {"Wobble Bass",    280.f,.82f,.85f,.90f,.75f,.78f,.00f,.0f,  0, .500f,.45f,.15f,.40f,.10f},
-    {"Warm Pad",       160.f,.14f,.30f,1.5f,.50f,.70f,.00f,.0f,  0, .750f,.50f,.20f,.80f,.55f},
-    {"Scream",         520.f,.98f,.65f,.15f,.85f,.80f,.15f,.0f,  0, .188f,.40f,.10f,.30f,.05f},
-    {"Hybrid FX",      500.f,.60f,.55f,.35f,.70f,.75f,.20f,.0f,  0, .375f,.45f,.30f,.65f,.35f}
+    {"Acid Saw",       600.f,.75f,.70f,.20f,.75f,.80f,.00f,.0f,  0, .30f, .375f,.35f,.00f,.50f,.00f},
+    {"TB Squelch",     200.f,.95f,.90f,.40f,.85f,.75f,.00f,.0f,  0, .35f, .250f,.30f,.00f,.50f,.00f},
+    {"Deep Sub",       120.f,.18f,.20f,.80f,.60f,.85f,.00f,.0f,  0, .85f, .375f,.20f,.00f,.40f,.10f},
+    {"Jungle Bass",    900.f,.50f,.50f,.15f,.70f,.82f,.05f,.0f,  0, .60f, .375f,.30f,.10f,.30f,.05f},
+    {"Ambient Cloud",  350.f,.40f,.50f,1.0f,.55f,.72f,.00f,.0f,  0, .25f, .750f,.50f,.20f,.80f,.50f},
+    {"Echo Acid",      700.f,.65f,.65f,.25f,.70f,.78f,.00f,.0f,  0, .35f, .375f,.55f,.45f,.40f,.15f},
+    {"Square Stomp",   550.f,.62f,.60f,.18f,.75f,.80f,.08f,.0f,  1, .45f, .188f,.30f,.00f,.30f,.00f},
+    {"Overdrive",      800.f,.40f,.45f,.20f,.70f,.78f,.75f,.0f,  0, .30f, .188f,.20f,.00f,.30f,.00f},
+    {"Wobble Bass",    280.f,.82f,.85f,.90f,.75f,.78f,.00f,.0f,  0, .70f, .500f,.45f,.15f,.40f,.10f},
+    {"Warm Pad",       160.f,.14f,.30f,1.5f,.50f,.70f,.00f,.0f,  0, .40f, .750f,.50f,.20f,.80f,.55f},
+    {"Scream",         520.f,.98f,.65f,.15f,.85f,.80f,.15f,.0f,  0, .20f, .188f,.40f,.10f,.30f,.05f},
+    {"Hybrid FX",      500.f,.60f,.55f,.35f,.70f,.75f,.20f,.0f,  0, .50f, .375f,.45f,.30f,.65f,.35f}
 }};

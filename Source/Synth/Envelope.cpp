@@ -13,7 +13,11 @@ double Envelope::computeCoeff(double timeSec, double sr)
 void Envelope::prepare(double sr)
 {
     sampleRate  = sr;
-    attackCoeff = computeCoeff(0.003, sr);  // 3ms attack
+    // L'accento ha un attacco piu' rapido della nota. Nei 156 factory di
+    // Acid V VCAEnv303_AccentAttack ha mediana 0.0, cioe' il minimo: a 3 ms
+    // l'attacco arrotonda proprio il transiente che rende l'accento
+    // riconoscibile, e la nota accentata perde il morso.
+    attackCoeff = computeCoeff(type == Type::Accent ? 0.001 : 0.003, sr);
 
     if (type == Type::Note)
         decayCoeff = computeCoeff(0.300, sr);   // default 300ms, overridden by setDecay

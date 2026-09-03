@@ -131,9 +131,10 @@ build/TB303Clone_artefacts/Debug/Standalone/303 Meow.app
 MIDI input / Sequencer
         ↓
    TB303Engine
-   ├── VCO (genera onda grezza SAW/SQR)
+   ├── VCO (SAW/SQR + sub un'ottava sotto)
    ├── ×(1 + distortion·2)  ← il drive entra QUI, prima del filtro
    ├── VCF (filtra con inviluppo + accent mod; satura se spinto)
+   ├── bass boost (shelf a 180 Hz: compensa il basso che il ladder porta via)
    ├── VCA (inviluppo + accentEnv·accentLevel, soft clip ADAA)
    └── toneShaper (passa-basso a un polo, 13 kHz)
         ↓
@@ -158,7 +159,27 @@ MIDI input / Sequencer
 | `setNote(midiNote, tuningCents)` | Converte MIDI → Hz (formula 12-TET) |
 | `setWaveform(0 or 1)` | 0 = Sawtooth, 1 = Square |
 | `setSlide(enable, fromNote, toNote)` | Abilita portamento esponenziale, τ = 25 ms |
+| `setSubVolume(0.0–1.0)` | Volume del sub-oscillatore un'ottava sotto |
 | `processSample()` | Restituisce il prossimo campione float |
+
+**Sub-oscillatore.** Onda quadra un'ottava sotto, fase indipendente. In Acid V
+lo usano **72 preset su 156** e chi lo usa lo tiene forte (volume mediano 0.84):
+è da lì che arriva il peso in basso che un solo VCO non dà. Misurato sulla C3,
+l'energia a 65 Hz passa da −34.6 dB (assente) a −8.0 dB con il sub a 0.55.
+
+Gira sempre, anche a volume zero, perché la sua fase deve restare agganciata:
+riaprendolo entrerebbe a fase casuale e si sentirebbe uno scalino. La
+normalizzazione `/(1 + subVol·0.7)` tiene il picco fra 0.99 e 1.06 su tutta la
+corsa, così a decidere quanta saturazione entra nel ladder resta il knob
+Distort e non il volume del sub.
+
+**Sulla forma della rampa.** Si è provato a curvarla come la carica del
+condensatore del 303 (`V = Vmax(1−e^(−t/τ))`), che è quello che fa l'hardware.
+Misurato: **non serve.** Anche con curvatura estrema le armoniche cambiano di
+meno di 1 dB, perché il contenuto armonico di una dente di sega lo determina il
+salto a fine ciclo, non la forma della rampa fra un salto e l'altro. L'aliasing
+non cambiava (−16.9 → −17.2 dB), quindi nessun danno, ma nemmeno beneficio: era
+un `exp()` per campione per niente, e la rampa è tornata lineare.
 
 **Tecnica anti-aliasing:** PolyBLEP (Polynomial Band-Limited Step)
 - Corregge le discontinuità nelle forme d'onda digitali
@@ -202,6 +223,21 @@ currentFreq += (targetFreq - currentFreq) * (1 - slideCoeff)
 
 **DC Blocker:** filtro IIR passa-alto posto in uscita per eliminare l'offset DC generato dal feedback non lineare.
 
+**Bass boost** (`TB303Engine`, dopo il VCF e prima del VCA). `Filter303_BassBoost`
+è attivo in **149 dei 156** preset factory di Acid V (96%), mediana 0.50:
+praticamente sempre. È la compensazione del basso che il ladder porta via
+salendo di risonanza, e senza di essa la linea resta magra qualunque cosa si
+faccia col cutoff. Shelf a un polo a 180 Hz:
+
+```cpp
+bassLp += bassCoeff * (vcfOut - bassLp);
+boosted = vcfOut + 0.5f * bassLp;
+```
+
+Sta **prima** del VCA perché è compensazione del filtro, non un effetto in
+coda: deve passare per l'inviluppo d'ampiezza come il resto. Misurato: +2.6 dB
+sulla fondamentale contro +0.5 dB sulla quinta armonica.
+
 ---
 
 ### VCA — `Source/Synth/VCA.h/.cpp`
@@ -228,7 +264,11 @@ output = adaaTanh(input * amp * volume)
 | Istanza | Tipo | Attack | Decay |
 |---------|------|--------|-------|
 | `noteEnv` | `Type::Note` | 3ms esponenziale | user-defined (0.05–2.0s) |
-| `accentEnv` | `Type::Accent` | 3ms esponenziale | fisso 200ms |
+| `accentEnv` | `Type::Accent` | **1ms** esponenziale | fisso 200ms |
+
+L'accento ha l'attacco più rapido della nota: nei 156 factory di Acid V
+`VCAEnv303_AccentAttack` ha mediana 0.0, cioè il minimo. A 3 ms l'attacco
+arrotondava proprio il transiente che rende l'accento riconoscibile.
 
 **Caratteristica chiave:** il trigger NON resetta a 0 — parte dal livello corrente (comportamento originale del TB-303, evita click su note legato).
 
@@ -363,6 +403,7 @@ Tutti i parametri sono registrati in `PluginProcessor` via `AudioProcessorValueT
 | `distortion` | 0.0–1.0 | 0.0 | Float | Knob SYNTH/FX |
 | `tempo` | 60–200 BPM | 160 | Float | BPM display |
 | `swing` | 0–75 % | 0 | Float | Slider SHUFFLE (SETTINGS) |
+| `subOsc` | 0.0–1.0 | 0.35 | Float | — (per banco, nessun knob) |
 | `play` | 0 o 1 | 0 | Float (binary) | Play/Stop button |
 | `delayTime` | 0.02–0.75 s | 0.375 | Float | Knob FX |
 | `delayFeedback` | 0.0–0.90 | 0.35 | Float | Knob FX |
@@ -399,6 +440,11 @@ resta consonante.
 | # | Banco | Linea del tasto 1 | Note | BPM | Onda |
 |---|-------|-------------------|------|-----|------|
 | 0 | Robot Funk | `C · C Eb · G · Bb  C · C Eb F · G Bb` | 5 | 124 | SAW |
+
+Ogni banco ha anche il suo livello di **sub-oscillatore**: Robot Funk 0.55,
+Rollin Acid 0.40, Basic Acid 0.30, Night Drive 0.45, Deep Squelch 0.70,
+Phrygian Drive 0.50.
+
 | 1 | Rollin Acid | `C C C4 Bb G Eb C4 C  C C C4 Bb G F Eb C` | 6 | 132 | SAW |
 | 2 | Basic Acid | `C · C G C4 · Bb G  C · C Eb G · F C` | 6 | 130 | SAW |
 | 3 | Night Drive | `G F Eb C Eb F G Bb  C4 Bb G F Eb C Eb C` | 6 | 118 | SAW |

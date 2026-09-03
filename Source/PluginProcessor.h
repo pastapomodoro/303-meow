@@ -91,7 +91,7 @@ private:
     // l'orecchio ragiona in ottave.
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> smCutoff;
     juce::SmoothedValue<float> smResonance, smEnvMod, smAccent, smVolume,
-                               smDistortion, smTuning;
+                               smDistortion, smTuning, smSubOsc;
 
     int           currentPresetIndex      = -1;
     int           currentSynthPresetIndex = -1;
@@ -109,6 +109,7 @@ private:
     std::atomic<float>* pTempo         = nullptr;
     std::atomic<float>* pPlay          = nullptr;
     std::atomic<float>* pSwing         = nullptr;
+    std::atomic<float>* pSubOsc        = nullptr;
     std::atomic<float>* pDelayTime     = nullptr;
     std::atomic<float>* pDelayFeedback = nullptr;
     std::atomic<float>* pDelayMix      = nullptr;

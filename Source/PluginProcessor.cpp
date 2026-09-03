@@ -47,6 +47,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout TB303Processor::createParame
         "distortion", "Distortion",
         juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
 
+    // Sub-oscillatore un'ottava sotto: in Acid V lo usano 72 preset su 156, e
+    // chi lo usa lo tiene forte (mediana 0.84). E' la voce che mancava per
+    // avere peso in basso.
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        "subOsc", "Sub Osc",
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.35f));
+
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "tempo", "Tempo",
         juce::NormalisableRange<float>(60.0f, 200.0f, 0.1f), 160.0f));
@@ -102,6 +109,7 @@ TB303Processor::TB303Processor()
     pTempo         = apvts.getRawParameterValue("tempo");
     pPlay          = apvts.getRawParameterValue("play");
     pSwing         = apvts.getRawParameterValue("swing");
+    pSubOsc        = apvts.getRawParameterValue("subOsc");
     pDelayTime     = apvts.getRawParameterValue("delayTime");
     pDelayFeedback = apvts.getRawParameterValue("delayFeedback");
     pDelayMix      = apvts.getRawParameterValue("delayMix");
@@ -164,6 +172,7 @@ void TB303Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smVolume    .reset(sampleRate, 0.020);
     smDistortion.reset(sampleRate, 0.020);
     smTuning    .reset(sampleRate, 0.020);
+    smSubOsc    .reset(sampleRate, 0.020);
 
     // Partenza sui valori correnti, altrimenti la prima nota dopo il load
     // arriva mentre i parametri stanno ancora rampando dal default.
@@ -174,6 +183,7 @@ void TB303Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smVolume    .setCurrentAndTargetValue(pVolume->load());
     smDistortion.setCurrentAndTargetValue(pDistortion->load());
     smTuning    .setCurrentAndTargetValue(pTuning->load());
+    smSubOsc    .setCurrentAndTargetValue(pSubOsc->load());
 }
 
 void TB303Processor::releaseResources() {}
@@ -199,6 +209,7 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
     smVolume    .setTargetValue(pVolume->load());
     smDistortion.setTargetValue(pDistortion->load());
     smTuning    .setTargetValue(pTuning->load());
+    smSubOsc    .setTargetValue(pSubOsc->load());
 
     // Decay e waveform non moltiplicano il segnale: il primo cambia solo la
     // costante di tempo dell'inviluppo, il secondo agisce al prossimo ciclo
@@ -303,6 +314,7 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
         engine.setVolume     (smVolume.getNextValue());
         engine.setDistortion (smDistortion.getNextValue());
         engine.setTuning     (smTuning.getNextValue() * 100.0f);  // semitoni → cent
+        engine.setSubVolume  (smSubOsc.getNextValue());
 
         float mono  = engine.processSample();
         float mixed = delay.processSample(mono);
@@ -426,6 +438,7 @@ void TB303Processor::loadPreset(int index)
     setParam("tuning",        p.tuning);
     setParam("tempo",         p.tempo);
     setParam("waveform",      static_cast<float>(p.waveform));
+    setParam("subOsc",        p.subOsc);
     setParam("delayTime",     p.delayTime);
     setParam("delayFeedback", p.delayFeedback);
     setParam("delayMix",      p.delayMix);
@@ -479,6 +492,7 @@ void TB303Processor::loadSynthPreset(int index)
     setParam("distortion",    p.distortion);
     setParam("tuning",        p.tuning);
     setParam("waveform",      static_cast<float>(p.waveform));
+    setParam("subOsc",        p.subOsc);
     setParam("delayTime",     p.delayTime);
     setParam("delayFeedback", p.delayFeedback);
     setParam("delayMix",      p.delayMix);

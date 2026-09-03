@@ -18,6 +18,12 @@ void TB303Engine::prepare(double sampleRate, int blockSize)
     // sporcizia residua. Abbastanza alto da non sentirsi come un filtro.
     toneShaper.prepare(sampleRate, 13000.0);
 
+    // 180 Hz: sotto la fondamentale delle note piu' basse del 303, quindi
+    // aggiunge peso senza impastare la zona in cui vive il timbro.
+    bassCoeff = 1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi
+                               * 180.0 / sampleRate);
+    bassLp    = 0.0;
+
     noteEnv.setDecay(0.3f);
     reset();
 }
@@ -30,6 +36,7 @@ void TB303Engine::reset()
     accentEnv.reset();
     vca.reset();
     toneShaper.reset();
+    bassLp      = 0.0;
     noteActive  = false;
 }
 
@@ -41,6 +48,7 @@ void TB303Engine::setVolume(float v)        { vca.setVolume(v);        }
 void TB303Engine::setWaveform(int wf)       { vco.setWaveform(wf);     }
 void TB303Engine::setTuning(float cents)    { tuningCents = cents;     }
 void TB303Engine::setDistortion(float d)    { distortion  = d;         }
+void TB303Engine::setSubVolume(float v)     { vco.setSubVolume(v);     }
 
 void TB303Engine::setAccentLevel(float level)
 {
@@ -84,7 +92,13 @@ float TB303Engine::processSample()
     float vcoOut  = vco.processSample();
     float driven  = vcoOut * (1.0f + distortion * 2.0f);   // drive VCF input
     float vcfOut  = vcf.processSample(driven, envOut, accentOut);
-    float vcaOut  = vca.processSample(vcfOut, envOut, accentOut, accentLevel);
+
+    // Bass boost prima del VCA: e' compensazione del filtro, non un effetto
+    // in coda, quindi deve passare per l'inviluppo d'ampiezza come il resto.
+    bassLp += bassCoeff * (static_cast<double>(vcfOut) - bassLp);
+    const float boosted = vcfOut + kBassBoost * static_cast<float>(bassLp);
+
+    float vcaOut  = vca.processSample(boosted, envOut, accentOut, accentLevel);
     float out     = toneShaper.process(vcaOut);
 
     return out;

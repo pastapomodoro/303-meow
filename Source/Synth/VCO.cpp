@@ -12,8 +12,14 @@ void VCO::prepare(double sr)
 
 void VCO::reset()
 {
-    phase = 0.0;
-    sliding = false;
+    phase    = 0.0;
+    subPhase = 0.0;
+    sliding  = false;
+}
+
+void VCO::setSubVolume(float v)
+{
+    subVol = juce::jlimit(0.0f, 1.0f, v);
 }
 
 double VCO::noteToHz(int note, float tuning)
@@ -60,8 +66,26 @@ double VCO::polyBlep(double t, double dt)
 double VCO::processSaw()
 {
     double dt  = phaseInc;
-    double out = 2.0 * phase - 1.0;         // naive sawtooth
-    out -= polyBlep(phase, dt);             // correct discontinuity at 0
+    // Rampa lineare. Si e' provato a curvarla come la carica del condensatore
+    // del 303: misurato, non serve. Anche con curvatura estrema le armoniche
+    // cambiano di meno di 1 dB, perche' il contenuto armonico di una dente di
+    // sega lo determina il salto a fine ciclo, non la forma della rampa fra un
+    // salto e l'altro. Costava un exp() per campione per nulla.
+    double out = 2.0 * phase - 1.0;
+    out -= polyBlep(phase, dt);                  // correct discontinuity at 0
+    return out;
+}
+
+// Sub: onda quadra un'ottava sotto, con la sua fase indipendente.
+double VCO::processSub()
+{
+    const double dt  = phaseInc * 0.5;
+    double out = (subPhase < 0.5) ? 1.0 : -1.0;
+    out += polyBlep(subPhase, dt);
+    out -= polyBlep(std::fmod(subPhase + 0.5, 1.0), dt);
+
+    subPhase += dt;
+    if (subPhase >= 1.0) subPhase -= 1.0;
     return out;
 }
 
@@ -94,11 +118,21 @@ float VCO::processSample()
 
     phaseInc = currentFreq / sampleRate;
 
-    double out = 0.0;
-    if (waveform == 0)
-        out = processSaw();
-    else
-        out = processSquare();
+    double out = (waveform == 0) ? processSaw() : processSquare();
+
+    // Il sub gira sempre: la sua fase deve restare agganciata anche quando il
+    // volume e' a zero, altrimenti riaprendolo entra a fase casuale e si sente
+    // uno scalino.
+    const double sub = processSub();
+    if (subVol > 1.0e-4f)
+    {
+        // Il denominatore tiene il picco intorno a 1.0 su tutta la corsa del
+        // sub (misurato 1.04 a 0.55, 1.06 a fondo corsa). Serve perche' a
+        // decidere quanta saturazione entra nel ladder deve restare il knob
+        // Distort, non il volume del sub.
+        out = (out + static_cast<double>(subVol) * 0.8 * sub)
+            / (1.0 + static_cast<double>(subVol) * 0.7);
+    }
 
     phase += phaseInc;
     if (phase >= 1.0) phase -= 1.0;

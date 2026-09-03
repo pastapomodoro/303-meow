@@ -3092,12 +3092,12 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
-  {name:'Robot Funk',    tempo:124, wave:'SAW', cut:'850Hz', res:0.62, env:0.55, dec:0.28},
-  {name:'Rollin Acid',   tempo:132, wave:'SAW', cut:'520Hz', res:0.88, env:0.75, dec:0.20},
-  {name:'Basic Acid',    tempo:130, wave:'SAW', cut:'700Hz', res:0.55, env:0.55, dec:0.35},
-  {name:'Night Drive',   tempo:118, wave:'SAW', cut:'900Hz', res:0.58, env:0.50, dec:0.40},
-  {name:'Deep Squelch',  tempo:126, wave:'SQR', cut:'380Hz', res:0.90, env:0.82, dec:0.55},
-  {name:'Phrygian Drive',tempo:128, wave:'SQR', cut:'560Hz', res:0.80, env:0.70, dec:0.42},
+  {name:'Robot Funk',    tempo:124, wave:'SAW', cut:'850Hz', res:0.62, env:0.55, dec:0.28, sub:0.55},
+  {name:'Rollin Acid',   tempo:132, wave:'SAW', cut:'520Hz', res:0.88, env:0.75, dec:0.20, sub:0.40},
+  {name:'Basic Acid',    tempo:130, wave:'SAW', cut:'700Hz', res:0.55, env:0.55, dec:0.35, sub:0.30},
+  {name:'Night Drive',   tempo:118, wave:'SAW', cut:'900Hz', res:0.58, env:0.50, dec:0.40, sub:0.45},
+  {name:'Deep Squelch',  tempo:126, wave:'SQR', cut:'380Hz', res:0.90, env:0.82, dec:0.55, sub:0.70},
+  {name:'Phrygian Drive',tempo:128, wave:'SQR', cut:'560Hz', res:0.80, env:0.70, dec:0.42, sub:0.50},
 ];
 const SYNTH_DATA = [
   {name:'Acid Saw',     cut:0.65,res:0.75,env:0.70,dec:0.20,acc:0.75},
@@ -3349,7 +3349,7 @@ function setMode(mode){
   ];
   // Valori del banco "Robot Funk".
   const DEFAULTS={cutoff:850,resonance:0.62,envMod:0.55,decay:0.28,accent:0.78,
-                  volume:0.82,distortion:0.18,tuning:0,waveform:0,tempo:124,resolution:4};
+                  volume:0.82,distortion:0.18,tuning:0,waveform:0,tempo:124,resolution:4,subOsc:0.55};
 
   // ── Codice dell'AudioWorkletProcessor (porting fedele dei .cpp) ──
   const WORKLET_CODE = `
@@ -3362,7 +3362,8 @@ class TB303Processor extends AudioWorkletProcessor {
     this.stage=[0,0,0,0]; this.stageT=[0,0,0,0]; this.prevIn=0; this.dcX=0; this.dcY=0;
     this.baseCutoff=800; this.resonance=0.5; this.envMod=0.5; this.accentMod=0.5;
     this.nVal=0; this.nState=0; this.nAtt=Math.exp(-1/(0.003*sr)); this.nDec=Math.exp(-1/(0.3*sr));
-    this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.003*sr)); this.aDec=Math.exp(-1/(0.2*sr));
+    // accent attack 1 ms, non 3: in Acid V VCAEnv303_AccentAttack ha mediana 0
+    this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.001*sr)); this.aDec=Math.exp(-1/(0.2*sr));
     this.volume=0.8; this.distortion=0.0; this.dX=0; this.dY=0;
     // ADAA: una memoria per ogni nonlinearita', vedi Source/DSP/Saturation.h
     this.sVca={xp:0,fp:0}; this.sDist={xp:0,fp:0};
@@ -3373,6 +3374,9 @@ class TB303Processor extends AudioWorkletProcessor {
     this.prevNote=36; this.prevSlide=false;
     this.transpose=0;   // semitoni, come StepSequencer::transpose
     this.swing=0;       // 0..0.45, come StepSequencer::swing
+    this.subVol=0; this.subPhase=0;      // sub un'ottava sotto
+    this.bassLp=0; this.bassC=1-Math.exp(-2*Math.PI*180/sr);   // bass boost 180 Hz
+    this.BASS=0.5;      // Filter303_BassBoost: attivo in 149/156 preset di Acid V
     this.port.onmessage=(e)=>this.onMsg(e.data);
   }
   onMsg(d){
@@ -3395,6 +3399,7 @@ class TB303Processor extends AudioWorkletProcessor {
     else if(id==='waveform') this.waveform=v|0;
     else if(id==='tempo') this.bpm=v;
     else if(id==='resolution') this.res=v|0;
+    else if(id==='subOsc') this.subVol=Math.max(0,Math.min(1,v));
   }
   start(){ this.playing=true; this.step=0; this.counter=0; this.firstBeat=true; this.prevSlide=false; }
   noteToHz(n,c){ return 440*Math.pow(2,(n-69+c/100)/12); }
@@ -3422,6 +3427,15 @@ class TB303Processor extends AudioWorkletProcessor {
     let out;
     if(this.waveform===0){ out=2*this.phase-1; out-=this.polyBlep(this.phase,this.phaseInc); }
     else { out=this.phase<0.5?1:-1; out+=this.polyBlep(this.phase,this.phaseInc); let p2=this.phase+0.5; if(p2>=1)p2-=1; out-=this.polyBlep(p2,this.phaseInc); }
+    // Sub: quadra un'ottava sotto, fase indipendente. Gira sempre anche a
+    // volume zero, altrimenti riaprendolo entra a fase casuale e fa uno scalino.
+    const sdt=this.phaseInc*0.5;
+    let sub=this.subPhase<0.5?1:-1;
+    sub+=this.polyBlep(this.subPhase,sdt);
+    let sp2=this.subPhase+0.5; if(sp2>=1)sp2-=1;
+    sub-=this.polyBlep(sp2,sdt);
+    this.subPhase+=sdt; if(this.subPhase>=1)this.subPhase-=1;
+    if(this.subVol>1e-4) out=(out+this.subVol*0.8*sub)/(1+this.subVol*0.7);
     this.phase+=this.phaseInc; if(this.phase>=1) this.phase-=1;
     return out;
   }
@@ -3483,7 +3497,10 @@ class TB303Processor extends AudioWorkletProcessor {
       }
       this.envTick();
       let s=0;
-      if(this.playing || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal); s=this.dist(this.vca(b)); }
+      if(this.playing || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal);
+        // bass boost prima del VCA, come in TB303Engine::processSample
+        this.bassLp+=this.bassC*(b-this.bassLp);
+        s=this.dist(this.vca(b+this.BASS*this.bassLp)); }
       chL[i]=s; if(chR!==chL) chR[i]=s;
     }
     return true;
@@ -3665,6 +3682,7 @@ registerProcessor('tb303-processor', TB303Processor);
       send('accent',DEFAULTS.accent); send('volume',DEFAULTS.volume);
       send('distortion',DEFAULTS.distortion); send('tuning',DEFAULTS.tuning*100);
       send('waveform',DEFAULTS.waveform); send('tempo',bpm); send('resolution',curRes);
+      send('subOsc',DEFAULTS.subOsc);
       ready=true;
     }catch(e){ console.error('WebAudio init error',e); }
     starting=false;
@@ -3935,6 +3953,7 @@ registerProcessor('tb303-processor', TB303Processor);
     if(knobCtl.envMod)    knobCtl.envMod(d.env);
     if(knobCtl.decay)     knobCtl.decay(d.dec);
     setWaveUI((d.wave||'SAW').toUpperCase()==='SQR');
+    if(d.sub!=null) send('subOsc', d.sub);   // sub per banco
     setTempo(d.tempo);
     if(d.name) setTxt('lcd-preset', d.name);
     if(idx!=null && window._setPresetIdx) window._setPresetIdx(idx);
