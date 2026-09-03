@@ -65,10 +65,10 @@ La separazione netta tra **DSP** (C++) e **UI** (HTML/JS) è una scelta architet
 └── Source/
     ├── PluginProcessor.h / .cpp       — AudioProcessor: audio thread, APVTS, FX chain
     ├── PluginEditor.h / .cpp          — AudioProcessorEditor: WebView host, relay system
-    ├── Presets.h                      — Dati preset inline (8 factory + 12 synth)
+    ├── Presets.h                      — Dati preset inline (10 factory + 12 synth)
     ├── Synth/
     │   ├── VCO.h / .cpp              — Oscillatore PolyBLEP (SAW/SQR) + portamento
-    │   ├── VCF.h / .cpp              — Filtro Huovilainen diode ladder 4-pole
+    │   ├── VCF.h / .cpp              — Filtro Huovilainen diode ladder, tap a 18 dB/ott
     │   ├── VCA.h / .cpp              — Amplificatore + tanh soft clip
     │   ├── Envelope.h / .cpp         — Inviluppo Attack/Decay esponenziale
     │   └── TB303Engine.h / .cpp      — Engine principale: VCO+VCF+VCA+ENV+Dist
@@ -132,13 +132,16 @@ MIDI input / Sequencer
         ↓
    TB303Engine
    ├── VCO (genera onda grezza SAW/SQR)
-   ├── VCF (filtra con inviluppo + accent mod)
-   ├── VCA (amplifica con inviluppo + accent)
-   └── Distortion (tanh soft clip)
+   ├── ×(1 + distortion·2)  ← il drive entra QUI, prima del filtro
+   ├── VCF (filtra con inviluppo + accent mod; satura se spinto)
+   ├── VCA (inviluppo + accentEnv·accentLevel, soft clip ADAA)
+   └── toneShaper (passa-basso a un polo, 13 kHz)
         ↓
      Delay (FX/Delay.h)
         ↓
   juce::dsp::Reverb
+        ↓
+  juce::dsp::Limiter (-1 dBFS) + clamp di sicurezza
         ↓
      Output stereo
 ```
@@ -154,7 +157,7 @@ MIDI input / Sequencer
 | `prepare(sampleRate)` | Inizializza la frequenza campione |
 | `setNote(midiNote, tuningCents)` | Converte MIDI → Hz (formula 12-TET) |
 | `setWaveform(0 or 1)` | 0 = Sawtooth, 1 = Square |
-| `setSlide(enable, fromNote, toNote)` | Abilita portamento esponenziale ~70ms |
+| `setSlide(enable, fromNote, toNote)` | Abilita portamento esponenziale, τ = 25 ms |
 | `processSample()` | Restituisce il prossimo campione float |
 
 **Tecnica anti-aliasing:** PolyBLEP (Polynomial Band-Limited Step)
@@ -164,8 +167,9 @@ MIDI input / Sequencer
 
 **Portamento (Slide):**
 ```
-currentFreq → targetFreq via moltiplicatore per-campione
-slideCoeff = exp(-1 / (0.070 * sampleRate))  // ~70ms
+currentFreq → targetFreq, approccio esponenziale per-campione
+slideCoeff = exp(-1 / (0.025 * sampleRate))   // τ = 25 ms
+currentFreq += (targetFreq - currentFreq) * (1 - slideCoeff)
 ```
 
 ---
@@ -176,13 +180,19 @@ slideCoeff = exp(-1 / (0.070 * sampleRate))  // ~70ms
 
 **Modello:** Huovilainen Diode Ladder (2006)
 - Simula il filtro transistor ladder dell'originale Roland TB-303
-- 4 stadi in cascata → pendenza -24dB/ottava
-- Feedback con risonanza autooscillante
+- 4 stadi in cascata, ma **l'uscita è presa al terzo polo → -18 dB/ottava**
+- È la pendenza del TB-303, non i -24 dB/ott del ladder Moog: è la ragione
+  principale del suo timbro più aperto e nasale. A -24 dB/ott le armoniche
+  sopra il taglio spariscono troppo e la linea non "buca" il mix.
+- Il feedback resta preso dal quarto stadio, così la risonanza conserva la
+  rotazione di fase dei quattro poli
 - Non lineare: include `tanh()` per la saturazione dei transistor
+- Compensazione risonanza: `inputGain = 1 + resonance·0.5` prima degli stadi,
+  altrimenti ad alta risonanza il feedback svuota il fondamentale
 
 | Metodo | Descrizione |
 |--------|-------------|
-| `setCutoff(hz)` | Frequenza di taglio (20–20000 Hz) |
+| `setCutoff(hz)` | Frequenza di taglio (120–8000 Hz) |
 | `setResonance(0.0–1.0)` | 0.99 = auto-oscillazione |
 | `setEnvMod(0.0–1.0)` | Quantità di modulazione inviluppo sulla cutoff |
 | `setAccentMod(0.0–1.0)` | Boost cutoff + risonanza su note accentate |
@@ -199,12 +209,15 @@ slideCoeff = exp(-1 / (0.070 * sampleRate))  // ~70ms
 **Responsabilità:** Controllo dell'ampiezza finale del segnale.
 
 ```cpp
-output = tanh(input * (noteEnv + accentEnv) * volume)
+amp = min(noteEnv + accentEnv * accentLevel, 2.0)
+output = adaaTanh(input * amp * volume)
 ```
 
 - `noteEnv`: inviluppo principale (0.0–1.0)
-- `accentEnv`: +6dB su note accentate
-- `tanh()`: saturazione armonica soft clip
+- `accentEnv * accentLevel`: l'accento scala col knob Accent, non è un +6 dB fisso
+- `adaaTanh()`: soft clip con antiderivative anti-aliasing (`DSP/Saturation.h`),
+  perché con `amp` fino a 2.0 il tanh lavora ben fuori dalla zona lineare
+  proprio sulle note accentate
 
 ---
 
@@ -229,13 +242,19 @@ coeff = exp(-1.0 / (timeSec * sampleRate))
 ### Distortion — `TB303Engine.cpp`
 
 ```cpp
-drive = 1.0f + distortion * 9.0f;   // distortion = 0.0–1.0
-output = tanh(drive * input) / tanh(drive);
+driven = vcoOut * (1.0f + distortion * 2.0f);   // 1× … 3×
+vcfOut = vcf.processSample(driven, envOut, accentOut);
 ```
 
-- `distortion = 0.0`: bypass trasparente
-- `distortion = 1.0`: overdrive pesante (drive = 10)
-- DC blocker post-distortion per eliminare bias
+Il drive **non è un waveshaper in coda alla catena**: è guadagno d'ingresso
+prima del VCF. È la differenza che conta, perché così la distorsione interagisce
+con la risonanza — sono le non-linearità `tanh()` dentro il ladder a produrre
+la compressione e le armoniche, come nell'hardware. Messo dopo il VCA, il drive
+schiacciava un segnale già filtrato e il filtro non lo sentiva.
+
+- `distortion = 0.0`: guadagno unitario, ingresso trasparente
+- `distortion = 1.0`: 3× nel filtro, che satura in modo evidente
+- Non serve più un DC blocker dedicato: quello del VCF è a valle del drive
 
 ---
 
@@ -292,10 +311,30 @@ samplesPerStep = (60.0 / bpm / resolution) * sampleRate
 
 **Host sync:** legge `AudioPlayHead::CurrentPositionInfo` — se il DAW è in play, usa il suo BPM.
 
+**Timing:** il sequencer avanza **campione per campione** dentro lo stesso loop
+che rende l'audio (`advanceSample`), non a blocchi. Sparare tutti i `noteOn` di
+un blocco e poi renderizzare dal campione 0 introduceva un jitter fino a
+`blockSize / sampleRate` — a 512 campioni sono 11 ms, udibili come groove
+instabile. Anche gli eventi MIDI vengono processati al loro `samplePosition`.
+
+**Swing:** lo step pari si allunga e il dispari si accorcia della stessa
+frazione, quindi ogni coppia dura sempre `2 × samplesPerStep` e il tempo non
+deriva. A 132 BPM: 1:1 dritto, 1.67:1 al 50%, 2.2:1 al 75%.
+
+**MIDI mode = pattern player trasposto.** La nota in arrivo non suona da sola:
+diventa la root del pattern e il sequencer parte finché la nota resta premuta —
+come Acid V dentro un DAW. Premere un secondo tasto mentre il primo è giù
+ritraspone *senza* ripartire da capo (legato); rilasciare tutto ferma il
+sequencer. Priorità all'ultimo tasto premuto, stack di 16 note.
+
 **API principale:**
 
 | Metodo | Descrizione |
 |--------|-------------|
+| `syncBpm(playHead, fallbackBpm)` | Una volta per blocco: legge il BPM dell'host |
+| `advanceSample(engine)` | Una volta per **campione**, dentro il loop audio |
+| `setTranspose(semitoni)` | Trasposizione del pattern (MIDI mode) |
+| `setSwing(0…0.45)` | Allunga gli step pari, accorcia i dispari |
 | `play()` | Avvia playback |
 | `stop()` | Ferma e resetta posizione |
 | `selectPattern(index)` | Cambia pattern attivo (0–7) |
@@ -313,7 +352,7 @@ Tutti i parametri sono registrati in `PluginProcessor` via `AudioProcessorValueT
 
 | ID (stringa esatta) | Range | Default | Tipo JUCE | Controllo UI |
 |---------------------|-------|---------|-----------|--------------|
-| `cutoff` | 20–20000 Hz | 800 | Float (skew 0.25) | Knob SYNTH |
+| `cutoff` | 120–8000 Hz | 700 | Float (skew 0.4) | Knob SYNTH |
 | `resonance` | 0.0–1.0 | 0.5 | Float | Knob SYNTH |
 | `envMod` | 0.0–1.0 | 0.5 | Float | Knob SYNTH |
 | `decay` | 0.05–2.0 s | 0.3 | Float | Knob SYNTH |
@@ -322,7 +361,8 @@ Tutti i parametri sono registrati in `PluginProcessor` via `AudioProcessorValueT
 | `tuning` | -12–+12 semitoni | 0.0 | Float | Knob SYNTH |
 | `waveform` | 0 o 1 | 0 | Float (binary) | Toggle SAW/SQR |
 | `distortion` | 0.0–1.0 | 0.0 | Float | Knob SYNTH/FX |
-| `tempo` | 60–200 BPM | 120 | Float | BPM display |
+| `tempo` | 60–200 BPM | 160 | Float | BPM display |
+| `swing` | 0–75 % | 0 | Float | Slider SHUFFLE (SETTINGS) |
 | `play` | 0 o 1 | 0 | Float (binary) | Play/Stop button |
 | `delayTime` | 0.02–0.75 s | 0.375 | Float | Knob FX |
 | `delayFeedback` | 0.0–0.90 | 0.35 | Float | Knob FX |
@@ -343,20 +383,38 @@ apvts.getParameter("cutoff")->setValueNotifyingHost(normalizedValue);
 
 ## 7. SISTEMA PRESET
 
-### Factory Presets — 8 preset completi
+### Factory Presets — 10 preset completi
 
 Ogni preset include: tutti i parametri synth + FX + pattern completo 16-step.
 
-| # | Nome | Carattere |
-|---|------|-----------|
-| 0 | Classic Acid | Linea acid classica, SAW, cutoff medio |
-| 1 | Deep Squelch | Bass profondo, resonance alta |
-| 2 | Funky Groove | Groove sincopato, accent su beat |
-| 3 | Dub Delay | Delay prominente, atmosfera dub |
-| 4 | Space Acid | Reverb alto, trame ambientali |
-| 5 | Dark Techno | Distortion, tono oscuro |
-| 6 | Rave Acid | Acid veloce, classico anni '90 |
-| 7 | Square Pulse | Waveform SQR, pulse minimale |
+Uno per **archetipo**, non uno per "atmosfera". Gli archetipi vengono
+dall'analisi dei 154 pattern factory di Arturia Acid V, che smentisce
+l'intuizione: le linee acid vere non sono melodicamente affollate. Mediana di
+**3 sole classi di altezza** (99 su 154 ne usano ≤3, 29 stanno su una nota
+sola), root al **69%** delle note, span mediano 22 semitoni. La varietà non sta
+nelle note: sta in ritmo, densità dei gate (da 2 a 16), accenti (0–14), slide
+(0–14) e salti d'ottava. Dieci linee con sette note ciascuna nella stessa scala
+suonano tutte uguali — errore commesso e poi corretto.
+
+| # | Nome | Classi | Gate | Acc | Slide | Carattere |
+|---|------|--------|------|-----|-------|-----------|
+| 0 | Basic Acid | 2 | 16 | 2 | 1 | Riferimento: root + quinta + ottava, res 0.55 |
+| 1 | Root Drone | 1 | 16 | 4 | 0 | Una nota sola: muove tutto il filtro |
+| 2 | Glide Pair | 2 | 16 | 2 | 8 | Due note, legato continuo |
+| 3 | Octave Ladder | 1 | 16 | 2 | 2 | Salto d'ottava a ogni step |
+| 4 | Sparse Groove | 2 | 6 | 2 | 1 | Il groove sta nelle pause |
+| 5 | Half Loop | 3 | 16 | 4 | 2 | Figura di 8 step ripetuta |
+| 6 | Phrygian Three | 3 | 16 | 2 | 2 | Root, b2, m3 — la scala più scura |
+| 7 | Accent Storm | 2 | 16 | 8 | 0 | Pompa a sedicesimi alterni |
+| 8 | Deep Slow | 4 | 5 | 1 | 1 | Decay 1.15 s, note sovrapposte |
+| 9 | Rave Sixteen | 3 | 16 | 4 | 1 | Denso e veloce, 145 BPM |
+
+**Tutti scritti sulla root C3 = 48** (`StepSequencer::PATTERN_ROOT`), che è anche
+la riga più bassa del piano roll. Scriverli più in basso li rendeva non
+editabili e la UI li riavvolgeva di un'ottava, appiattendo i salti.
+
+I pattern e i nomi sono originali: di Acid V si è usato solo il profilo
+statistico, che è un dato di fatto e non un'opera creativa.
 
 ### Synth Presets — 12 preset solo timbrici
 
@@ -547,7 +605,7 @@ Il file originale è un prototipo standalone completamente funzionale nel browse
 - Canvas SVG per il pannello visivo
 
 #### PRESET
-- Dropdown factory preset (8 voci)
+- Dropdown factory preset (10 voci)
 - Dropdown synth preset (12 voci)
 - Pulsante Load
 
@@ -630,12 +688,29 @@ if (window.__JUCE__) {
 }
 ```
 
-### Comando per rigenerare ui.html
+### ⚠️ Due avvertenze prima di toccare il frontend
+
+**1. `build_html.py` non va lanciato così com'è.** `sketch definitivo.html` è
+rimasto fermo ad agosto 2025 (~134 KB) mentre `index.html` e `Resources/ui.html`
+sono andati avanti (~195 KB). Rigenerare dal sketch **sovrascriverebbe** mesi di
+lavoro: DSP JS, piano roll, swing, pattern transpose, preset. Le modifiche al
+frontend si fanno **direttamente su `index.html` e `Resources/ui.html`, tenendoli
+in sync** (sono lo stesso file: uno per il deploy statico, uno embedded nel
+plugin). Poi:
 
 ```bash
-python3 build_html.py
-# → genera Resources/ui.html (~2400 righe)
+cmake --build build --target TB303Assets          # reimpacchetta ui.html
+cmake --build build --target TB303Clone_Standalone
 ```
+
+**2. Il bridge JUCE è disattivato.** `INCLUDE_JUCE_BRIDGE = False`, quindi in
+`Resources/ui.html` non c'è nessun riferimento a `window.__JUCE__`.
+`PluginEditor.cpp` espone comunque 16 relay e 11 funzioni native
+(`selectPattern`, `loadPreset`, `setMidiMode`, …) ma **nessuno le chiama**: nel
+plugin VST/AU l'interfaccia non è collegata al DSP C++, e i knob muovono il
+motore WebAudio in JS. È uno stato deliberato — il progetto lavora sulla versione
+standalone — ma va saputo, perché è la ragione per cui alcune funzioni C++
+(MIDI mode, swing) non sono raggiungibili dal plugin.
 
 ---
 
@@ -810,9 +885,12 @@ document.addEventListener("mousemove", (e) => {
 1. **Separazione totale DSP / UI:** Il plugin audio può funzionare senza interfaccia grafica. L'UI è un layer separato che comunica via messaggi — non tocca mai direttamente l'audio.
 
 2. **Fedeltà all'originale TB-303:**
-   - VCF Huovilainen: il modello matematico più accurato del filtro transistor ladder
+   - VCF Huovilainen con tap a **18 dB/ott**, la pendenza del 303 (non i 24 del Moog)
    - PolyBLEP: stesso anti-aliasing usato nei plugin commerciali
-   - Accent/Slide: comportamento identico all'hardware originale
+   - Drive **prima** del filtro, così interagisce con la risonanza
+   - Slide: durante il portamento l'inviluppo **non** riparte, come nell'hardware
+   - Range del cutoff limitato a 120–8000 Hz: con 20–20000 un quarto della corsa
+     del knob stava sopra i 6 kHz, dove su un basso non c'è più niente da filtrare
 
 3. **Web-first UI in un plugin audio:**
    - Prima volta che questa tecnica viene usata a livello di tesi (JUCE 8 è uscito nel 2024)
@@ -820,11 +898,18 @@ document.addEventListener("mousemove", (e) => {
    - Workflow design-to-plugin senza ricompilazioni C++
 
 4. **Preset system completo:**
-   - 8 factory preset (synth + sequencer)
+   - 10 factory preset (synth + sequencer), uno per archetipo di pattern
    - 12 synth preset
    - Persistenza dello stato via XML / ValueTree
 
 ### Possibili domande e risposte
+
+**D: Il MIDI mode funziona nel plugin?**
+R: La logica C++ c'è ed è completa, ma il bridge JUCE **non è iniettato** in
+`Resources/ui.html` (vedi l'avvertenza in §11), quindi il toggle MIDI non si può
+accendere dall'interfaccia del plugin e `patternMode` resta false: il MIDI in
+arrivo dal DAW suona note singole. Nella pagina web il pattern transpose
+funziona. Per abilitarlo nel plugin va riattivato il bridge.
 
 **D: Come viene garantita la sicurezza thread?**
 R: I relay JUCE (`WebSliderRelay`) usano meccanismi thread-safe interni. I parametri APVTS possono essere scritti da qualsiasi thread. Il sequencer usa accesso diretto agli step sul thread UI (potenziale race condition nota, documentata nei TODO).
@@ -869,5 +954,5 @@ R: Sì — VST3 (Ableton, Logic, Cubase, Reaper), AU (Logic, GarageBand), Standa
 
 ---
 
-*303 Meow v1.0.0 — CLAUDE.md — Aprile 2026*
+*303 Meow v1.0.0 — CLAUDE.md — allineato al codice il 3 settembre 2026*
 *Eugenio Bellini — NABA UI/UX Design Thesis*

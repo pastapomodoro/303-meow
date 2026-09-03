@@ -218,7 +218,11 @@ body {
 /* le pagine corte distribuiscono lo spazio nel contenuto invece di lasciare
    una fascia vuota in fondo */
 #page-settings > .settings-grid { flex:none; }
-#page-settings > .settings-wide { flex:1; }
+/* La riga si dimensiona sul contenuto, non sullo spazio che avanza: con flex:1
+   e align-content stretch le due card venivano tirate a 333px pur avendo ~184px
+   di contenuto, e il buco finiva DENTRO la card, dove sembra un errore. Cosi'
+   lo spazio libero resta sotto, ed e' semplice superficie del pannello. */
+#page-settings > .settings-wide { flex:1; align-content:start; }
 /* la griglia prende lo spazio che avanza, la barra idraulica resta della sua
    altezza: lo spazio libero va nei controlli, non nel dettaglio decorativo */
 #page-synth > .grid-3 { flex:1; }
@@ -1610,6 +1614,10 @@ body {
 /* solo i tasti della griglia pattern sono quadrati: applicare aspect-ratio a
    tutti i .keycap rendeva TAP TEMPO e +/- alti quanto sono larghi */
 .keycap.pat-btn { aspect-ratio: 1; }
+/* 8 tasti su 6 colonne: ognuno ne occupa 2, cosi' la riga finale di due si
+   centra partendo dalla colonna 2 invece di allinearsi a sinistra. */
+#pat-btns .keycap.pat-btn { grid-column: span 2; }
+#pat-btns .keycap.pat-btn:nth-child(7) { grid-column: 2 / span 2; }
 /* ── Keycap Meris-style: flat white, sottile shadow, acid on active ── */
 .keycap-base {
   border-radius: 8px;
@@ -1776,7 +1784,7 @@ body {
 
             <div class="ctrl-sec ctrl-grow">
               <div class="ctrl-lbl">Pattern</div>
-              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;" id="pat-btns"></div>
+              <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;" id="pat-btns"></div>
             </div>
 
             </div>
@@ -2457,7 +2465,16 @@ body {
           <div class="card-hdr"><span class="card-hdr-txt">Keyboard — Pattern Transpose</span></div>
           <div class="card-body" style="padding:14px;">
             <div class="set-hint" style="margin-bottom:10px;">In <b style="color:var(--acid-dark);">MIDI mode</b> (toggle nel SEQUENCER) la nota non suona da sola: diventa la <b>root del pattern</b>. Tieni premuto e la bassline gira in quella tonalità — <b>A</b> = C3, il pattern come è scritto:</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;"><div class="kbdkey"><b>A</b><span>C</span></div><div class="kbdkey"><b>W</b><span>C#</span></div><div class="kbdkey"><b>S</b><span>D</span></div><div class="kbdkey"><b>E</b><span>D#</span></div><div class="kbdkey"><b>D</b><span>E</span></div><div class="kbdkey"><b>F</b><span>F</span></div><div class="kbdkey"><b>T</b><span>F#</span></div><div class="kbdkey"><b>G</b><span>G</span></div><div class="kbdkey"><b>Y</b><span>G#</span></div><div class="kbdkey"><b>H</b><span>A</span></div><div class="kbdkey"><b>U</b><span>A#</span></div><div class="kbdkey"><b>J</b><span>B</span></div><div class="kbdkey"><b>K</b><span>C</span></div></div></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"><div class="kbdkey"><b>A</b><span>C</span></div><div class="kbdkey"><b>W</b><span>C#</span></div><div class="kbdkey"><b>S</b><span>D</span></div><div class="kbdkey"><b>E</b><span>D#</span></div><div class="kbdkey"><b>D</b><span>E</span></div><div class="kbdkey"><b>F</b><span>F</span></div><div class="kbdkey"><b>T</b><span>F#</span></div><div class="kbdkey"><b>G</b><span>G</span></div><div class="kbdkey"><b>Y</b><span>G#</span></div><div class="kbdkey"><b>H</b><span>A</span></div><div class="kbdkey"><b>U</b><span>A#</span></div><div class="kbdkey"><b>J</b><span>B</span></div><div class="kbdkey"><b>K</b><span>C</span></div></div>
+            <div style="height:1px;background:var(--border);margin:0 0 12px;"></div>
+            <div style="display:grid;grid-template-columns:22px 1fr;gap:7px 9px;font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.55;">
+              <span style="color:var(--acid-dark);font-weight:700;">1</span>
+              <span><b style="color:var(--text-mid);">Premi un tasto</b> — il pattern riparte dallo step 1 nella tonalità di quella nota.</span>
+              <span style="color:var(--acid-dark);font-weight:700;">2</span>
+              <span><b style="color:var(--text-mid);">Tieni e premi un secondo tasto</b> — ritraspone a tempo <i>senza</i> ripartire da capo: è il legato del piano roll.</span>
+              <span style="color:var(--acid-dark);font-weight:700;">3</span>
+              <span><b style="color:var(--text-mid);">Rilascia tutto</b> — il sequencer si ferma. Priorità all'ultimo tasto premuto.</span>
+            </div></div>
         </div>
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">About</span></div>
@@ -2596,11 +2613,18 @@ function buildKeycaps() {
   const grid = document.getElementById('pat-btns');
   if(!grid) return;
   grid.innerHTML = '';
-  // 4×2 di tasti quadrati: compatto, nessuna cella orfana.
-  // Sono 8 perche' tanti sono gli slot pattern del sequencer
-  // (StepSequencer::NUM_PATTERNS) e tanti ne dichiara il display "BANK nn/08".
-  // I 10 preset factory restano raggiungibili dalla pagina PRESET.
-  grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+  // 8 tasti = gli slot pattern del sequencer (StepSequencer::NUM_PATTERNS),
+  // quanti ne dichiara il display "BANK nn/08". I 10 preset factory restano
+  // raggiungibili dalla pagina PRESET.
+  //
+  // Griglia a 6 colonne con span 2, non a 3: i .pat-btn hanno aspect-ratio 1,
+  // quindi la loro altezza la decide la larghezza della colonna. Con 3 colonne
+  // vengono quadrati da ~63px e tre righe riempiono i ~200px della sezione;
+  // con 4 colonne restavano 46px e sotto/sopra avanzavano 53px di vuoto per
+  // parte. Le 6 colonne servono a centrare l'ultima riga di due tasti (vedi
+  // la regola #pat-btns .keycap:nth-child(7)), altrimenti 8 su 3 colonne
+  // lasciano un buco in basso a destra.
+  grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
   grid.style.gap = '5px';
 
   for(let i = 0; i < 8; i++) {
@@ -3286,6 +3310,8 @@ function setMode(mode){
 
   // Animazione — parte da zero: a macchina ferma il meter e' spento
   let level = 0;
+  let clipHeldUntil = 0; // timestamp ms — clip indicator persiste 2s dopo l'evento
+
   setInterval(()=>{
     if(!playing) {
       level = Math.max(0, level - 0.08);
@@ -3293,8 +3319,14 @@ function setMode(mode){
       const target = 0.4 + Math.random() * 0.55;
       level = level * 0.7 + target * 0.3;
     }
-    ledEls.forEach(({ dome, cfg }) => {
-      const on = level >= cfg.threshold;
+
+    const isClipping = level >= 0.94;
+    if(isClipping) clipHeldUntil = Date.now() + 2000;
+    const clipHeld = Date.now() < clipHeldUntil;
+
+    ledEls.forEach(({ dome, cfg }, i) => {
+      const isClipLed = i === ledEls.length - 1; // ultimo LED = rosso clip
+      const on = isClipLed ? (isClipping || clipHeld) : level >= cfg.threshold;
       dome.style.background = on
         ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), ${cfg.color})`
         : `radial-gradient(circle at 35% 30%, rgba(255,255,255,.15), ${cfg.color}44)`;
