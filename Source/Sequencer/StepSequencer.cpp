@@ -5,6 +5,7 @@ StepSequencer::StepSequencer()
 {
     currentPatternIdx = 0;
     currentStep       = 0;
+    currentPatternAtomic.store(0, std::memory_order_relaxed);
 }
 
 void StepSequencer::prepare(double sr)
@@ -29,6 +30,7 @@ void StepSequencer::stop()
     playing       = false;
     currentStep   = 0;
     sampleCounter = 0.0;
+    pendingPattern.store(-1, std::memory_order_relaxed);
     currentStepAtomic.store(0, std::memory_order_relaxed);
 }
 
@@ -45,11 +47,29 @@ bool StepSequencer::isPlaying() const { return playing; }
 
 void StepSequencer::selectPattern(int index)
 {
-    if (index >= 0 && index < NUM_PATTERNS)
+    if (index < 0 || index >= NUM_PATTERNS)
+        return;
+
+    if (!playing)
+    {
+        // Da fermo non c'e' nessun giro da finire: il cambio e' immediato.
         currentPatternIdx = index;
+        currentPatternAtomic.store(index, std::memory_order_relaxed);
+        pendingPattern.store(-1, std::memory_order_relaxed);
+        return;
+    }
+
+    // In riproduzione il cambio si accoda e scatta quando il pattern corrente
+    // arriva in fondo, come sul TB-303: premere un tasto a meta' battuta non
+    // la interrompe. Ripremere il pattern che sta suonando annulla la coda.
+    pendingPattern.store(index == currentPatternIdx ? -1 : index,
+                         std::memory_order_relaxed);
 }
 
-int StepSequencer::getCurrentPatternIndex() const { return currentPatternIdx; }
+int StepSequencer::getCurrentPatternIndex() const
+{
+    return currentPatternAtomic.load(std::memory_order_relaxed);
+}
 
 Pattern& StepSequencer::getPattern(int index)
 {
@@ -96,10 +116,23 @@ void StepSequencer::sendStepEvents(TB303Engine& engine, int step)
 
 void StepSequencer::advanceStep(TB303Engine& engine, double /*bpm*/)
 {
-    const Pattern& pat = patterns[static_cast<size_t>(currentPatternIdx)];
-    int len = pat.getLength();
+    // La lunghezza la decide il pattern che sta suonando ORA: e' lui che deve
+    // finire il giro prima dell'eventuale cambio.
+    const int len = patterns[static_cast<size_t>(currentPatternIdx)].getLength();
     currentStep = (currentStep + 1) % len;
+
+    // Rientrando sullo step 0 il giro e' chiuso: qui, e solo qui, entra il
+    // pattern accodato. exchange() lo consuma in un colpo, quindi non serve
+    // altra sincronizzazione con il thread che ha premuto il tasto.
+    if (currentStep == 0)
+    {
+        const int queued = pendingPattern.exchange(-1, std::memory_order_relaxed);
+        if (queued >= 0 && queued < NUM_PATTERNS)
+            currentPatternIdx = queued;
+    }
+
     currentStepAtomic.store(currentStep, std::memory_order_relaxed);
+    currentPatternAtomic.store(currentPatternIdx, std::memory_order_relaxed);
 
     sendStepEvents(engine, currentStep);
 }

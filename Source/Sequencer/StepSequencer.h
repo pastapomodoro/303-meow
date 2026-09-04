@@ -32,8 +32,15 @@ public:
     bool isPlaying() const;
 
     // Pattern management (UI thread safe via atomic / copy-on-write)
+    //
+    // Durante la riproduzione selectPattern() NON cambia subito: accoda. Il
+    // pattern nuovo entra quando quello corrente chiude il giro, come sul
+    // TB-303. getPendingPattern() dice cosa c'e' in attesa (-1 = niente), cosi'
+    // la UI puo' far lampeggiare il tasto accodato invece di accenderlo.
     void        selectPattern(int index);
     int         getCurrentPatternIndex() const;
+    int         getPendingPattern() const
+                { return pendingPattern.load(std::memory_order_relaxed); }
     Pattern&    getPattern(int index);
     const Pattern& getPattern(int index) const;
 
@@ -75,7 +82,11 @@ private:
     bool needsHostResync   = false;   // phase-lock to host on first block after play()
     double lastPpqPos      = -1.0;    // previous block ppqPosition, for loop detection
 
-    std::atomic<int> currentStepAtomic { 0 };
+    std::atomic<int> currentStepAtomic    { 0 };
+    // Il pattern che sta suonando davvero: currentPatternIdx cambia sul thread
+    // audio quando la coda entra, quindi la UI non puo' leggerlo direttamente.
+    std::atomic<int> currentPatternAtomic { 0 };
+    std::atomic<int> pendingPattern       { -1 };   // -1 = nessuna coda
 
     void advanceStep(TB303Engine& engine, double bpm);
     void sendStepEvents(TB303Engine& engine, int step);

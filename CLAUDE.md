@@ -361,6 +361,23 @@ instabile. Anche gli eventi MIDI vengono processati al loro `samplePosition`.
 frazione, quindi ogni coppia dura sempre `2 × samplesPerStep` e il tempo non
 deriva. A 132 BPM: 1:1 dritto, 1.67:1 al 50%, 2.2:1 al 75%.
 
+**Cambio pattern in coda.** Durante la riproduzione `selectPattern()` non
+cambia subito: accoda. Il pattern nuovo entra quando quello corrente rientra
+sullo step 0, come sul TB-303 — premere un tasto a metà battuta non la
+interrompe. Da fermo il cambio è immediato, perché non c'è nessun giro da
+chiudere; ripremere il pattern che sta suonando annulla la coda, e lo stop la
+svuota.
+
+La lunghezza del giro la decide il pattern **che sta suonando**, non quello
+accodato. Il passaggio di consegne usa `pendingPattern.exchange(-1)` sul thread
+audio: consuma la coda in un colpo, quindi non serve altra sincronizzazione con
+il thread che ha premuto il tasto. `getCurrentPatternIndex()` legge un atomico
+separato perché `currentPatternIdx` ora cambia sul thread audio.
+
+Nella UI il tasto accodato **lampeggia** invece di accendersi fisso (`.keycap.queued`),
+e il piano roll resta su quello che sta suonando finché il cambio non entra:
+altrimenti si vedrebbe un pattern e se ne sentirebbe un altro.
+
 **MIDI mode = pattern player trasposto.** La nota in arrivo non suona da sola:
 diventa la root del pattern e il sequencer parte finché la nota resta premuta —
 come Acid V dentro un DAW. Premere un secondo tasto mentre il primo è giù
@@ -377,7 +394,8 @@ sequencer. Priorità all'ultimo tasto premuto, stack di 16 note.
 | `setSwing(0…0.45)` | Allunga gli step pari, accorcia i dispari |
 | `play()` | Avvia playback |
 | `stop()` | Ferma e resetta posizione |
-| `selectPattern(index)` | Cambia pattern attivo (0–7) |
+| `selectPattern(index)` | Accoda il pattern (0–7): entra a fine giro |
+| `getPendingPattern()` | Pattern in coda, −1 se nessuno |
 | `getCurrentStep()` | Step corrente (0–15), usato per highlight UI |
 | `getCurrentPatternIndex()` | Pattern attivo |
 | `isPlaying()` | Stato transport |

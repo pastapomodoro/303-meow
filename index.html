@@ -1547,6 +1547,13 @@ body {
   background:linear-gradient(180deg,#d6ff7a,#7fda00);
   box-shadow: 0 0 6px var(--acid-glow), inset 0 1px 0 rgba(255,255,255,.75);
 }
+/* Tasto accodato: il cambio scatta a fine giro, quindi il LED lampeggia
+   invece di accendersi fisso — come fa l'hardware mentre aspetta. */
+.keycap.queued .keycap-led {
+  background:linear-gradient(180deg,#d6ff7a,#7fda00);
+  animation: patQueue .45s steps(1,end) infinite;
+}
+@keyframes patQueue { 0%,49%{opacity:1; box-shadow:0 0 6px var(--acid-glow);} 50%,100%{opacity:.18; box-shadow:none;} }
 
 /* lo stato playing non ricolora il tasto: parla solo il LED (vedi sopra) */
 
@@ -3374,6 +3381,7 @@ class TB303Processor extends AudioWorkletProcessor {
     this.prevNote=36; this.prevSlide=false;
     this.transpose=0;   // semitoni, come StepSequencer::transpose
     this.swing=0;       // 0..0.45, come StepSequencer::swing
+    this.pendPat=null;  // pattern accodato, entra allo step 0 come sul TB-303
     this.subVol=0; this.subPhase=0;      // sub un'ottava sotto
     this.bassLp=0; this.bassC=1-Math.exp(-2*Math.PI*180/sr);   // bass boost 180 Hz
     this.BASS=0.5;      // Filter303_BassBoost: attivo in 149/156 preset di Acid V
@@ -3381,8 +3389,12 @@ class TB303Processor extends AudioWorkletProcessor {
   }
   onMsg(d){
     if(d.type==='param') this.setParam(d.id,d.value);
-    else if(d.type==='pattern'){ this.pattern=d.steps; this.len=d.steps.length||16; }
-    else if(d.type==='transport'){ if(d.playing) this.start(); else this.playing=false; }
+    else if(d.type==='pattern'){
+      // queue:true e in riproduzione -> non cambia ora, entra a fine giro
+      if(d.queue && this.playing){ this.pendPat=d.steps; }
+      else { this.pattern=d.steps; this.len=d.steps.length||16; this.pendPat=null; }
+    }
+    else if(d.type==='transport'){ if(d.playing) this.start(); else { this.playing=false; this.pendPat=null; } }
     else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note); }
     else if(d.type==='transpose'){ this.transpose=d.semis|0; }
     else if(d.type==='swing'){ this.swing=Math.max(0,Math.min(0.45,+d.amount||0)); }
@@ -3419,7 +3431,17 @@ class TB303Processor extends AudioWorkletProcessor {
     this.noteOn(n,!!s.accent,this.prevSlide,this.prevNote);
     this.prevNote=n; this.prevSlide=!!s.slide;
   }
-  advance(){ this.step=(this.step+1)%this.len; this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); }
+  advance(){
+    // La lunghezza la decide il pattern che sta suonando ORA: e' lui che deve
+    // chiudere il giro prima dell'eventuale cambio.
+    this.step=(this.step+1)%this.len;
+    if(this.step===0 && this.pendPat){
+      this.pattern=this.pendPat; this.len=this.pendPat.length||16; this.pendPat=null;
+      this.port.postMessage({type:'patternApplied'});
+    }
+    this.sendStep(this.step);
+    this.port.postMessage({type:'step',step:this.step});
+  }
   polyBlep(t,dt){ if(t<dt){t/=dt; return t+t-t*t-1;} else if(t>1-dt){t=(t-1)/dt; return t*t+t+t+1;} return 0; }
   vcoTick(){
     if(this.sliding){ const diff=this.tgtFreq-this.curFreq; if(Math.abs(diff)<0.01){this.curFreq=this.tgtFreq; this.sliding=false;} else { this.curFreq+=(this.tgtFreq-this.curFreq)*(1-this.slideCoeff);} }
@@ -3675,7 +3697,9 @@ registerProcessor('tb303-processor', TB303Processor);
       const st=document.getElementById('audio-status');
       if(st) st.textContent = (mode==='worklet' ? 'AudioWorklet' : 'ScriptProcessor') + ' · ready';
       buildFX();
-      node.port.onmessage=(ev)=>{ const m=ev.data||{}; if(m.type==='step'){ const st=m.step|0; window._prStep=st; curStep=st; seqCur=st; seqPlayhead(); if(window._drawPR) window._drawPR(); if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); } const sl=document.getElementById('slcd'); if(sl) sl.textContent=String(st+1).padStart(2,'0'); } };
+      node.port.onmessage=(ev)=>{ const m=ev.data||{};
+        if(m.type==='patternApplied' && window._patternApplied){ window._patternApplied(); return; }
+        if(m.type==='step'){ const st=m.step|0; window._prStep=st; curStep=st; seqCur=st; seqPlayhead(); if(window._drawPR) window._drawPR(); if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); } const sl=document.getElementById('slcd'); if(sl) sl.textContent=String(st+1).padStart(2,'0'); } };
       post({type:'pattern',steps:currentPattern()});
       send('cutoff',DEFAULTS.cutoff); send('resonance',DEFAULTS.resonance);
       send('envMod',DEFAULTS.envMod); send('decay',DEFAULTS.decay);
@@ -3772,8 +3796,8 @@ registerProcessor('tb303-processor', TB303Processor);
   window._onPatternChange=function(){ if(srcMode!=='midi') pushPattern(); renderSeqBay(); };
   window._setPresetIdx=function(i){
     presetIdx=((i|0)%FACTORY_BANKS.length+FACTORY_BANKS.length)%FACTORY_BANKS.length;
-    // nuovo banco: torna al tasto 1, che e' la linea piena
-    document.querySelectorAll('#pat-btns .keycap').forEach((k,j)=>k.classList.toggle('active',j===0));
+    // nuovo banco: torna al tasto 1 (la linea piena) e svuota la coda
+    if(window._resetPatBtns) window._resetPatBtns(0);
     setTxt('lcd-pat','01');
     if(window._prSetPattern) window._prSetPattern((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0]);
     if(srcMode!=='midi'){ pushPattern(); if(webPlaying) post({type:'transport',playing:true}); }
@@ -3799,6 +3823,9 @@ registerProcessor('tb303-processor', TB303Processor);
   function uiStop(){
     webPlaying=false; window._seqPlaying=false; setPlayVisual(false);
     post({type:'transport',playing:false});
+    // Il worklet svuota la sua coda allo stop: se restasse il LED acceso
+    // lampeggerebbe in attesa di un cambio che non arrivera' mai.
+    if(window._resetPatBtns) window._resetPatBtns(window._activeVar!=null?window._activeVar:0);
     window._prStep=0; curStep=0; seqCur=0; seqPlayhead();
     if(window._drawPR) window._drawPR();
     if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); }
@@ -4051,17 +4078,39 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Pattern buttons: pattern diverso per ogni tasto ──
   // Il tasto n non cambia banco: carica la VARIAZIONE n del banco corrente.
   // Il nome del preset resta quello del banco, cosi' il display non mente.
+  //
+  // In riproduzione il cambio NON e' immediato: si accoda e scatta quando il
+  // pattern corrente chiude il giro, come sul TB-303. Il piano roll resta su
+  // quello che sta suonando finche' il cambio non entra, altrimenti si
+  // vedrebbe un pattern e se ne sentirebbe un altro.
+  let queuedVar=-1, activeVar=0;
+  function paintPatBtns(){
+    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{
+      k.classList.toggle('active', i===activeVar);
+      k.classList.toggle('queued', i===queuedVar);
+    });
+  }
+  function applyVariation(v){
+    const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
+    activeVar=v; queuedVar=-1; window._activeVar=v;
+    if(window._prSetPattern) window._prSetPattern(bank[v]);
+    post({type:'pattern',steps:cloneP(bank[v])});
+    setTxt('lcd-pat', String(v+1).padStart(2,'0'));
+    paintPatBtns(); renderSeqBay();
+  }
+  window._patternApplied=function(){ if(queuedVar>=0) applyVariation(queuedVar); };
+  window._resetPatBtns=function(v){ activeVar=v|0; queuedVar=-1; window._activeVar=activeVar; paintPatBtns(); };
+
   window.loadPatternButton=function(n){
     const v=((n|0)%8+8)%8;
-    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>k.classList.toggle('active',i===v));
-    const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
-    if(window._prSetPattern) window._prSetPattern(bank[v]);
-    pushPattern();
-    if(webPlaying) post({type:'transport',playing:true});
-    setTxt('lcd-pat', String(v+1).padStart(2,'0'));
     const fd=(typeof FACTORY_DATA!=='undefined')&&FACTORY_DATA[presetIdx];
     if(fd&&fd.name) setTxt('lcd-preset', fd.name);
-    renderSeqBay();
+
+    if(!webPlaying){ applyVariation(v); return; }        // da fermo: subito
+    if(v===activeVar){ queuedVar=-1; paintPatBtns(); return; }  // annulla la coda
+    queuedVar=v;
+    post({type:'pattern',steps:cloneP((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[v]),queue:true});
+    paintPatBtns();
   };
   function wirePatternButtons(){
     document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{ k.onclick=()=>window.loadPatternButton(i); });
