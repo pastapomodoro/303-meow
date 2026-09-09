@@ -68,6 +68,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout TB303Processor::createParame
         "play", "Play",
         juce::NormalisableRange<float>(0.0f, 1.0f, 1.0f), 0.0f));
 
+    // MIDI mode come parametro e non come flag interno: era uno
+    // std::atomic<bool> raggiungibile solo da una native function della UI,
+    // quindi invisibile all'host, non automatizzabile e non salvato nella
+    // sessione. Da parametro Ableton lo vede, lo automatizza e lo ripristina.
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        "midiMode", "MIDI Mode", false));
+
     // ── FX ────────────────────────────────────────────────────────────────
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         "delayTime", "Delay Time",
@@ -109,6 +116,7 @@ TB303Processor::TB303Processor()
     pTempo         = apvts.getRawParameterValue("tempo");
     pPlay          = apvts.getRawParameterValue("play");
     pSwing         = apvts.getRawParameterValue("swing");
+    pMidiMode      = apvts.getRawParameterValue("midiMode");
     pSubOsc        = apvts.getRawParameterValue("subOsc");
     pDelayTime     = apvts.getRawParameterValue("delayTime");
     pDelayFeedback = apvts.getRawParameterValue("delayFeedback");
@@ -238,7 +246,7 @@ void TB303Processor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // ── Transport ─────────────────────────────────────────────────────────
     bool shouldPlay  = pPlay->load() > 0.5f;
-    bool isMidiMode  = midiMode.load();
+    bool isMidiMode  = pMidiMode->load() > 0.5f;
 
     // Cambio di modalita': azzera le note tenute, altrimenti una nota rimasta
     // giu' al momento dello switch lascerebbe il sequencer in trasposizione.

@@ -56,11 +56,14 @@ public:
     // parte finche' la nota resta premuta — comportamento "pattern player" di
     // Acid V/Phoscyon dentro un DAW. Fuori da MIDI mode il MIDI suona note
     // singole sopra il sequencer, come prima.
-    void setMidiMode(bool on) { midiMode.store(on); }
-    bool getMidiMode() const  { return midiMode.load(); }
+    void setMidiMode(bool on)
+    {
+        if (auto* p = apvts.getParameter("midiMode"))
+            p->setValueNotifyingHost(on ? 1.0f : 0.0f);
+    }
+    bool getMidiMode() const { return pMidiMode->load() > 0.5f; }
 
 private:
-    std::atomic<bool> midiMode { false };
 
     // ── Note tenute in MIDI mode (priorita' all'ultima premuta) ───────────
     static constexpr int kMaxHeld = 16;
@@ -109,6 +112,7 @@ private:
     std::atomic<float>* pTempo         = nullptr;
     std::atomic<float>* pPlay          = nullptr;
     std::atomic<float>* pSwing         = nullptr;
+    std::atomic<float>* pMidiMode      = nullptr;
     std::atomic<float>* pSubOsc        = nullptr;
     std::atomic<float>* pDelayTime     = nullptr;
     std::atomic<float>* pDelayFeedback = nullptr;
