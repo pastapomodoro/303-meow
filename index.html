@@ -4760,8 +4760,11 @@ registerProcessor('tb303-processor', TB303Processor);
       // DOM ma invisibile, e continuava a disegnare a 60 fps mentre si stava
       // sul sequencer. offsetParent e' null quando un antenato ha display:none.
       if(!cv.offsetParent) return;
-      // Trenta fotogrammi bastano a un oscilloscopio e dimezzano il lavoro.
-      if(t-ultimo < 32) return;
+      // Ventidue fotogrammi al secondo. Erano trenta, ed erano ancora la voce
+      // piu' costosa della pagina: su un alone di fosforo, che per sua natura
+      // e' sfumato, la differenza fra 30 e 22 non si vede, mentre e' un quarto
+      // di lavoro in meno per il rasterizzatore.
+      if(t-ultimo < 45) return;
       ultimo=t;
       if(cv.width<2||cv.height<2) return;
       const W=cv.width, H=cv.height;
@@ -4782,19 +4785,32 @@ registerProcessor('tb303-processor', TB303Processor);
         if(buf[i-1]<128 && buf[i]>=128){ start=i; break; }
       }
       const span=Math.min(buf.length-start, (buf.length/2)|0);
-      const amp=(H/2)*0.86*2.2;   // guadagno di visualizzazione (VOLTS/DIV)
+      // Guadagno 1,25 e non 2,2 (VOLTS/DIV). A 2,2 il clamp ai bordi scattava
+      // per ogni campione sopra 0,53 di ampiezza, perche' 0.86*2.2 supera 1: i
+      // picchi d'attacco stanno a 0,9, quindi l'onda sbatteva contro i limiti
+      // e diventava un blocco pieno invece di una forma. Ora un segnale a
+      // fondo scala usa l'86% della semi-altezza e il clamp non scatta.
+      const amp=(H/2)*0.86*1.25;
 
+      // Un punto ogni due pixel del canvas, non uno per campione. Con 1024
+      // punti su 660 px si rasterizzavano tre tratti larghi e semitrasparenti
+      // su segmenti piu' fitti di quanto lo schermo possa mostrare: lavoro
+      // invisibile. Il costo di rasterizzazione non si vede in un
+      // microbenchmark, perche' stroke() registra i comandi e il conto lo paga
+      // il frame; si vede nei frame lunghi, ed era il piu' caro della pagina.
+      const punti=Math.max(2,Math.min(span,(W/2)|0));
+      const passo=span/punti;
       ctx2d.lineJoin='round'; ctx2d.lineCap='round';
       ctx2d.beginPath();
-      for(let i=0;i<span;i++){
-        const x=(i/(span-1))*W;
-        let y=H/2 - ((buf[start+i]-128)/128)*amp;
+      for(let i=0;i<punti;i++){
+        const x=(i/(punti-1))*W;
+        let y=H/2 - ((buf[start+((i*passo)|0)]-128)/128)*amp;
         if(y<2) y=2; else if(y>H-2) y=H-2;
         i? ctx2d.lineTo(x,y) : ctx2d.moveTo(x,y);
       }
-      // alone di fosforo + traccia netta sopra
-      ctx2d.strokeStyle='rgba(136,255,0,.22)'; ctx2d.lineWidth=7*dpr; ctx2d.stroke();
-      ctx2d.strokeStyle='rgba(136,255,0,.45)'; ctx2d.lineWidth=3.4*dpr; ctx2d.stroke();
+      // Alone di fosforo + traccia netta: due passate invece di tre. La
+      // intermedia stava fra le altre due e non si distingueva.
+      ctx2d.strokeStyle='rgba(136,255,0,.30)'; ctx2d.lineWidth=5*dpr; ctx2d.stroke();
       ctx2d.strokeStyle='#b6ff5a';             ctx2d.lineWidth=1.5*dpr; ctx2d.stroke();
     };
     draw();
