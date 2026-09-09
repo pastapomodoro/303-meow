@@ -1638,6 +1638,17 @@ body {
 }
 /* Tasto accodato: il cambio scatta a fine giro, quindi il LED lampeggia
    invece di accendersi fisso — come fa l'hardware mentre aspetta. */
+/* Accodato, sulla fila compatta del piano roll: lo stato esisteva solo per i
+   keycap grandi, quindi lassu' non si vedeva che il cambio era in attesa della
+   fine della battuta. Lampeggia, come il LED dei tasti grandi. */
+.pat-mini.queued {
+  color:var(--acid-deep);
+  box-shadow:inset 0 0 0 1px var(--acid), 0 0 6px var(--acid-glow);
+  animation:patMiniQueued .5s steps(1,end) infinite;
+}
+@keyframes patMiniQueued { 50% { box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); } }
+@media (prefers-reduced-motion: reduce) { .pat-mini.queued { animation:none; } }
+
 .keycap.queued .keycap-led {
   background:linear-gradient(180deg,#d6ff7a,#7fda00);
   animation: patQueue .45s steps(1,end) infinite;
@@ -2762,6 +2773,13 @@ body {
               <button class="btn transport-btn acid" id="stop-key2" onclick="doStop2()" style="min-width:90px;padding:10px 12px;font-size:10px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:7px;">
                 <span style="font-size:10px;">■</span> STOP
               </button>
+              <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
+              <!-- Le nove variazioni, anche qui: scrivendo nel piano roll si
+                   sceglie su quale parte si sta lavorando senza tornare a
+                   SYNTH. Chiamano loadPatternButton, la stessa funzione dei
+                   tasti grandi, quindi ereditano l'accodamento a fine battuta
+                   invece di reimplementarlo. -->
+              <div id="pat-btns-seq" style="display:flex;gap:3px;" title="Variazione del pattern — a tempo entra a fine battuta"></div>
               <div style="width:1px;height:28px;background:var(--panel-shad);margin:0 4px;"></div>
               <button class="btn sm">LENGTH</button>
               <button class="btn sm" id="shuffle-btn" onclick="window.toggleShuffle&&window.toggleShuffle()">SHUFFLE</button>
@@ -5252,13 +5270,39 @@ registerProcessor('tb303-processor', TB303Processor);
   let queuedVar=-1, activeVar=0, factoryBankQueued=false;
   let patChain=[], chainIdx=0, chainActive=false;
 
+  // La fila compatta nella pagina SEQUENCER: nove tasti che chiamano la stessa
+  // loadPatternButton dei grandi, quindi accodano a fine battuta allo stesso
+  // modo. Costruita qui e non nel markup per non ripetere nove volte lo stesso
+  // nodo a mano.
+  (function costruisciFilaSeq(){
+    const host=document.getElementById('pat-btns-seq');
+    if(!host) return;
+    for(let i=0;i<9;i++){
+      const b=document.createElement('button');
+      b.className='btn sm pat-mini';
+      b.textContent=String(i+1);
+      b.style.cssText='min-width:22px;padding:6px 0;font-size:9px;';
+      b.onclick=()=>window.loadPatternButton&&window.loadPatternButton(i);
+      host.appendChild(b);
+    }
+  })();
+
   function paintPatBtns(){
-    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{
+    // Le due file si dipingono insieme: i tasti grandi in SYNTH e quelli
+    // compatti nel piano roll sono lo stesso controllo, quindi devono mostrare
+    // lo stesso stato — attivo, accodato, in catena.
+    const dipingi=(el,i,mini)=>{
       const isCur = i===activeVar;
-      k.classList.toggle('active',  isCur);
-      k.classList.toggle('queued',  i===queuedVar);
-      k.classList.toggle('chain-sel', patChain.includes(i) && !isCur && i!==queuedVar);
-    });
+      el.classList.toggle('active',  isCur);
+      el.classList.toggle('queued',  i===queuedVar);
+      el.classList.toggle('chain-sel', patChain.includes(i) && !isCur && i!==queuedVar);
+      // Solo i mini: sono dei .btn, e nella libreria del pannello l'accento di
+      // un .btn e' la classe .acid. I keycap grandi hanno un loro stile
+      // .active e aggiungere .acid li avrebbe ridipinti a sproposito.
+      if(mini) el.classList.toggle('acid', isCur);
+    };
+    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>dipingi(k,i,false));
+    document.querySelectorAll('#pat-btns-seq .pat-mini').forEach((k,i)=>dipingi(k,i,true));
   }
   function applyVariation(v){
     const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
