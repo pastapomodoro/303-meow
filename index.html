@@ -3201,6 +3201,22 @@ body {
             <div class="set-hint" style="margin-top:12px;">Swing sposta gli step pari · Accent regola la spinta</div></div>
         </div>
         <div class="card">
+          <div class="card-hdr"><span class="card-hdr-txt">Oscillatore</span></div>
+          <div class="card-body" style="padding:14px;">
+            <div style="display:flex;gap:6px;">
+              <div class="wave-btn active" onclick="setWave(this)">SAW</div>
+              <div class="wave-btn" onclick="setWave(this)">SQR</div>
+            </div>
+            <div class="set-hint" style="margin:8px 0 14px;">Prima la forma d'onda la decideva solo il preset e non c'era modo di scegliere. Sega e quadra sono generate con PolyBLEP, quindi senza aliasing anche sulle note alte.</div>
+            <div style="display:flex;justify-content:center;padding:2px 0 4px;">
+              <div class="knob-wrap">
+                <div class="knob" style="width:58px;height:58px;"></div>
+                <div class="knob-lbl">Tuning</div><div class="knob-val">0.0</div>
+              </div>
+            </div>
+            <div class="set-hint" style="margin-top:10px;">Accordatura generale, ±12 semitoni. Sul TB-303 la manopola TUNING sta sul pannello: si accorda a orecchio col resto della strumentazione e resta ferma per tutto il set.</div></div>
+        </div>
+        <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Audio Engine</span></div>
           <div class="card-body" style="padding:14px;">
             <!-- diagnostica dell'engine: terminale incassato nel pannello -->
@@ -3882,7 +3898,15 @@ function setSrcMode(m){
 window.setSrcMode=setSrcMode;
 setTimeout(()=>{ mountSpriteKnobs(); initFXKnobs(); drawFXCanvas(); },150);
 
-function setWave(el){document.querySelectorAll('.wave-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setWave(el){
+  // Si accende per etichetta e non solo il bottone cliccato: il selettore
+  // esiste in due punti (VOICE e SETTINGS), e spegnendo tutto tranne quello
+  // premuto il gemello nell'altra pagina restava spento pur essendo la stessa
+  // impostazione.
+  const w=(el.textContent||'').trim();
+  document.querySelectorAll('.wave-btn').forEach(b=>
+    b.classList.toggle('active',(b.textContent||'').trim()===w));
+}
 function setPat(el){document.querySelectorAll('#pat-btns .btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function setResUI(el,r){document.querySelectorAll('.res-btn').forEach(b=>b.classList.remove('res-active'));el.classList.add('res-active');const lbl=document.getElementById('res-lcd');if(lbl)lbl.textContent='1/'+r;}
 
@@ -4782,8 +4806,10 @@ registerProcessor('tb303-processor', TB303Processor);
   });
 
   // ── Waveform ──
-  const _sw=window.setWave;
-  window.setWave = function(el){ _sw&&_sw(el); send('waveform', (el.textContent||'').trim()==='SQR'?1:0); };
+  // Delega a setWaveUI invece di mandare solo il parametro: quella aggiorna
+  // anche il display VCO e il disegnino dell'onda, che altrimenti restavano
+  // sulla forma precedente mentre il suono era gia' cambiato.
+  window.setWave = function(el){ setWaveUI((el.textContent||'').trim()==='SQR'); };
 
   // ── Tempo (default 160) ──
   let bpm=DEFAULTS.tempo;
@@ -4876,7 +4902,12 @@ registerProcessor('tb303-processor', TB303Processor);
 
   // ── Preset: applicali davvero ai knob + engine (nel browser) ──
   function setWaveUI(isSqr){
-    document.querySelectorAll('.wave-btn').forEach((b,i)=>b.classList.toggle('active', i===(isSqr?1:0)));
+    // Per etichetta e non per indice: con il selettore presente anche in
+    // SETTINGS i .wave-btn non sono piu' due, e i===0/1 accendeva solo la
+    // prima coppia lasciando l'altra sempre spenta.
+    const wname=isSqr?'SQR':'SAW';
+    document.querySelectorAll('.wave-btn').forEach(b=>
+      b.classList.toggle('active',(b.textContent||'').trim()===wname));
     document.querySelectorAll('#wave-lcd').forEach(e=>e.textContent=isSqr?'SQR':'SAW');
     const wave=document.getElementById('lcd-vco-wave');
     if(wave) wave.setAttribute('d',isSqr
