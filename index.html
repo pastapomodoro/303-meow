@@ -777,6 +777,16 @@ body {
   box-shadow: var(--acid-btn-s);
 }
 .btn.acid:hover { filter:brightness(1.05); }
+/* Conferma del LOAD: il tasto si accende in verde acido per un attimo. Serve
+   perche' scorrendo la tendina le etichette sono gia' aggiornate, quindi
+   premere non produceva nessun cambiamento visibile — e su touch non c'e'
+   l'hover a dire che il tocco e' arrivato. */
+.btn.acid.confermato {
+  color:#0d1f00;
+  background:linear-gradient(to bottom,var(--acid-hi),var(--acid));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 10px var(--acid-glow),
+             0 0 0 1px rgba(45,70,35,.45);
+}
 /* Transport btn — STOP resting: outline verde; PLAY playing: dark selected */
 /* Tasto di trasporto fisico: cappuccio + LED di stato annegato.
    .acid  = questa è la posizione di trasporto corrente → tasto abbassato
@@ -3120,7 +3130,7 @@ body {
             </div>
 
             <!-- LOAD button -->
-            <button class="btn acid" onclick="loadPreset()" style="width:100%;padding:13px;font-size:10px;">▶ LOAD PRESET</button>
+            <button class="btn acid" id="load-preset-btn" onclick="loadPreset()" style="width:100%;padding:13px;font-size:10px;">▶ LOAD PRESET</button>
 
             <!-- USER LIBRARY -->
             <div class="user-library-label">User Library</div>
@@ -4099,6 +4109,22 @@ function buildSynthBars(d){
   if(dot){ dot.setAttribute('cx',x.toFixed(1)); dot.setAttribute('cy',peakY.toFixed(1)); }
 }
 
+// Conferma visibile sul bottone LOAD.
+//
+// Scorrendo la tendina, onFactorySelect aggiorna gia' loaded-name e
+// loaded-type: quando poi si premeva LOAD, sullo schermo non cambiava niente e
+// non si capiva se il tocco fosse stato registrato. Su touch manca anche
+// l'hover, che sul desktop dava almeno un indizio.
+function confermaLoad(){
+  const b=document.getElementById('load-preset-btn');
+  if(!b) return;
+  if(b._t) clearTimeout(b._t);
+  if(b._testo==null) b._testo=b.textContent;
+  b.classList.add('confermato');
+  b.textContent='CARICATO';
+  b._t=setTimeout(()=>{ b.classList.remove('confermato'); b.textContent=b._testo; }, 850);
+}
+
 function loadPreset(){
   // carica sia factory che synth in base a quale è selezionato
   const fs=document.getElementById('factory-select');
@@ -4106,6 +4132,7 @@ function loadPreset(){
   const fd=FACTORY_DATA[fs?fs.value:0]||FACTORY_DATA[0];
   const ln=document.getElementById('loaded-name'); if(ln) ln.textContent=fd.name;
   const lt=document.getElementById('loaded-type'); if(lt) lt.textContent='Factory Pattern · '+fd.tempo+' BPM';
+  confermaLoad();
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
@@ -5584,7 +5611,10 @@ function ulRender(){
   }
   el.innerHTML=arr.map((item,i)=>`
     <div class="preset-item" style="display:flex;align-items:center;gap:4px;padding:5px 7px;">
-      <span style="flex:1;font-family:var(--mono);font-size:8px;letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.name}">${item.name}</span>
+      <!-- color esplicito: senza, il nome ereditava il bianco e finiva
+           illeggibile sul fondo chiaro del pannello. I due bottoni accanto lo
+           avevano gia', il nome no. -->
+      <span style="flex:1;font-family:var(--mono);font-size:8px;letter-spacing:.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.name}">${item.name}</span>
       <button onclick="ulLoad(${i})" style="padding:3px 8px;font-size:7px;font-family:var(--mono);letter-spacing:1px;
               background:linear-gradient(to bottom,#fafaf6,#e0e0dc);border:1px solid var(--panel-shad);
               border-radius:4px;cursor:pointer;color:var(--text);">▶</button>
