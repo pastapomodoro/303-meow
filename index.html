@@ -3916,11 +3916,11 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
   {name:'Classic Acid',   tempo:128,wave:'SAW',cut:'420Hz',res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
-  {name:'Rollin Acid',    tempo:134,wave:'SAW',cut:'340Hz',res:.80,env:.78,dec:.14,acc:.82,vol:.72,dis:.30,sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
-  {name:'Munich Sequence',tempo:124,wave:'SAW',cut:'1150Hz',res:.38,env:.26,dec:.17,acc:.58,vol:.74,dis:.02,sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
-  {name:'Night Drive',    tempo:116,wave:'SAW',cut:'520Hz',res:.52,env:.40,dec:.32,acc:.60,vol:.75,dis:.06,sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
-  {name:'Deep Squelch',   tempo:126,wave:'SQR',cut:'240Hz',res:.80,env:.74,dec:.30,acc:.68,vol:.73,dis:.12,sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
-  {name:'Phrygian Drive', tempo:140,wave:'SQR',cut:'380Hz',res:.82,env:.80,dec:.16,acc:.86,vol:.71,dis:.34,sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03}
+  {name:'Rollin Acid',    tempo:134,wave:'SAW',cut:'340Hz',res:.80,env:.78,dec:.14,acc:.82,vol:.59,dis:.30,sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
+  {name:'Munich Sequence',tempo:124,wave:'SAW',cut:'1150Hz',res:.38,env:.26,dec:.17,acc:.58,vol:.77,dis:.02,sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
+  {name:'Night Drive',    tempo:116,wave:'SAW',cut:'520Hz',res:.52,env:.40,dec:.32,acc:.60,vol:.76,dis:.06,sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
+  {name:'Deep Squelch',   tempo:126,wave:'SQR',cut:'240Hz',res:.80,env:.74,dec:.30,acc:.68,vol:.66,dis:.12,sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
+  {name:'Phrygian Drive', tempo:140,wave:'SQR',cut:'380Hz',res:.82,env:.80,dec:.16,acc:.86,vol:.38,dis:.34,sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03}
 ];
 const SYNTH_DATA = [
   {name:'Classic Acid 303',cut:.270544,res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,wave:'SAW',sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
@@ -4286,15 +4286,17 @@ class TB303Processor extends AudioWorkletProcessor {
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
     const es=Math.pow(Math.min(Math.max(env,0),1),.72), a=this.envMod;
-    // Escursione dell'inviluppo: 2.8 ottave al massimo, non 5.
+    // Escursione dell'inviluppo sul cutoff: ~3.3 ottave a fondo corsa.
     //
-    // Con 4.65 il picco risonante correva da 420 Hz a 2.6 kHz e passava buona
-    // parte della nota parcheggiato intorno alla quinta armonica, che nella
-    // serie e' la TERZA MAGGIORE: misurata, stava a 0.67 contro una
-    // fondamentale a 0.34, cioe' il doppio. Ecco perche' anche i banchi in
-    // minore suonavano allegri. Con 2.45 la terza maggiore scende a 0.32.
-    // 2-3 ottave e' anche l'escursione della macchina vera.
-    const eo=(.35+2.45*a)*a*es, ao=this.accentMod*1.1*acc;
+    // E' la spazzata che da' il carattere acid, quindi va tenuta ampia. La
+    // colorazione in maggiore che sembrava venire da qui era in realta' delle
+    // linee: erano inchiodate sulla fondamentale (42% delle note su C, 56% in
+    // Classic Acid) e il filtro ne esaltava la quinta armonica, che e' la
+    // terza MAGGIORE. Riscritte le linee mettendo avanti la terza minore, la
+    // stessa spazzata porta la terza maggiore da 0.67 a 0.26: stringerla a
+    // 2.45 era una sovra-correzione, e togliendo lo squelch il suono diventava
+    // un pizzicato.
+    const eo=(.35+4.2*a)*a*es, ao=this.accentMod*1.1*acc;
     const ko=.32*Math.log2(this.noteFreq/130.81278265);
     let mod=Math.pow(2,logC+eo+ao+ko); mod=Math.min(Math.max(mod,20),this.sr*.45);
     // L'accento ALZA la risonanza: e' quel circuito a produrre il pompaggio
@@ -4835,7 +4837,11 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Knob draggabili + registry per preset/automazione ──
   let curRes=DEFAULTS.resolution;
   const RANGES={
-    'Cutoff':{p:'cutoff',min:120,max:8000,skew:0.4,fmt:v=>Math.round(v)+'Hz'},
+    // Fondo corsa a 5 kHz e non 8. Su una nota di basso, oltre i 5 kHz il
+    // filtro non ha piu' nulla da togliere: si sentiva la sega cruda, cioe' un
+    // ronzio senza carattere, e l'ultimo quarto di corsa del knob era morto.
+    // E' anche il limite del filtro della macchina vera.
+    'Cutoff':{p:'cutoff',min:120,max:5000,skew:0.4,fmt:v=>Math.round(v)+'Hz'},
     'Resonance':{p:'resonance',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
     'Env Mod':{p:'envMod',min:0,max:1,skew:1,fmt:v=>v.toFixed(2)},
     'Decay':{p:'decay',min:0.05,max:2,skew:0.4,fmt:v=>v.toFixed(2)+'s'},

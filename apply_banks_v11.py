@@ -83,6 +83,11 @@ BANKS = [
 
 # tempo, wave, cutoff Hz, res, env, dec, acc, vol, dis, sub, dlyT, dlyF, dlyM, rvbS, rvbM
 #
+# I volumi sono riequilibrati sulla misura, non a occhio: rms per banco andava
+# da 0.32 a 0.69, cioe' Phrygian entrava piu' del doppio di Night Drive, e il
+# picco toccava 0.956 a un soffio dal clipping. Bersaglio ~0.42 di rms per
+# tutti, cosi' passare da un banco all'altro dal vivo non cambia il livello.
+#
 # Risonanza sotto .85. Con .88 e .93 il feedback del ladder arriva a ~3.0 e il
 # filtro auto-oscilla: canta da solo e riempie le pause a prescindere
 # dall'inviluppo, che e' insieme il "troppo squelch" e i pattern che suonano
@@ -98,11 +103,11 @@ BANKS = [
 # Qui nessun banco supera i ~2.5 step, e i piu' densi stanno sotto 1.5.
 SYNTH = [
     (128, "SAW",  420, .74, .72, .22, .76, .70, .05, .00, .375, .28, .00, .35, .00),
-    (134, "SAW",  340, .80, .78, .14, .82, .72, .30, .12, .250, .36, .06, .36, .02),
-    (124, "SAW", 1150, .38, .26, .17, .58, .74, .02, .55, .300, .26, .18, .55, .14),
-    (116, "SAW",  520, .52, .40, .32, .60, .75, .06, .45, .500, .42, .16, .60, .10),
-    (126, "SQR",  240, .80, .74, .30, .68, .73, .12, .70, .250, .44, .12, .52, .08),
-    (140, "SQR",  380, .82, .80, .16, .86, .71, .34, .26, .214, .38, .05, .40, .03),
+    (134, "SAW",  340, .80, .78, .14, .82, .59, .30, .12, .250, .36, .06, .36, .02),
+    (124, "SAW", 1150, .38, .26, .17, .58, .77, .02, .55, .300, .26, .18, .55, .14),
+    (116, "SAW",  520, .52, .40, .32, .60, .76, .06, .45, .500, .42, .16, .60, .10),
+    (126, "SQR",  240, .80, .74, .30, .68, .66, .12, .70, .250, .44, .12, .52, .08),
+    (140, "SQR",  380, .82, .80, .16, .86, .38, .34, .26, .214, .38, .05, .40, .03),
 ]
 
 
