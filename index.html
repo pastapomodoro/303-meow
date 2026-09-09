@@ -4657,7 +4657,34 @@ class TB303Processor extends AudioWorkletProcessor {
     else { this.aVal*=this.aDec; if(this.aVal<1e-6){this.aVal=0; this.aState=0;} }
   }
   cutG(hz){ const sr4=this.sr*4; let f=Math.min(Math.max(hz,20),sr4*0.45); const g=Math.tan(Math.PI*f/sr4); return g/(1+g); }
-  fStep(input,g,feedback){ const bias=.035, z=Math.tanh(bias); const fb=Math.tanh((input-feedback*this.stageT[3])*.80+bias)-z; for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const target=Math.tanh(si*(.92+.045*i)+bias)-z; const v=g*(target-this.stageT[i]); this.stage[i]+=2*v; this.stageT[i]=Math.tanh(this.stage[i]*.80+bias)-z; } return this.stageT[2]; }
+    // Un passo del ladder a quattro poli. Torna a essere il porting fedele di
+  // VCF.cpp::filterStep: il porting precedente aveva tre divergenze che
+  // insieme rendevano la manopola RESONANCE quasi muta.
+  //
+  //  - il feedback si prendeva da stageT[3], cioe' dal nodo GIA' passato per
+  //    la tanh. Saturato, il segnale di ritorno e' limitato a +-1: appena la
+  //    risonanza comincia a crescere l'anello si strozza da solo e il picco
+  //    non si forma. Adesso torna da stage[3], lo stato dell'integratore,
+  //    che porta l'ampiezza vera. E' la correzione che conta.
+  //  - gli stadi saturavano a tanh(stage*.80) invece di .5, comprimendo
+  //    ancora l'anello.
+  //  - c'era una tanh in piu' per stadio, sull'ingresso, che nel C++ non
+  //    esiste: sei nonlinearita' nel giro invece di cinque.
+  //
+  // Misurato col filtro isolato, rumore bianco, cutoff 800 Hz: il picco di
+  // risonanza passa da +12,5 dB a +21,9 dB a res .95, e da +12,5 a +15,9 a
+  // res .60. Prima il picco era praticamente lo stesso a ogni posizione
+  // della manopola.
+  fStep(input,g,feedback){
+    const fb=Math.tanh((input-feedback*this.stage[3])*.5);
+    for(let i=0;i<4;i++){
+      const si=(i===0)?fb:this.stageT[i-1];
+      const v=g*(si-this.stageT[i]);
+      this.stage[i]+=2*v;                       // integratore trapezoidale
+      this.stageT[i]=Math.tanh(this.stage[i]*.5);
+    }
+    return this.stageT[2];                      // terzo polo: 18 dB/ott, non 24
+  }
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
     const es=Math.pow(Math.min(Math.max(env,0),1),.72), a=this.envMod;
@@ -4678,11 +4705,18 @@ class TB303Processor extends AudioWorkletProcessor {
     // sulle note accentate. Qui la sottraeva, col segno invertito rispetto
     // all'hardware.
     let res=this.resonance+acc*this.accentMod*.10; res=Math.min(Math.max(res,0),.985);
-    const g=this.cutG(mod), feedback=3.85*Math.pow(res,1.15);
-    // Compensazione della fondamentale. Il feedback del ladder svuota il
-    // fondamentale a risonanza alta: con .38 restava a un terzo dell'ottava
-    // superiore e il suono non aveva corpo.
-    const inF=input*(1+res*1.6); let o=0;
+    // Il moltiplicatore 1.9 e' taratura, non gusto. Misurato col filtro
+    // isolato, il -3 dB stava a 204 Hz con la manopola su 800 e a 204 Hz con
+    // la manopola su 3200: fino a quindici volte piu' scuro di quanto
+    // scritto, ed e' il motivo per cui "col cutoff alto si sente solo un
+    // ronzio" - la manopola girava senza aprire niente. Con 1.9 il -3 dB
+    // cade fra 0.98x e 1.15x del valore chiesto.
+    const g=this.cutG(mod*1.9), feedback=4*res;
+    // Compensazione della fondamentale: il feedback del ladder svuota il
+    // fondamentale a risonanza alta. Torna a .5 come nel C++. Con 1.6 alzava
+    // tutta la banda passante insieme al picco, quindi nascondeva proprio la
+    // risonanza che avrebbe dovuto compensare.
+    const inF=input*(1+res*0.5); let o=0;
     for(let k=1;k<=4;k++) o=this.fStep(this.prevIn+(inF-this.prevIn)*k*.25,g,feedback);
     this.prevIn=inF;
     const xn=o*(1.65+.35*res), yn=xn-this.dcX+.9995*this.dcY; this.dcX=xn; this.dcY=yn; return Number.isFinite(yn)?yn:0;
