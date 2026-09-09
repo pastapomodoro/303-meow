@@ -4333,10 +4333,10 @@ function onFactorySelect(sel){
   const d=FACTORY_DATA[i]||FACTORY_DATA[0];
   const t=document.getElementById('fp-tempo'); if(t) t.textContent=d.tempo+' BPM';
 
-  // La card mostra proprieta' della LINEA e non del timbro. Prima leggeva
-  // onda, cutoff e risonanza del banco: da quando il preset Pattern non
-  // scrive piu' il timbro, quei tre campi avrebbero raccontato un suono
-  // diverso da quello che stai sentendo.
+  // La card mostra proprieta' della LINEA e non del timbro: onda, cutoff e
+  // risonanza le racconta la card SYNTH PRESET accanto, che ora si aggiorna
+  // insieme al banco. Qui si leggono gate e scala, che sono l'unica cosa che
+  // di questo banco non e' scritta da nessun'altra parte.
   const pats=window.FACTORY_PATTERNS_JS;
   const pat=(pats && (pats[i]||pats[0])) || [];
   const on=pat.filter(s=>s && s.gate);
@@ -5497,15 +5497,37 @@ registerProcessor('tb303-processor', TB303Processor);
   }
   function applyFactory(d,idx){
     if(!d) return;
-    // Il preset Pattern cambia SOLO la linea e il tempo. Prima scriveva anche
-    // cutoff, risonanza, inviluppo, decay, accento, volume, distorsione, onda,
-    // sub e FX: scegliere una linea azzerava il suono costruito a mano, e le
-    // due tendine della pagina PRESET non erano davvero indipendenti nonostante
-    // le etichette. Il timbro lo decide la lista Synth, dove ogni banco ha la
-    // sua voce con lo stesso nome se si vuole la coppia originale.
     setTempo(d.tempo);
     if(d.name) setTxt('lcd-preset', d.name);
     if(idx!=null && window._setPresetIdx) window._setPresetIdx(idx);
+
+    // Il preset porta con se' la sua voce: le manopole si spostano sui valori
+    // del banco. Per un periodo cambiava solo la linea, per tenere le due
+    // tendine della pagina PRESET indipendenti, ma il risultato era che
+    // scegliere un preset non si sentiva: "Deep Squelch" suonava col timbro
+    // che avevi in mano. L'indipendenza resta dov'e' utile, cioe' nella lista
+    // Synth, che si puo' cambiare dopo per montare un'altra voce sulla stessa
+    // linea.
+    //
+    // La voce si prende da SYNTH_DATA per NOME, non da FACTORY_DATA: i campi
+    // timbrici sono identici nelle due liste, ma il cutoff di FACTORY_DATA e'
+    // una stringa ('240Hz') mentre applySynth vuole il normalizzato che sta
+    // in SYNTH_DATA (0.227146). Per nome e non per posizione, perche' un
+    // indice fisso si romperebbe in silenzio se una delle liste cambia.
+    const voci=SD();
+    const j=voci.findIndex(v=>v&&v.name===d.name);
+    if(j<0) return;
+    const sel=document.getElementById('synth-select');
+    if(!sel){ applySynth(voci[j]); return; }
+    // Si passa da onSynthSelect invece di chiamare applySynth: quella aggiorna
+    // anche le barre e il nome della card SYNTH PRESET, che altrimenti
+    // resterebbero a raccontare la voce precedente. Assegnare .value non fa
+    // scattare onchange, quindi non c'e' ricorsione.
+    sel.value=String(j);
+    window.onSynthSelect(sel);
+    // Nota: a tempo la linea entra a fine battuta (la accoda _setPresetIdx)
+    // mentre il timbro cambia subito. E' voluto: si sente immediatamente che
+    // il preset e' cambiato, e la frase si sostituisce sul confine musicale.
   }
   function applySynth(d){
     if(!d) return;
