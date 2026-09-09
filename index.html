@@ -4520,11 +4520,17 @@ registerProcessor('tb303-processor', TB303Processor);
     // non a ogni frame: getBoundingClientRect dentro il loop forzava un
     // ricalcolo del layout sessanta volte al secondo su oltre mille nodi
     // chiusi in un layer scalato, ed era il costo piu' alto della pagina.
+    // dpr sta nella closure, non dentro il callback: lo usa anche draw per lo
+    // spessore della traccia. Passando al ResizeObserver era diventato un
+    // const locale al callback, cosi' draw lanciava ReferenceError a ogni
+    // frame e l'onda non si disegnava piu'. Lo aggiorna l'observer, che
+    // scatta anche quando la pagina cambia zoom o schermo.
+    let dpr=Math.min(window.devicePixelRatio||1,2);
     if(scopeRO) scopeRO.disconnect();
     scopeRO=new ResizeObserver(es=>{
       const b=es[0].contentRect;
       if(b.width<2||b.height<2) return;
-      const dpr=Math.min(window.devicePixelRatio||1,2);
+      dpr=Math.min(window.devicePixelRatio||1,2);
       cv.width=Math.round(b.width*dpr);
       cv.height=Math.round(b.height*dpr);
     });
