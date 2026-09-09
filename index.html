@@ -2439,7 +2439,24 @@ body {
   border:2px solid #161d1a; border-radius:5px;
   box-shadow:inset 0 3px 14px rgba(0,0,0,.92),0 1px 0 rgba(255,255,255,.55);
   padding:9px 12px; box-sizing:border-box;
+  position:relative; overflow:hidden;
 }
+/* Simbolo di rischio biologico, dietro al logo. Disegnato inline e non
+   scaricato: index.html e' un file solo e il deploy copia una lista fissa di
+   asset, quindi un file in piu' e' un'occasione in piu' di arrivare online
+   senza. Inline il colore lo decide il CSS e non sgrana a nessuna scala. Il
+   simbolo e' uno standard di sicurezza, non un marchio. */
+.about-bio {
+  /* A destra e non dietro al centro: il riquadro e' largo il quintuplo di
+     quanto e' alto e il logo ne occupa solo la parte centrale, quindi al
+     centro il simbolo finiva coperto dal logo e tagliato in alto e in basso
+     dall'overflow. Di lato ci sta intero e si vede per quello che e'. */
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  height:76%; width:auto; pointer-events:none;
+  fill:var(--acid); opacity:.9;
+  filter:drop-shadow(0 0 7px rgba(136,255,0,.6));
+}
+.about-logo { position:relative; z-index:1; }
 .about-logo { display:block; max-width:100%; max-height:100%; width:auto; height:auto; }
 
 @media (max-width:900px) {
@@ -3339,7 +3356,7 @@ body {
             <!-- Il file -header ha il canale alpha, il -master no: e' un WebP
                  con un solo chunk VP8 e il bianco cotto dentro, per questo qui
                  si vedeva il riquadro bianco. Stesso disegno, stessi 900x300. -->
-            <div class="about-logo-shell"><img class="about-logo" src="assets/branding/acidlab-logo-header.webp" alt="AcidLab — Bass Synthesizer"></div>
+            <div class="about-logo-shell"><svg class="about-bio" viewBox="0 0 100 100" aria-hidden="true"><path fill-rule="evenodd" d="M 37.88 45.87 A 25 25 0 1 1 62.12 45.87 L 57.27 37.12 A 15 15 0 1 0 42.73 37.12 Z M 36.96 27.49 A 13.5 13.5 0 1 1 63.04 27.49 L 58.69 26.33 A 9 9 0 1 0 41.31 26.33 Z M 49.04 44.08 L 50.96 44.08 L 51.44 38.09 L 48.56 38.09 Z M 59.64 41.57 A 25 25 0 1 1 47.52 62.56 L 57.52 62.74 A 15 15 0 1 0 64.79 50.14 Z M 76.01 49.96 A 13.5 13.5 0 1 1 62.97 72.55 L 66.15 69.36 A 9 9 0 1 0 74.85 54.31 Z M 55.61 52.13 L 54.65 53.79 L 59.60 57.20 L 61.04 54.71 Z M 52.48 62.56 A 25 25 0 1 1 40.36 41.57 L 35.21 50.14 A 15 15 0 1 0 42.48 62.74 Z M 37.03 72.55 A 13.5 13.5 0 1 1 23.99 49.96 L 25.15 54.31 A 9 9 0 1 0 33.85 69.36 Z M 45.35 53.79 L 44.39 52.13 L 38.96 54.71 L 40.40 57.20 Z M 43.5 50 a 6.5 6.5 0 1 0 13 0 a 6.5 6.5 0 1 0 -13 0 Z"/></svg><img class="about-logo" src="assets/branding/acidlab-logo-header.webp" alt="AcidLab — Bass Synthesizer"></div>
             <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:5px;">VERSION 1.1.0</div>
             <div style="height:1px;background:var(--border);margin:12px 0;"></div>
             <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.7;">
