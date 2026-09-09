@@ -2825,12 +2825,18 @@ body {
           <div class="card-body" style="padding:0;overflow:hidden;border-radius:0 0 8px 8px;">
 
             <!-- Wrapper LCD touchscreen -->
+            <!-- height:100% invece dell'altezza da contenuto: cresceva fino a
+                 558 px dentro un card-body da 384 e il resto veniva tagliato
+                 dall'overflow, quindi la griglia era piu' alta della finestra
+                 che la mostra e le righe finivano schiacciate. Con l'altezza
+                 presa dal body la griglia sa quanto spazio ha davvero. -->
             <div style="
               background:#111111;
               border-top:2px solid #000000;
               box-shadow:inset 0 2px 12px rgba(0,0,0,.8);
               display:flex;
               flex-direction:column;
+              height:100%;
               min-height:250px;
               position:relative;
               overflow:hidden;
@@ -2842,7 +2848,11 @@ body {
               "></div>
 
               <!-- Schermo LCD -->
-              <div style="display:flex;flex:1;overflow:hidden;">
+              <!-- min-height:0 e' quello che rompe il giro: un flex item ha
+                   min-height:auto, quindi questa riga si rifiutava di scendere
+                   sotto l'altezza del canvas, il canvas si misurava su di lei
+                   e l'altezza di riga dipendeva da se stessa. -->
+              <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
 
                 <!-- Tastiera piano (sinistra) -->
                 <div id="piano-keys" style="
@@ -3484,15 +3494,10 @@ buildKeycaps();
 
 // ── PIANO ROLL ────────────────────────────────────────────────────────────────
 (function(){
-  const STEPS=16, ROWS=24, NOTE_H=18;
-  const ALL_NOTES=[];
-  for(let oct=4;oct>=3;oct--){
-    ['B','A#','A','G#','G','F#','F','E','D#','D','C#','C'].forEach(n=>{
-      ALL_NOTES.push({name:n,oct,isBlack:n.includes('#')});
-    });
-  }
-  // ── Tonalità e scala: le righe in scala si illuminano nel piano roll ──
-  const PC={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+  const STEPS=16;
+  const NOMI=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const nomeDi=n=>NOMI[((n%12)+12)%12]+(Math.floor(n/12)-1);   // 48 -> C3
+  // ── Tonalità e scala: definiscono quali righe esistono nel piano roll ──
   const SCALES={
     minor:      [0,2,3,5,7,8,10],
     phrygian:   [0,1,3,5,7,8,10],   // la scala dell'acid per eccellenza
@@ -3501,10 +3506,66 @@ buildKeycaps();
     major:      [0,2,4,5,7,9,11],
     chromatic:  [0,1,2,3,4,5,6,7,8,9,10,11]
   };
-  let scaleRoot=9, scaleType='minor', scaleOn=true;   // La minore, evidenziazione attiva
-  const inScale=(pc)=>scaleOn && SCALES[scaleType].includes(((pc-scaleRoot)%12+12)%12);
+  // DO minore, non LA minore: i sei banchi di fabbrica girano tutti intorno a
+  // 48 = C3 e usano Eb (51) e Bb (58). In La minore quelle due sono fuori
+  // scala, quindi l'evidenziazione diceva il falso proprio sul contenuto della
+  // macchina; le righe della griglia, che adesso vengono dalla scala, sarebbero
+  // state sbagliate di conseguenza.
+  let scaleRoot=0, scaleType='minor', scaleOn=true;
 
-  const notes=new Set(['0:20','2:18','3:20','5:16','6:20','8:18','9:16','11:20','12:18','14:16','15:20']);
+  // ── Le righe sono i gradi della scala, non i dodici semitoni ──────────────
+  // Ventiquattro righe cromatiche in 432 px facevano 18 px di riga: col dito,
+  // dove il bersaglio minimo e' 44 pt, ogni tocco era una scommessa, ed era il
+  // difetto piu' grosso della versione tablet. Mostrando i soli gradi della
+  // scala le righe diventano otto - sette gradi piu' l'ottava che chiude - e
+  // ognuna e' larga il triplo: si scrive al primo colpo.
+  //
+  // Le note vivono in una Map step -> nota MIDI assoluta, non in un Set di
+  // "step:riga". Cosi' cambiare scala o ottava non tocca il contenuto (la
+  // riga non e' piu' l'identita' della nota), "una nota per step" e' garantito
+  // dalla struttura invece che da un ciclo di cancellazione, e il giro
+  // pattern -> piano roll -> pattern non perde piu' i salti d'ottava: prima
+  // ogni nota veniva ripiegata dentro 48..71 e riscritta con octave 0.
+  let viewBase=48;                                  // ottava piu' bassa a schermo
+  let hTasti=0, nTasti=0;                           // stato della tastiera disegnata
+  const gradi=()=>{
+    const s=SCALES[scaleType]||SCALES.minor;
+    if(!scaleOn || s.length>=12) return SCALES.chromatic;   // scala spenta: tutti i semitoni
+    return s.concat([12]);
+  };
+  const numRighe=()=>gradi().length;
+  // In modo scala il bianco-e-nero del pianoforte non vuol dire niente: in Do
+  // minore Eb, Ab e Bb sono gradi come gli altri, e dipingerli scuri li faceva
+  // sembrare fuori posto. La tinta scura resta solo in modo cromatico, dove la
+  // metafora della tastiera e' quella giusta.
+  const cromatico=()=>!scaleOn || (SCALES[scaleType]||[]).length>=12;
+  // la tonica nell'ottava di viewBase, presa al di sotto: le righe formano
+  // una scala completa e non un frammento che parte a meta'
+  const radice=()=>viewBase-((((viewBase%12)+12)%12-scaleRoot)%12+12)%12;
+  // riga 0 in cima, come nella versione cromatica: l'acuto sta in alto
+  const noteDellaRiga=r=>{ const g=gradi(); return radice()+g[g.length-1-r]; };
+  // Dove disegnare una nota. Fuori scala o fuori finestra non si perde: si
+  // mostra dov'e' piu' vicina, con un colore che dice che non e' sulla griglia.
+  function posizione(n){
+    const g=gradi(), base=radice();
+    if(n>base+g[g.length-1]) return {riga:0, stato:'sopra'};
+    if(n<base)               return {riga:g.length-1, stato:'sotto'};
+    const d=n-base, i=g.indexOf(d);
+    if(i>=0) return {riga:g.length-1-i, stato:'esatta'};
+    let vicina=0, dist=99;
+    for(let k=0;k<g.length;k++){ const dd=Math.abs(g[k]-d); if(dd<dist){ dist=dd; vicina=k; } }
+    return {riga:g.length-1-vicina, stato:'fuoriscala'};
+  }
+  // L'altezza di riga esce dallo spazio che c'e', cosi' le otto righe
+  // riempiono il display invece di lasciare una fascia morta in fondo.
+  function altezzaRiga(){
+    const cv=document.getElementById('piano-roll-canvas');
+    const h=(cv&&cv.parentElement&&cv.parentElement.clientHeight)||0;
+    return (h>16?h:432)/numRighe();
+  }
+
+  // step -> nota MIDI. Le iniziali sono le stesse di prima (Eb F G in Do minore).
+  const notes=new Map([[0,51],[2,53],[3,51],[5,55],[6,51],[8,53],[9,55],[11,51],[12,53],[14,55],[15,51]]);
   const slideData=Array(STEPS).fill(false);
   const accentData=Array(STEPS).fill(false);
   [2,5,10].forEach(i=>slideData[i]=true);
@@ -3514,22 +3575,60 @@ buildKeycaps();
   const pianoEl=document.getElementById('piano-keys');
   function buildKeys(){
     if(!pianoEl) return;
+    const h=altezzaRiga(), n=numRighe(), crom=cromatico();
     pianoEl.innerHTML='';
-    ALL_NOTES.forEach(({name,oct,isBlack})=>{
-      const dentro=inScale(PC[name]);
-      // stessa tinta per tutti i tasti in scala
-      const bg = isBlack ? (dentro ? '#1e2c09' : '#111111')
-                         : (dentro ? '#e3f2cf' : '#f0f0ec');
+    for(let r=0;r<n;r++){
+      const nota=noteDellaRiga(r), nome=nomeDi(nota);
+      const nera=crom && nome.includes('#');
+      // In modo scala sono tutti gradi buoni, quindi tutti della stessa
+      // tinta: la gerarchia la fa la tonica, non il bianco-e-nero del piano.
+      const tonica=((nota-scaleRoot)%12+12)%12===0;
+      const bg = nera ? '#111111' : (tonica ? '#cfe8a8' : '#e3f2cf');
       const k=document.createElement('div');
-      k.style.cssText=`height:${NOTE_H}px;flex:none;display:flex;align-items:center;
+      k.style.cssText=`height:${h}px;flex:none;display:flex;align-items:center;
         justify-content:flex-end;padding-right:6px;box-sizing:border-box;
         background:${bg};
-        border-bottom:1px solid ${isBlack?'#000000':'#c8c8c4'};`;
-      if(!isBlack) k.innerHTML=`<span style="font-family:monospace;font-size:6px;color:#aaa;">${name}${oct}</span>`;
+        border-bottom:1px solid ${nera?'#000000':'#c8c8c4'};`;
+      k.innerHTML=`<span style="font-family:monospace;font-size:9px;
+        color:${nera?'#666':(tonica?'#3d5c14':'#8a8a86')};
+        font-weight:${tonica?'700':'400'};">${nome}</span>`;
       pianoEl.appendChild(k);
-    });
+    }
   }
   buildKeys();
+
+  // ── Ottava: si trascina la tastiera ───────────────────────────────────────
+  // Otto righe coprono un'ottava, ma le variazioni salgono piu' su (la 8 usa
+  // Bb4): senza un modo per spostare la finestra quelle note si vedrebbero
+  // solo come frecce al bordo. La colonna dei tasti non faceva niente, ed e'
+  // il posto dove si cerca istintivamente di scorrere una tastiera.
+  function spostaOttava(d){
+    const nuovo=Math.max(24,Math.min(84,viewBase+d*12));
+    if(nuovo===viewBase) return;
+    viewBase=nuovo; buildKeys(); draw();
+  }
+  if(pianoEl){
+    pianoEl.style.touchAction='none';
+    pianoEl.style.cursor='grab';
+    pianoEl.title='Trascina in verticale per cambiare ottava';
+    let y0=null, spostate=0;
+    pianoEl.addEventListener('pointerdown',e=>{
+      y0=e.clientY; spostate=0;
+      try{ pianoEl.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    pianoEl.addEventListener('pointermove',e=>{
+      if(y0===null) return;
+      // una riga di trascinata = un'ottava: la soglia scala col display
+      const passo=Math.max(28,altezzaRiga()*0.8);
+      const quante=Math.round((e.clientY-y0)/passo);
+      if(quante===spostate) return;
+      spostaOttava(spostate-quante);    // giu' col dito = scendi di ottava
+      spostate=quante;
+    });
+    const fineTast=()=>{ y0=null; };
+    pianoEl.addEventListener('pointerup',fineTast);
+    pianoEl.addEventListener('pointercancel',fineTast);
+  }
 
   // ── selettori tonalità / scala ──
   (function wireScale(){
@@ -3592,8 +3691,14 @@ buildKeycaps();
     const canvas=document.getElementById('piano-roll-canvas');
     if(!canvas) return;
     const parent=canvas.parentElement;
-    const W=parent.offsetWidth||600;
-    const H=ROWS*NOTE_H;
+    // Niente ripiego a 600 px: se il contenitore non ha ancora una larghezza
+    // la griglia veniva disegnata stretta dentro un box largo il doppio e ci
+    // restava, perche' nulla la ridisegnava fino al primo resize. Meglio non
+    // disegnare: ci pensa l'observer qui sotto appena la misura esiste.
+    const W=parent.offsetWidth;
+    if(!(W>0)) return;
+    const ROWS=numRighe(), cH=altezzaRiga();
+    const H=ROWS*cH;
     const dpr=window.devicePixelRatio||1;
     canvas.width=Math.round(W*dpr);
     canvas.height=Math.round(H*dpr);
@@ -3601,23 +3706,26 @@ buildKeycaps();
     canvas.style.height=H+'px';
     const ctx=canvas.getContext('2d');
     ctx.scale(dpr,dpr);
-    const cW=W/STEPS, cH=NOTE_H;
+    const cW=W/STEPS;
+    // La tastiera a lato deve avere le righe alte uguali. Si ricostruisce solo
+    // quando cambia qualcosa: draw() gira a ogni step in riproduzione.
+    if(cH!==hTasti || ROWS!==nTasti){ hTasti=cH; nTasti=ROWS; buildKeys(); }
 
-    // Sfondo righe: le note in scala sono illuminate, la tonica di più.
-    // Fuori scala resta buio, così la linea da suonare si legge a occhio.
-    ALL_NOTES.forEach(({name,isBlack},r)=>{
-      ctx.fillStyle = isBlack?'#1c1c1c':'#2c2c2c';
+    // Sfondo righe: sono tutti gradi della scala, quindi tutte illuminate
+    // uguale tranne la tonica, che fa da riferimento per l'occhio.
+    const crom=cromatico();
+    for(let r=0;r<ROWS;r++){
+      const nota=noteDellaRiga(r), tonica=((nota-scaleRoot)%12+12)%12===0;
+      ctx.fillStyle = (crom && nomeDi(nota).includes('#')) ? '#1c1c1c' : '#2c2c2c';
       ctx.fillRect(0,r*cH,W,cH);
-      // tutte le righe in scala hanno la stessa tinta: nessuna tonica marcata
-      if(inScale(PC[name])){
-        ctx.fillStyle='rgba(136,255,0,.09)';
-        ctx.fillRect(0,r*cH,W,cH);
-      }
-    });
-    // Linee orizzontali
+      ctx.fillStyle = tonica ? 'rgba(136,255,0,.16)' : 'rgba(136,255,0,.07)';
+      ctx.fillRect(0,r*cH,W,cH);
+    }
+    // Linee orizzontali: la marcata e' l'ottava, cioe' la prima e l'ultima
     for(let r=0;r<=ROWS;r++){
-      ctx.strokeStyle=r%12===0?'rgba(255,255,255,.18)':'rgba(255,255,255,.05)';
-      ctx.lineWidth=r%12===0?1:.4;
+      const ottava=r===0||r===ROWS;
+      ctx.strokeStyle=ottava?'rgba(255,255,255,.18)':'rgba(255,255,255,.05)';
+      ctx.lineWidth=ottava?1:.4;
       ctx.beginPath();ctx.moveTo(0,r*cH);ctx.lineTo(W,r*cH);ctx.stroke();
     }
     // Linee verticali 1/16
@@ -3636,23 +3744,55 @@ buildKeycaps();
       ctx.fillText(s+1,s*cW+cW/2,12);
     }
     // Note
-    notes.forEach(key=>{
-      const[s,r]=key.split(':').map(Number);
-      // isFinite e non solo i limiti: una chiave NaN passerebbe i confronti e
+    notes.forEach((nota,s)=>{
+      // isFinite e non solo i limiti: un valore NaN passerebbe i confronti e
       // farebbe lanciare createLinearGradient, uccidendo tutto il disegno.
-      if(!Number.isFinite(s)||!Number.isFinite(r)) return;
-      if(s<0||s>=STEPS||r<0||r>=ROWS) return;
-      const x=s*cW+1.5,y=r*cH+1.5,w=cW-3,h=cH-3;
+      if(!Number.isFinite(s)||!Number.isFinite(nota)) return;
+      if(s<0||s>=STEPS) return;
+      const p=posizione(nota);
+      const x=s*cW+1.5,y=p.riga*cH+1.5,w=cW-3,h=cH-3;
+
+      // Fuori finestra: una freccia al bordo. La nota resta nel pattern e
+      // continua a suonare, ma si vede che sta sopra o sotto quello che
+      // mostra la griglia - senza il segno sembrerebbe sparita.
+      if(p.stato==='sopra'||p.stato==='sotto'){
+        const su=p.stato==='sopra', cy=su?y+5:y+h-5;
+        ctx.fillStyle='rgba(136,255,0,.85)';
+        ctx.beginPath();
+        ctx.moveTo(x+w/2, su?cy-5:cy+5);
+        ctx.lineTo(x+w/2-5, su?cy+3:cy-3);
+        ctx.lineTo(x+w/2+5, su?cy+3:cy-3);
+        ctx.closePath(); ctx.fill();
+        ctx.font='700 8px monospace'; ctx.textAlign='center';
+        ctx.fillStyle='rgba(136,255,0,.7)';
+        ctx.fillText(nomeDi(nota), x+w/2, su?cy+13:cy-9);
+        return;
+      }
+
       const g=ctx.createLinearGradient(x,y,x,y+h);
-      g.addColorStop(0,'#ccff55');g.addColorStop(.5,'#88ff00');g.addColorStop(1,'#55aa00');
+      if(p.stato==='fuoriscala'){
+        // Ambra: la nota non e' un grado della scala, quindi non ha una riga
+        // sua. Si disegna sulla piu' vicina, e il colore lo dichiara invece di
+        // far credere che sia quella.
+        g.addColorStop(0,'#ffd98a');g.addColorStop(.5,'#ffab1f');g.addColorStop(1,'#b06f00');
+      }else{
+        g.addColorStop(0,'#ccff55');g.addColorStop(.5,'#88ff00');g.addColorStop(1,'#55aa00');
+      }
       ctx.fillStyle=g;
       ctx.beginPath();
-      if(ctx.roundRect)ctx.roundRect(x,y,w,h,2);else ctx.rect(x,y,w,h);
+      if(ctx.roundRect)ctx.roundRect(x,y,w,h,3);else ctx.rect(x,y,w,h);
       ctx.fill();
       ctx.fillStyle='rgba(255,255,255,.3)';
       ctx.beginPath();
       if(ctx.roundRect)ctx.roundRect(x+1,y+1,w-2,Math.min(h*.4,5),1);else ctx.rect(x+1,y+1,w-2,Math.min(h*.4,5));
       ctx.fill();
+      // Con righe alte il triplo c'e' posto per il nome della nota: si legge
+      // la linea senza contare le righe.
+      if(cH>=26){
+        ctx.font='700 9px monospace'; ctx.textAlign='center';
+        ctx.fillStyle=p.stato==='fuoriscala'?'rgba(60,30,0,.75)':'rgba(20,45,0,.65)';
+        ctx.fillText(nomeDi(nota), x+w/2, y+h/2+3.5);
+      }
     });
     // Playhead
     if(window.playing2){
@@ -3680,14 +3820,16 @@ buildKeycaps();
     // per rimediare bisognava ritrovare e togliere la nota sbagliata. Adesso
     // la nuova sostituisce la precedente: un tocco fuori bersaglio si corregge
     // ritoccando il punto giusto. Ritoccare la stessa nota la toglie.
+    // Con la Map "una nota per step" non e' piu' un ciclo di cancellazione ma
+    // la struttura: set() sostituisce. Ritoccare la stessa nota la toglie.
     const setNote=(s,r)=>{
-      if(s<0||s>=STEPS||r<0||r>=ROWS) return false;
+      if(!(s>=0&&s<STEPS)||!(r>=0&&r<numRighe())) return false;
       if(window._juceEditBlocked && window._juceEditBlocked()) return false;
-      if(window._prNoteHook){ window._prNoteHook(s,r); return true; }
-      const k=`${s}:${r}`;
-      const era=notes.has(k);
-      for(let i=0;i<ROWS;i++) notes.delete(`${s}:${i}`);
-      if(!era) notes.add(k);
+      // La nota va passata insieme alla riga: da quando le righe sono i gradi
+      // della scala, 'r' non basta piu' a ricavare l'altezza da fuori.
+      if(window._prNoteHook){ window._prNoteHook(s,r,noteDellaRiga(r)); return true; }
+      const nota=noteDellaRiga(r);
+      if(notes.get(s)===nota) notes.delete(s); else notes.set(s,nota);
       return true;
     };
     const cellaDa=e=>{
@@ -3703,13 +3845,34 @@ buildKeycaps();
       // controlli sui limiti gia' scartano.
       if(!(rect.width>0&&rect.height>0)) return [-1,-1];
       return [Math.floor((e.clientX-rect.left)/(rect.width/STEPS)),
-              Math.floor((e.clientY-rect.top)/(rect.height/ROWS))];
+              Math.floor((e.clientY-rect.top)/(rect.height/numRighe()))];
     };
 
-    let trascina=false, ultima='';
+    // Durante la trascinata il motore non ha bisogno di un pattern per cella:
+    // legge la linea solo al confine dello step, ~117 ms a 128 BPM. Ogni push
+    // si trascina dietro anche un renderSeqBay, quindi si accorpano a un
+    // frame. Il disegno resta immediato: e' quello che il dito deve vedere.
+    let pendPush=0;
+    const cambiato=()=>{
+      if(pendPush) return;
+      pendPush=requestAnimationFrame(()=>{ pendPush=0;
+        if(window._onPatternChange) window._onPatternChange(); });
+    };
+    const svuotaPush=()=>{
+      if(!pendPush) return;
+      cancelAnimationFrame(pendPush); pendPush=0;
+      if(window._onPatternChange) window._onPatternChange();
+    };
+
+    let trascina=false, ultima='', modo='scrivi';
     canvas.addEventListener('pointerdown',e=>{
       e.preventDefault();
       const [s,r]=cellaDa(e);
+      // Il primo tocco decide il verso del gesto: se toglie la nota che c'era,
+      // trascinando si cancella; altrimenti si scrive. Un gesto che scrive e
+      // cancella a seconda di cosa passa sotto il dito e' impossibile da
+      // controllare, ed e' il difetto classico di questi editor a griglia.
+      modo = (s>=0&&notes.get(s)===noteDellaRiga(r)) ? 'cancella' : 'scrivi';
       if(!setNote(s,r)) return;
       trascina=true; ultima=s+':'+r;
       // setPointerCapture lancia NotFoundError se quel puntatore non e' piu'
@@ -3722,34 +3885,40 @@ buildKeycaps();
       draw();
       if(window._onPatternChange) window._onPatternChange();
     });
-    // Trascinando si disegna la linea invece di dover centrare sedici tocchi.
-    // Su una riga da 18 px e' la differenza fra scrivere una frase e
-    // rincorrere i pixel.
+    // Trascinando si disegna la linea invece di dover centrare sedici tocchi:
+    // e' la differenza fra scrivere una frase e rincorrere i pixel.
     canvas.addEventListener('pointermove',e=>{
       if(!trascina) return;
       const [s,r]=cellaDa(e);
       const k=s+':'+r;
-      if(k===ultima) return;               // stessa cella: non ritogliere
-      if(s<0||s>=STEPS||r<0||r>=ROWS) return;
+      if(k===ultima) return;               // stessa cella: non rifare il lavoro
+      if(!(s>=0&&s<STEPS)||!(r>=0&&r<numRighe())) return;
       if(window._juceEditBlocked && window._juceEditBlocked()) return;
-      if(window._prNoteHook){ window._prNoteHook(s,r); }
-      else { for(let i=0;i<ROWS;i++) notes.delete(`${s}:${i}`); notes.add(k); }
+      if(window._prNoteHook){ window._prNoteHook(s,r,noteDellaRiga(r)); }
+      else if(modo==='cancella') notes.delete(s);
+      else notes.set(s,noteDellaRiga(r));
       ultima=k;
       draw();
-      if(window._onPatternChange) window._onPatternChange();
+      cambiato();
     });
-    const fine=()=>{ trascina=false; ultima=''; };
+    const fine=()=>{ trascina=false; ultima=''; svuotaPush(); };
     canvas.addEventListener('pointerup',fine);
     canvas.addEventListener('pointercancel',fine);
+
+    // Rotella / due dita in verticale: cambia ottava, come sulla tastiera.
+    canvas.addEventListener('wheel',e=>{
+      if(Math.abs(e.deltaY)<4) return;
+      e.preventDefault();
+      spostaOttava(e.deltaY>0?-1:1);
+    },{passive:false});
   }
 
   window._prBuildPattern=function(){
     const steps=[];
     for(let s=0;s<STEPS;s++){
-      let row=-1;
-      for(let r=0;r<ROWS;r++){ if(notes.has(s+':'+r)){ row=r; break; } }
-      if(row<0) steps.push({note:48,gate:false,accent:!!accentData[s],slide:!!slideData[s],octave:0});
-      else steps.push({note:71-row,gate:true,accent:!!accentData[s],slide:!!slideData[s],octave:0});
+      const n=notes.get(s);
+      const gate=Number.isFinite(n);
+      steps.push({note:gate?n:48, gate, accent:!!accentData[s], slide:!!slideData[s], octave:0});
     }
     return steps;
   };
@@ -3759,26 +3928,54 @@ buildKeycaps();
       const st=pat[s]; if(!st) continue;
       slideData[s]=!!st.slide; accentData[s]=!!st.accent;
       if(!st.gate) continue;
-      let n=st.note+(st.octave||0)*12; while(n<48)n+=12; while(n>71)n-=12;
-      const row=71-n; if(row>=0&&row<ROWS) notes.add(s+':'+row);
+      // Nota assoluta, senza ripiegarla in 48..71: prima le variazioni che
+      // salgono d'ottava (la 8 arriva a Bb4) venivano schiacciate qui, e alla
+      // prima modifica il pattern rimandato al motore era senza salti.
+      const n=st.note+(st.octave||0)*12;
+      if(Number.isFinite(n)) notes.set(s,Math.max(0,Math.min(127,n)));
+    }
+    // La finestra si ricentra sulla nota piu' bassa del pattern. Senza questo,
+    // se l'utente aveva spostato l'ottava, caricare un preset mostrava solo
+    // frecce al bordo e il piano roll sembrava vuoto: il caso peggiore in
+    // demo, dove si schiaccia un preset e si guarda lo schermo.
+    if(notes.size){
+      const bassa=Math.min(...notes.values());
+      viewBase=Math.max(24,Math.min(84,Math.floor(bassa/12)*12));
+      buildKeys();
     }
     buildRows(); draw();
   };
   window._prClear=function(){ notes.clear(); slideData.fill(false); accentData.fill(false); buildRows(); draw(); if(window._onPatternChange) window._onPatternChange(); };
   window._prRandom=function(){
     notes.clear(); slideData.fill(false); accentData.fill(false);
-    const scale=[48,50,51,53,55,58,60,62,63];
+    // Note dalla scala scelta e dalle righe a schermo, non da una lista fissa
+    // in Do minore: RANDOM in Fa# frigio dava comunque una linea in Do.
+    const n=numRighe();
     for(let s=0;s<STEPS;s++){
-      if(Math.random()<0.7){ const n=scale[(Math.random()*scale.length)|0]; const row=71-n; if(row>=0&&row<ROWS) notes.add(s+':'+row);
-        slideData[s]=Math.random()<0.18; accentData[s]=Math.random()<0.28; }
+      if(Math.random()<0.7){
+        notes.set(s,noteDellaRiga((Math.random()*n)|0));
+        slideData[s]=Math.random()<0.18; accentData[s]=Math.random()<0.28;
+      }
     }
     buildRows(); draw(); if(window._onPatternChange) window._onPatternChange();
   };
   window.playing2=false;
   window._prStep=0;
   window._drawPR=draw;
-  setTimeout(draw,80);
-  window.addEventListener('resize',draw);
+  // Un observer sul contenitore invece del listener su resize: copre anche il
+  // caso che contava, cioe' la prima apertura della pagina - dove la misura
+  // arriva un frame dopo il click - e la rotazione del tablet, che su iOS non
+  // manda sempre un resize utile alla finestra.
+  // L'observer va tenuto in una variabile: un ResizeObserver senza riferimenti
+  // vivi puo' essere raccolto dal garbage collector, e infatti cosi' non
+  // scattava nemmeno l'osservazione iniziale.
+  let roGriglia=null;
+  (function(){
+    const cv=document.getElementById('piano-roll-canvas');
+    if(!cv||!cv.parentElement||!window.ResizeObserver){ setTimeout(draw,80); return; }
+    roGriglia=new ResizeObserver(es=>{ if(es[0].contentRect.width>0) draw(); });
+    roGriglia.observe(cv.parentElement);
+  })();
 })();
 
 // ── TRANSPORT SEQUENCER ───────────────────────────────────────────────────────
