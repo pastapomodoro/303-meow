@@ -3653,21 +3653,60 @@ buildKeycaps();
   if(canvas){
     canvas.style.cursor='crosshair';
     canvas.style.touchAction='none';
+    // Un tocco = una nota su quello step.
+    //
+    // notes e' un Set di "step:riga", quindi si potevano impilare piu' note
+    // sullo stesso step: ne suonava solo la prima (_prBuildPattern prende la
+    // prima riga che trova) e le altre restavano disegnate senza suonare. Col
+    // dito, dove le righe sono alte 18 px, capitava a ogni tocco impreciso, e
+    // per rimediare bisognava ritrovare e togliere la nota sbagliata. Adesso
+    // la nuova sostituisce la precedente: un tocco fuori bersaglio si corregge
+    // ritoccando il punto giusto. Ritoccare la stessa nota la toglie.
+    const setNote=(s,r)=>{
+      if(s<0||s>=STEPS||r<0||r>=ROWS) return false;
+      if(window._juceEditBlocked && window._juceEditBlocked()) return false;
+      if(window._prNoteHook){ window._prNoteHook(s,r); return true; }
+      const k=`${s}:${r}`;
+      const era=notes.has(k);
+      for(let i=0;i<ROWS;i++) notes.delete(`${s}:${i}`);
+      if(!era) notes.add(k);
+      return true;
+    };
+    const cellaDa=e=>{
+      const rect=canvas.getBoundingClientRect();
+      return [Math.floor((e.clientX-rect.left)/(rect.width/STEPS)),
+              Math.floor((e.clientY-rect.top)/(rect.height/ROWS))];
+    };
+
+    let trascina=false, ultima='';
     canvas.addEventListener('pointerdown',e=>{
       e.preventDefault();
-      const rect=canvas.getBoundingClientRect();
-      const W=rect.width,cW=W/STEPS;
-      const s=Math.floor((e.clientX-rect.left)/cW);
-      const r=Math.floor((e.clientY-rect.top)/NOTE_H);
-      if(s>=0&&s<STEPS&&r>=0&&r<ROWS){
-        if(window._juceEditBlocked && window._juceEditBlocked()) return;
-        if(window._prNoteHook){ window._prNoteHook(s,r); return; }
-        const k=`${s}:${r}`;
-        notes.has(k)?notes.delete(k):notes.add(k);
-        draw();
-        if(window._onPatternChange) window._onPatternChange();
-      }
+      const [s,r]=cellaDa(e);
+      if(!setNote(s,r)) return;
+      trascina=true; ultima=s+':'+r;
+      canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId);
+      draw();
+      if(window._onPatternChange) window._onPatternChange();
     });
+    // Trascinando si disegna la linea invece di dover centrare sedici tocchi.
+    // Su una riga da 18 px e' la differenza fra scrivere una frase e
+    // rincorrere i pixel.
+    canvas.addEventListener('pointermove',e=>{
+      if(!trascina) return;
+      const [s,r]=cellaDa(e);
+      const k=s+':'+r;
+      if(k===ultima) return;               // stessa cella: non ritogliere
+      if(s<0||s>=STEPS||r<0||r>=ROWS) return;
+      if(window._juceEditBlocked && window._juceEditBlocked()) return;
+      if(window._prNoteHook){ window._prNoteHook(s,r); }
+      else { for(let i=0;i<ROWS;i++) notes.delete(`${s}:${i}`); notes.add(k); }
+      ultima=k;
+      draw();
+      if(window._onPatternChange) window._onPatternChange();
+    });
+    const fine=()=>{ trascina=false; ultima=''; };
+    canvas.addEventListener('pointerup',fine);
+    canvas.addEventListener('pointercancel',fine);
   }
 
   window._prBuildPattern=function(){
