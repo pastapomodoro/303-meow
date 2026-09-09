@@ -3638,6 +3638,9 @@ buildKeycaps();
     // Note
     notes.forEach(key=>{
       const[s,r]=key.split(':').map(Number);
+      // isFinite e non solo i limiti: una chiave NaN passerebbe i confronti e
+      // farebbe lanciare createLinearGradient, uccidendo tutto il disegno.
+      if(!Number.isFinite(s)||!Number.isFinite(r)) return;
       if(s<0||s>=STEPS||r<0||r>=ROWS) return;
       const x=s*cW+1.5,y=r*cH+1.5,w=cW-3,h=cH-3;
       const g=ctx.createLinearGradient(x,y,x,y+h);
@@ -3689,6 +3692,16 @@ buildKeycaps();
     };
     const cellaDa=e=>{
       const rect=canvas.getBoundingClientRect();
+      // A pagina nascosta il rect e' 0x0 e la divisione da' NaN. NaN supera i
+      // controlli tipo 's<0||s>=STEPS', perche' ogni confronto con NaN e'
+      // falso: la chiave "NaN:NaN" entrava nel Set, invisibile al pattern
+      // (_prBuildPattern scorre le righe buone) ma letale per draw(), che da
+      // quel momento lanciava su createLinearGradient e il piano roll non si
+      // ridisegnava piu'. Ci si arriva col dito ancora giu': la pointer
+      // capture continua a consegnare i movimenti alla canvas anche se nel
+      // frattempo si cambia pagina o si ruota il tablet. Si torna -1, che i
+      // controlli sui limiti gia' scartano.
+      if(!(rect.width>0&&rect.height>0)) return [-1,-1];
       return [Math.floor((e.clientX-rect.left)/(rect.width/STEPS)),
               Math.floor((e.clientY-rect.top)/(rect.height/ROWS))];
     };
@@ -3699,7 +3712,13 @@ buildKeycaps();
       const [s,r]=cellaDa(e);
       if(!setNote(s,r)) return;
       trascina=true; ultima=s+':'+r;
-      canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId);
+      // setPointerCapture lancia NotFoundError se quel puntatore non e' piu'
+      // attivo - un tocco molto rapido, rilasciato prima che il handler parta.
+      // Senza try la nota restava disegnata ma il push al motore non veniva
+      // mai eseguito: si vedeva accendersi e non suonava. La capture serve
+      // solo alla trascinata, quindi perderla non e' un motivo per fermarsi.
+      try{ canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId); }
+      catch(_){ trascina=false; }
       draw();
       if(window._onPatternChange) window._onPatternChange();
     });
