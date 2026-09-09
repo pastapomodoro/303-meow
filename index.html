@@ -5942,6 +5942,11 @@ registerProcessor('tb303-processor', TB303Processor);
     renderSeqBay();
   }
 
+  // Esposta perche' nel plugin il bridge deve potersi garantire i pad: se lo
+  // stato arriva dal C++ prima che l'init della pagina abbia costruito la
+  // striscia, non c'e' niente da accendere e il sequencer resta vuoto.
+  window.seqBuild = seqBuild;
+
   function seqEdit(i,field){
     // Nel plugin comanda il sequencer C++: il bridge installa l'hook.
     if(window._seqEditHook){ window._seqEditHook(i,field); return; }

@@ -49,16 +49,45 @@ nuovo = '''  // ── Piano roll ↔ C++ sequencer ─────────�
     const s = stepData[si];
     if(s.gate && s.note === nota){ s.gate = false; fnToggleStep(si); }
     else { s.note = nota; s.gate = true; fnSetStepNote(si, nota); }
-    syncNotesToCanvas(); window.buildSteps && window.buildSteps();
+    mostraStato();
   };
 
-  // Slide e accent dalle due righe sotto la griglia: prima cadevano nello
-  // stato locale della pagina e non arrivavano al sequencer C++.
-  window._prModifierHook = function(i, campo){
+  // ── Striscia degli step ↔ C++ ─────────────────────────────────────────────
+  // buildSteps del bridge scriveva in #steps-grid e #step-sub, contenitori che
+  // la pagina non ha piu': usciva alla prima riga e la striscia restava vuota,
+  // percio' nel plugin non si potevano sequenziare gli step. Oggi i pad sono
+  // #seq-pads, li costruisce seqBuild() e il click passa da seqEdit, che
+  // controlla _seqEditHook proprio per questo caso. Quindi non si ridisegna
+  // niente a mano: si spinge lo stato del C++ nella pagina e si lascia
+  // ridisegnare a lei.
+  function mostraStato(){
+    // I pad prima di tutto: lo stato del C++ puo' arrivare prima che l'init
+    // della pagina abbia costruito la striscia, e renderSeqBay esce subito se
+    // il contenitore e' vuoto - percio' nel plugin restava vuota per sempre.
+    if(!document.querySelector('#seq-pads .padcell') && window.seqBuild)
+      window.seqBuild();
+    syncNotesToCanvas();                                    // C++ -> piano roll
+    if(window._onPatternChange) window._onPatternChange();  // -> renderSeqBay
+  }
+  window.buildSteps = mostraStato;
+
+  // Gate, accent e slide dai pad: prima cadevano nello stato locale della
+  // pagina e non arrivavano al sequencer C++.
+  window._seqEditHook = function(i, campo){
     const s = stepData[i]; if(!s) return;
-    if(campo === 'accent'){ s.accent = !s.accent; fnSetAccent(i, s.accent); }
-    else { s.slide = !s.slide; fnSetSlide(i, s.slide); }
-    syncNotesToCanvas(); window.buildSteps && window.buildSteps();
+    if(campo === 'gate'){
+      s.gate = !s.gate;
+      if(s.gate && !s.note) s.note = 48;
+      fnToggleStep(i);
+    }
+    else if(campo === 'accent'){ s.accent = !s.accent; fnSetAccent(i, s.accent); }
+    else                       { s.slide  = !s.slide;  fnSetSlide(i, s.slide); }
+    mostraStato();
+  };
+
+  // Le due righe SLIDE e ACCENT sotto il piano roll passano da qui.
+  window._prModifierHook = function(i, campo){
+    window._seqEditHook(i, campo === 'accent' ? 'accent' : 'slide');
   };
 
   // Due interruttori che la pagina legge da sola:
@@ -92,6 +121,8 @@ esiti = [
     ('gate standalone del bridge', "if(typeof window.__JUCE__ === 'undefined') return;" in fuori),
     ('hook nota',                  conta(fuori, '_prNoteHook') >= 1),
     ('hook slide/accent',          conta(fuori, '_prModifierHook') >= 1),
+    ('hook pad del sequencer',     conta(fuori, '_seqEditHook') >= 1),
+    ('buildSteps ridiretto',       'window.buildSteps = mostraStato' in fuori),
     ('motore WebAudio spento',     conta(fuori, '_juceNoWebAudio') >= 1),
     ('griglia vecchia rimossa',    'const midiNote=71-row' not in fuori),
     ('piano roll a scala',         conta(fuori, 'noteDellaRiga') >= 1),
