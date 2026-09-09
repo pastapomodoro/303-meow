@@ -2985,7 +2985,7 @@ body {
                 appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
                 <option value="0">01 — Classic Acid</option>
                 <option value="1">02 — Rollin Acid</option>
-                <option value="2">03 — Basic Acid</option>
+                <option value="2">03 — Munich Sequence</option>
                 <option value="3">04 — Night Drive</option>
                 <option value="4">05 — Deep Squelch</option>
                 <option value="5">06 — Phrygian Drive</option>
@@ -3891,12 +3891,12 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
-  {name:'Classic Acid',  tempo:128,wave:'SAW',cut:'420Hz',res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
-  {name:'Rollin Acid',   tempo:132,wave:'SAW',cut:'360Hz',res:.82,env:.78,dec:.15,acc:.78,vol:.72,dis:.26,sub:.14,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
-  {name:'Basic Acid',    tempo:130,wave:'SAW',cut:'620Hz',res:.66,env:.64,dec:.26,acc:.72,vol:.75,dis:.06,sub:.12,dlyT:.375,dlyF:.30,dlyM:.00,rvbS:.42,rvbM:.00},
-  {name:'Night Drive',   tempo:118,wave:'SAW',cut:'480Hz',res:.54,env:.42,dec:.38,acc:.62,vol:.74,dis:.08,sub:.40,dlyT:.500,dlyF:.40,dlyM:.14,rvbS:.55,rvbM:.08},
-  {name:'Deep Squelch',  tempo:126,wave:'SQR',cut:'260Hz',res:.76,env:.72,dec:.52,acc:.70,vol:.73,dis:.14,sub:.68,dlyT:.250,dlyF:.40,dlyM:.12,rvbS:.50,rvbM:.06},
-  {name:'Phrygian Drive',tempo:128,wave:'SQR',cut:'410Hz',res:.72,env:.58,dec:.30,acc:.74,vol:.72,dis:.22,sub:.30,dlyT:.333,dlyF:.36,dlyM:.09,rvbS:.44,rvbM:.04},
+  {name:'Classic Acid',   tempo:128,wave:'SAW',cut:'420Hz',res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
+  {name:'Rollin Acid',    tempo:134,wave:'SAW',cut:'340Hz',res:.88,env:.82,dec:.14,acc:.82,vol:.72,dis:.30,sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
+  {name:'Munich Sequence',tempo:124,wave:'SAW',cut:'1150Hz',res:.38,env:.26,dec:.40,acc:.58,vol:.74,dis:.02,sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
+  {name:'Night Drive',    tempo:116,wave:'SAW',cut:'520Hz',res:.52,env:.40,dec:.62,acc:.60,vol:.75,dis:.06,sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
+  {name:'Deep Squelch',   tempo:126,wave:'SQR',cut:'240Hz',res:.80,env:.74,dec:.78,acc:.68,vol:.73,dis:.12,sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
+  {name:'Phrygian Drive', tempo:140,wave:'SQR',cut:'380Hz',res:.93,env:.88,dec:.16,acc:.86,vol:.71,dis:.34,sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03}
 ];
 const SYNTH_DATA = [
   {name:'Classic Acid 303',cut:.270544,res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,wave:'SAW',sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
@@ -4526,76 +4526,55 @@ registerProcessor('tb303-processor', TB303Processor);
   // sono variazioni della stessa linea nella stessa tonalita', non pattern
   // slegati, quindi qualunque sequenza di tasti resta musicale.
   const FACTORY_BANKS=[
-    [ // Classic Acid
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,1,0],[55,1,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,1,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,1,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[48,0,0,0,0],[67,1,0,0,0],[48,0,0,0,0],[70,1,0,1,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[65,1,0,0,0],[48,0,0,0,0],[67,1,0,1,0],[70,1,0,0,0]]),   // 5 registro alto
-      _P([[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[58,1,1,1,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,1,0,0],[53,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[58,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[48,1,1,1,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,1,0],[48,0,0,0,0],[55,1,0,1,0],[48,0,0,0,0],[58,1,0,1,0],[48,1,1,1,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,1,0],[53,1,0,1,0],[48,0,0,0,0],[55,1,0,1,0],[58,1,0,0,0]]),   // 7 legato
-      _P([[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[51,1,1,0,0],[67,1,0,0,0],[55,1,0,0,0],[70,1,0,1,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[53,1,1,0,0],[65,1,0,0,0],[55,1,0,1,0],[70,1,0,0,0]])   // 8 picco
+    [ // Classic Acid — gradi 0,3,7,10 — la linea di riferimento: apre il set
+      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,1],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,0]])
     ],
-    [ // Rollin Acid
-      _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,1,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[58,1,0,1,0],[55,1,0,0,0],[51,1,1,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[48,1,1,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[67,1,1,0,0],[63,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[67,1,1,0,0],[65,1,0,0,0],[63,1,0,1,0],[48,1,0,0,0]]),   // 5 registro alto
-      _P([[48,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[58,1,1,0,0],[55,1,0,0,0],[51,1,1,0,0],[60,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[58,1,1,0,0],[55,1,0,0,0],[53,1,1,0,0],[51,1,0,1,0],[48,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[48,1,1,1,0],[48,1,0,1,0],[60,1,0,1,0],[58,1,0,1,0],[55,1,1,1,0],[51,1,0,1,0],[60,1,0,1,0],[48,1,0,1,0],[48,1,1,1,0],[48,1,0,1,0],[60,1,0,1,0],[58,1,0,1,0],[55,1,1,1,0],[53,1,0,1,0],[51,1,0,1,0],[48,1,0,0,0]]),   // 7 legato
-      _P([[48,1,1,0,0],[60,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[55,1,1,0,0],[63,1,0,0,0],[60,1,0,0,0],[60,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[55,1,1,0,0],[65,1,0,0,0],[51,1,0,1,0],[60,1,0,0,0]])   // 8 picco
+    [ // Rollin Acid — gradi 0,1,3,7,10 — sedicesimi pieni, il b2 da' la minaccia
+      _P([[48,1,1,0,0],[48,1,0,0,0],[49,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[51,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,1,0,0],[49,1,0,0,0],[48,1,0,0,1],[58,1,0,1,0],[48,1,1,0,0]])
     ],
-    [ // Basic Acid
-      _P([[48,1,1,0,0],[48,0,0,0,0],[55,1,0,1,0],[60,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[67,1,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[70,1,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[67,1,0,1,0],[48,0,0,0,0],[65,1,0,0,0],[48,1,0,0,0]]),   // 5 registro alto
-      _P([[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[55,1,1,0,0],[60,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,1,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,1,0,0],[55,1,0,1,0],[48,0,0,0,0],[53,1,0,0,0],[48,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[48,1,1,1,0],[48,0,0,0,0],[48,1,0,1,0],[55,1,0,1,0],[60,1,1,1,0],[48,0,0,0,0],[58,1,0,1,0],[55,1,0,1,0],[48,1,1,1,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,1,0],[55,1,0,1,0],[48,0,0,0,0],[53,1,0,1,0],[48,1,0,0,0]]),   // 7 legato
-      _P([[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[67,1,0,0,0],[60,1,1,0,0],[60,1,0,0,0],[58,1,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[55,1,1,1,0],[67,1,0,0,0],[53,1,0,0,0],[60,1,0,0,0]])   // 8 picco
+    [ // Munich Sequence — gradi 0,3,7 — l'antenato: arpeggio di triade, nessuno slide
+      _P([[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],[55,1,0,0,1],[51,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0]])
     ],
-    [ // Night Drive
-      _P([[48,1,1,0,0],[55,1,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[55,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,1,0],[55,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[55,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[67,1,1,0,0],[65,1,0,0,0],[63,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[65,1,0,0,0],[67,1,0,1,0],[70,1,0,0,0],[60,1,1,0,0],[70,1,0,0,0],[67,1,0,0,0],[65,1,0,0,0],[63,1,0,0,0],[48,1,0,1,0],[63,1,0,0,0],[48,1,0,0,0]]),   // 5 registro alto
-      _P([[55,1,0,0,0],[53,1,1,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,0,0],[53,1,1,0,0],[55,1,0,1,0],[58,1,1,0,0],[60,1,0,0,0],[58,1,1,0,0],[55,1,0,0,0],[53,1,1,0,0],[51,1,0,0,0],[48,1,1,1,0],[51,1,0,0,0],[48,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[55,1,1,1,0],[53,1,0,1,0],[51,1,0,1,0],[48,1,0,1,0],[51,1,0,1,0],[53,1,0,1,0],[55,1,0,1,0],[58,1,0,1,0],[60,1,1,1,0],[58,1,0,1,0],[55,1,0,1,0],[53,1,0,1,0],[51,1,0,1,0],[48,1,0,1,0],[51,1,0,1,0],[48,1,0,0,0]]),   // 7 legato
-      _P([[55,1,1,0,0],[65,1,0,0,0],[51,1,0,0,0],[60,1,0,0,0],[51,1,1,0,0],[65,1,0,0,0],[55,1,0,1,0],[70,1,0,0,0],[60,1,1,0,0],[70,1,0,0,0],[55,1,0,0,0],[65,1,0,0,0],[51,1,1,0,0],[60,1,0,1,0],[51,1,0,0,0],[60,1,0,0,0]])   // 8 picco
+    [ // Night Drive — gradi 0,3,5,10 — rada: il groove sta nelle pause, decay lungo
+      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[53,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[53,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]])
     ],
-    [ // Deep Squelch
-      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,1,0,0],[56,1,0,1,0],[55,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[56,1,0,1,0],[55,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[48,1,1,0,0],[48,0,0,0,0],[63,1,0,0,0],[48,0,0,0,0],[67,1,0,0,0],[68,1,0,1,0],[48,0,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[70,1,0,0,0],[48,0,0,0,0],[68,1,0,0,0],[67,1,0,1,0],[48,0,0,0,0],[63,1,0,0,0]]),   // 5 registro alto
-      _P([[48,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[56,1,1,1,0],[48,0,0,0,0],[55,1,1,0,0],[48,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,0,0],[55,1,1,1,0],[48,0,0,0,0],[51,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[48,1,1,1,0],[48,0,0,0,0],[51,1,0,1,0],[48,0,0,0,0],[55,1,0,1,0],[56,1,0,1,0],[48,0,0,0,0],[55,1,0,1,0],[48,1,1,1,0],[48,0,0,0,0],[58,1,0,1,0],[48,0,0,0,0],[56,1,0,1,0],[55,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0]]),   // 7 legato
-      _P([[48,1,1,0,0],[60,1,0,0,0],[51,1,0,0,0],[63,1,0,0,0],[55,1,1,0,0],[68,1,0,1,0],[56,1,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[58,1,0,0,0],[70,1,0,0,0],[56,1,1,0,0],[67,1,0,1,0],[55,1,0,0,0],[63,1,0,0,0]])   // 8 picco
+    [ // Deep Squelch — gradi 0,3,8,10 — il b6 porta la malinconia, quasi tutto legato
+      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[56,1,0,1,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,1,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,1,0],[56,1,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[48,1,0,0,0],[48,0,0,0,0]])
     ],
-    [ // Phrygian Drive
-      _P([[48,1,1,0,0],[49,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[53,1,1,0,0],[49,1,0,1,0],[48,1,0,0,0],[53,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,1,0,0],[58,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),   // 1 base
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[49,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
-      _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
-      _P([[48,1,1,0,0],[61,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[65,1,0,0,0],[61,1,0,1,0],[48,1,0,0,0],[65,1,0,0,0],[48,1,1,0,0],[61,1,0,0,0],[63,1,0,0,0],[61,1,0,0,0],[60,1,0,0,0],[70,1,0,1,0],[61,1,0,0,0],[48,1,0,0,0]]),   // 5 registro alto
-      _P([[48,1,0,0,0],[49,1,1,0,0],[48,1,0,0,0],[51,1,1,0,0],[53,1,0,0,0],[49,1,1,1,0],[48,1,0,0,0],[53,1,1,0,0],[48,1,0,0,0],[49,1,1,0,0],[51,1,0,0,0],[49,1,1,0,0],[60,1,0,0,0],[58,1,1,1,0],[49,1,0,0,0],[48,1,1,0,0]]),   // 6 accenti controtempo
-      _P([[48,1,1,1,0],[49,1,0,1,0],[48,1,0,1,0],[51,1,0,1,0],[53,1,0,1,0],[49,1,0,1,0],[48,1,0,1,0],[53,1,0,1,0],[48,1,1,1,0],[49,1,0,1,0],[51,1,0,1,0],[49,1,0,1,0],[60,1,0,1,0],[58,1,0,1,0],[49,1,0,1,0],[48,1,0,0,0]]),   // 7 legato
-      _P([[48,1,1,0,0],[61,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[53,1,1,0,0],[61,1,0,1,0],[48,1,0,0,0],[65,1,0,0,0],[48,1,1,0,0],[61,1,0,0,0],[51,1,0,0,0],[61,1,0,0,0],[60,1,1,0,0],[70,1,0,1,0],[49,1,0,0,0],[60,1,0,0,0]])   // 8 picco
+    [ // Phrygian Drive — gradi 0,1,3,6,10 — b2 e tritono: il banco piu' dissonante
+      _P([[48,1,1,0,0],[49,1,0,0,0],[51,1,1,0,0],[54,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[58,1,0,0,0],[54,1,0,1,0],[48,1,1,0,0],[51,1,0,0,0],[54,1,1,0,0],[58,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[54,1,0,0,0]])
     ]
   ];
   // I nove tasti sono variazioni performative della stessa frase, non nove
   // pattern scollegati. Le note del motivo restano o diventano fondamentali;
   // quelle aggiunte sono solo C/ottava, e ogni battuta entra e risolve su C.
+  // Il motivo del banco: le altezze che la linea base suona davvero, ottava
+  // compresa. Le variazioni che infittiscono pescano da qui invece di mettere
+  // sempre la fondamentale: riempiendo con C, a densita' alta ogni banco
+  // convergeva sulla stessa nota e il colore armonico che lo distingue
+  // spariva.
+  function motifOf(base){
+    const m=base.filter(s=>s.gate).map(s=>({note:s.note|0,octave:s.octave|0}));
+    return m.length?m:[{note:48,octave:0}];
+  }
   function makePerformanceVariation(base,variation){
+    const motif=motifOf(base);
+    // motif.length e' il numero di gate della base: sotto i dodici la frase
+    // ha piu' pause che note, e alcune variazioni vanno adattate.
+    const sparse=motif.length<12;
     const result=base.map((src,position)=>{
       const out={
-        note:Math.max(48,Math.min(60,src.note|0)),
-        gate:!!src.gate, accent:!!src.accent, slide:!!src.slide, octave:0
+        // L'ottava della base sopravvive. Prima la nota veniva clampata in
+        // 48..60 e octave azzerato: i salti d'ottava sono l'elemento piu'
+        // caratterizzante di una linea acid, e schiacciarli in un'ottava sola
+        // rendeva le 54 pattern del set quasi indistinguibili fra loro.
+        note:Math.max(0,Math.min(127,src.note|0)),
+        gate:!!src.gate, accent:!!src.accent, slide:!!src.slide,
+        octave:src.octave|0
       };
+      // Riempitivo preso dal motivo, non dalla fondamentale.
+      const fill=()=>{ const m=motif[position%motif.length];
+                       out.note=m.note; out.octave=m.octave; };
       const quarter=position%4===0;
       const pickup=position===3||position===7||position===11||position===14;
       switch(variation){
@@ -4604,42 +4583,68 @@ registerProcessor('tb303-processor', TB303Processor);
           out.accent=out.gate&&quarter;
           out.slide=false;
           break;
-        case 2: // stessa linea, dialogo diverso fra gli accenti
-          out.accent=out.gate&&(out.accent||position===2||position===10);
+        case 2: // gli accenti si spostano in controtempo
+          // Ridefinisce, non somma: prima era un OR con gli accenti della base,
+          // quindi su una linea che ne aveva gia' sui pari non cambiava niente
+          // e questo tasto suonava identico al primo.
+          out.accent=out.gate&&(position===2||position===6||position===10||position===14);
           break;
-        case 3: // legato controllato
-          out.slide=out.gate&&(out.slide||position===2||position===6||position===10||position===14);
+        case 3: // legato: la frase si connette e scivola
+          // Su una linea rada il solo slide non produce legato: la pulizia
+          // degli slide orfani in fondo alla funzione li toglierebbe quasi
+          // tutti, perche' dopo ogni nota c'e' una pausa. Quindi prima si
+          // riempiono le pause dal motivo, poi si scivola: e' anche la lettura
+          // musicale giusta di "legato" su una frase con pochi appoggi.
+          if(sparse&&!out.gate){ out.gate=true; fill(); }
+          out.slide=out.gate;
           break;
-        case 4: // pickup sulla fondamentale nei quattro gruppi
-          if(pickup){ out.gate=true; out.note=48; }
-          out.accent=out.gate&&(out.accent||position===7);
+        case 4: // pickup sulla fondamentale, accenti solo sui quarti
+          if(pickup){ out.gate=true; out.note=48; out.octave=0; }
+          out.accent=out.gate&&quarter;
           break;
         case 5: // due sole risposte all'ottava
           if(position===6||position===14){
-            out.gate=true; out.note=60; out.accent=position===14;
+            out.gate=true; out.note=48; out.octave=1; out.accent=position===14;
           }
           break;
         case 6: // fondamentali sincopate intorno allo stesso scheletro
           if(position===1||position===5||position===9||position===13){
-            out.gate=true; out.note=48;
+            out.gate=true; out.note=48; out.octave=0;
           }
           out.accent=out.gate&&(position===5||position===13);
           break;
-        case 7: // build piu' densa, senza introdurre note estranee
-          if(!out.gate||position%4===2){ out.gate=true; out.note=48; }
+        case 7: // build piu' densa, sul materiale del banco
+          // Prima riempiva con C e sovrascriveva anche le note che c'erano
+          // gia' su position%4===2: la variazione piu' densa finiva per essere
+          // la piu' monotona. Ora le pause si riempiono dal motivo e le note
+          // esistenti non si toccano.
+          if(!out.gate){ out.gate=true; fill(); }
+          // Su una linea gia' a sedicesimi il riempimento non ha nulla da
+          // riempire e la variazione ricadeva sulla base. L'ottava sugli
+          // offbeat le da' un'identita' anche a densita' massima: e' il
+          // movimento in salita che ci si aspetta da un build.
+          if(position%2===1) out.octave=out.octave+1;
           out.accent=out.gate&&(out.accent||position===6||position===14);
           break;
         case 8: // peak in sedicesimi, con slide radi e intenzionali
-          if(!out.gate){ out.gate=true; out.note=48; }
-          if(position===7) out.note=60;
+          if(!out.gate){ out.gate=true; fill(); }
+          if(position===7){ out.note=48; out.octave=1; }
           out.accent=quarter||position===7;
           out.slide=position===2||position===6||position===10||position===14;
           break;
       }
       if(position===0){
-        out.note=48; out.gate=true; out.accent=true; out.slide=false;
+        // L'attacco di battuta resta la fondamentale accentata: e' l'ancora
+        // che tiene consonante il passaggio da un banco all'altro durante un
+        // set, ed e' la ragione per cui i banchi stanno tutti in Do minore.
+        out.note=48; out.octave=0; out.gate=true; out.accent=true; out.slide=false;
+      }else if(position===15 && variation<=1){
+        // La risoluzione su C in fondo alla battuta la tengono solo base e
+        // breakdown. Applicandola a tutte e nove, ogni variazione di ogni
+        // banco chiudeva identica e il set perdeva la coda della frase.
+        out.note=48; out.octave=0; out.gate=true; out.slide=false;
       }else if(position===15){
-        out.note=48; out.gate=true; out.slide=false;
+        out.slide=false;   // niente slide che scavalca il punto di loop
       }
       return out;
     });
