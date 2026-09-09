@@ -4889,12 +4889,20 @@ registerProcessor('tb303-processor', TB303Processor);
   window.FACTORY_BANKS_JS=FACTORY_BANKS;
   let srcMode='seq', presetIdx=0;
   const cloneP=p=>p.map(x=>({note:x.note,gate:!!x.gate,accent:!!x.accent,slide:!!x.slide,octave:x.octave||0}));
+  // Il piano roll e' la sorgente del pattern in TUTTI E TRE i modi, MIDI
+  // compreso: in MIDI mode la nota premuta traspone questo pattern, quindi
+  // dev'essere quello che si vede sullo schermo. Con la vecchia esclusione
+  // 'srcMode!=="midi"' il motore riceveva sempre la variazione 1 del banco:
+  // scrivere nel piano roll non arrivava al motore, e il note-on sovrascriveva
+  // la variazione appena scelta coi nove tasti.
   function currentPattern(){
-    if(srcMode!=='midi' && window._prBuildPattern){ const p=window._prBuildPattern(); if(p&&p.length) return p; }
+    if(window._prBuildPattern){ const p=window._prBuildPattern(); if(p&&p.length) return p; }
     return cloneP((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0]);
   }
   function pushPattern(){ post({type:'pattern',steps:currentPattern()}); }
-  window._onPatternChange=function(){ if(srcMode!=='midi') pushPattern(); renderSeqBay(); };
+  // Un 'pattern' senza queue scambia la linea senza toccare lo step corrente,
+  // quindi la modifica entra a giro in corso anche con un tasto tenuto premuto.
+  window._onPatternChange=function(){ pushPattern(); renderSeqBay(); };
   window._setPresetIdx=function(i){
     presetIdx=((i|0)%FACTORY_BANKS.length+FACTORY_BANKS.length)%FACTORY_BANKS.length;
     const base=(FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0];
@@ -4905,7 +4913,7 @@ registerProcessor('tb303-processor', TB303Processor);
       if(window._resetPatBtns) window._resetPatBtns(0);
       setTxt('lcd-pat','01');
       if(window._prSetPattern) window._prSetPattern(base);
-      if(srcMode!=='midi') post({type:'pattern',steps:cloneP(base),variation:0});
+      post({type:'pattern',steps:cloneP(base),variation:0});
       document.querySelectorAll('#pat-btns .keycap').forEach((k,j)=>k.classList.toggle('active',j===0));
     }
     if(window._mostraPreset) window._mostraPreset(presetIdx);
@@ -4970,8 +4978,11 @@ registerProcessor('tb303-processor', TB303Processor);
     document.querySelectorAll('[data-srcmode]').forEach(b=>b.classList.toggle('on', b.getAttribute('data-srcmode')===m));
     const th=document.getElementById('srcmode-thumb'); if(th) th.style.transform='translateX('+(({midi:0,seq:100,preset:200})[m]||0)+'%)';
     post({type:'transpose',semis:0});
+    // Il pattern si manda in ogni caso: entrando in MIDI mode il motore resta
+    // fermo, ma armato con la linea che si vede, pronto al primo tasto.
+    pushPattern();
     if(m==='midi'){ post({type:'transport',playing:false}); }
-    else { pushPattern(); if(webPlaying) post({type:'transport',playing:true}); }
+    else if(webPlaying) post({type:'transport',playing:true});
   };
 
   // ── MIDI mode = pattern player trasposto ──────────────────────────────
@@ -5348,7 +5359,12 @@ registerProcessor('tb303-processor', TB303Processor);
     const fd=(typeof FACTORY_DATA!=='undefined')&&FACTORY_DATA[presetIdx];
     if(fd&&fd.name) setTxt('lcd-preset', fd.name);
     chainActive=false; patChain=[];
-    if(!webPlaying){ applyVariation(v); return; }
+    // In MIDI mode il sequencer del worklet e' fermo: gira solo mentre si
+    // tiene premuto un tasto. Un pattern accodato aspetterebbe uno step 0 che
+    // non arriva, quindi il LED lampeggiava in eterno e la variazione non
+    // entrava mai. Senza sequencer in corsa si applica subito.
+    const inCorsa = webPlaying && srcMode!=='midi';
+    if(!inCorsa){ applyVariation(v); return; }
     if(v===activeVar&&!factoryBankQueued){
       queuedVar=-1; post({type:'cancelPatternQueue'}); paintPatBtns(); return;
     }
