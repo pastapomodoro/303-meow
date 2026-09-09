@@ -235,10 +235,19 @@ body {
    di contenuto, e il buco finiva DENTRO la card, dove sembra un errore. Cosi'
    lo spazio libero resta sotto, ed e' semplice superficie del pannello. */
 #page-settings > .settings-wide { flex:1; align-content:start; }
-/* la griglia prende lo spazio che avanza, la barra idraulica resta della sua
-   altezza: lo spazio libero va nei controlli, non nel dettaglio decorativo */
-#page-synth > .grid-3 { flex:1; }
-#page-synth > .seqbay { flex:none; }
+/* Lo spazio che avanza si divide fra i controlli e la striscia del sequencer,
+   4 a 1. Prima la striscia era flex:none e restava a 122 px: su uno schermo
+   4:3, dove il pannello guadagna oltre 140 px di altezza, andavano tutti alle
+   colonne — che dentro hanno gia' spazio, quindi diventavano buchi — e i pad
+   del sequencer restavano alti 31 px, meno della meta' dei 44 pt che servono
+   per centrare un tasto col dito senza guardare. */
+   Entrambe partono dall'altezza del contenuto (basis auto) e non da zero: con
+   basis 0 sulle colonne il rapporto si applicava al totale invece che allo
+   spazio libero, la striscia arrivava a 238 px e i pad a 149, schiacciando i
+   knob. Il tetto sulla striscia tiene i pad in una misura da dito senza
+   lasciarle prendere il sopravvento. */
+#page-synth > .grid-3 { flex:1 1 auto; min-height:0; }
+#page-synth > .seqbay { flex:1 1 auto; min-height:122px; max-height:168px; }
 
 /* ═══════════════════════════════════════════════
    PANEL CARD (skeuomorfismo)
@@ -2064,8 +2073,20 @@ body {
 }
 .seqbay-hdr { margin-bottom:5px; }
 .seqbay-foot { margin-top:6px; padding-top:5px; }
-.pad { height:31px; }
 .pad-num { font-size:6px; }
+
+/* L'altezza che il pannello guadagna su uno schermo 4:3 va anche alla striscia
+   del sequencer, non tutta alle colonne. E' l'area che si tocca col dito, e i
+   pad erano alti 31 px: meno della meta' dei 44 pt che servono per centrare un
+   tasto senza guardare. Le colonne restano prioritarie (4 contro 1) perche'
+   dentro hanno gia' spazio, i pad no. */
+.page.active > .grid-3 { flex:4 1 0; min-height:0; }
+.page.active > .seqbay {
+  flex:1 1 auto; display:flex; flex-direction:column; min-height:122px;
+}
+.page.active > .seqbay > .seq-pads { flex:1 1 auto; min-height:0; }
+.seq-pads .padcell { height:100%; }
+.pad { height:100%; min-height:31px; }
 .fxscrew { opacity:.45; }
 
 /* Coerenza materica sulle quattro pagine secondarie. */
@@ -3213,14 +3234,14 @@ body {
               <div class="wave-btn active" onclick="setWave(this)">SAW</div>
               <div class="wave-btn" onclick="setWave(this)">SQR</div>
             </div>
-            <div class="set-hint" style="margin:8px 0 14px;">Prima la forma d'onda la decideva solo il preset e non c'era modo di scegliere. Sega e quadra sono generate con PolyBLEP, quindi senza aliasing anche sulle note alte.</div>
+            <div class="set-hint" style="margin:7px 0 10px;">Sega e quadra, generate con PolyBLEP: nessun aliasing sulle note alte.</div>
             <div style="display:flex;justify-content:center;padding:2px 0 4px;">
               <div class="knob-wrap">
                 <div class="knob" style="width:58px;height:58px;"></div>
                 <div class="knob-lbl">Tuning</div><div class="knob-val">0.0</div>
               </div>
             </div>
-            <div class="set-hint" style="margin-top:10px;">Accordatura generale, ±12 semitoni. Sul TB-303 la manopola TUNING sta sul pannello: si accorda a orecchio col resto della strumentazione e resta ferma per tutto il set.</div></div>
+            <div class="set-hint" style="margin-top:8px;">Accordatura della macchina, ±12 semitoni.</div></div>
         </div>
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Audio Engine</span></div>
@@ -5618,9 +5639,11 @@ body.is-portrait #app-stage   { visibility:hidden; }
 (function(){
   var DESIGN_W = 1160;   // larghezza di progetto del pannello
   var MAX_UP   = 1.5;    // oltre questo l'ingrandimento ammorbidisce le texture
+  var MIN_PAGE = 470;    // sotto questa altezza i contenuti si comprimono male
 
   var chassis = document.querySelector('.chassis');
   if(!chassis) return;
+  var nameplate = chassis.querySelector('.nameplate');
 
   var stage = document.createElement('div'); stage.id = 'app-stage';
   var scale = document.createElement('div'); scale.id = 'app-scale';
@@ -5646,8 +5669,26 @@ body.is-portrait #app-stage   { visibility:hidden; }
     var vw = vv ? vv.width  : window.innerWidth;
     var vh = vv ? vv.height : window.innerHeight;
 
+    // Il pannello cresce fino a riempire lo schermo, invece di stare in mezzo
+    // a due fasce morte. Con --page-h fisso a 596 px il chassis veniva
+    // 1160x653, cioe' 1.78:1, mentre un iPad Air in orizzontale e' 1.44:1:
+    // fittando sulla larghezza restavano 156 px vuoti sopra e sotto, il 19%
+    // dello schermo.
+    //
+    // Fissata la scala che riempie la larghezza, l'altezza di layout che serve
+    // per riempire anche l'altezza e' vh/s, meno la targhetta. Non c'e'
+    // ricorsione: s qui dipende solo dalla larghezza.
+    var sW = Math.min(vw / DESIGN_W, MAX_UP);
+    var nameH = nameplate ? nameplate.offsetHeight : 0;
+    document.documentElement.style.setProperty(
+      '--page-h', Math.max(MIN_PAGE, Math.round(vh / sW - nameH)) + 'px');
+
     // offsetHeight ignora la transform, quindi resta l'altezza di layout reale
     // anche dopo la prima scalatura: nessun accumulo fra un fit e il successivo.
+    // La scala definitiva guarda comunque anche l'altezza: se il contenuto non
+    // e' riuscito a scendere fino al valore chiesto — schermi molto larghi e
+    // bassi, dove MIN_PAGE fa da pavimento — si torna a fittare sul lato corto
+    // invece di far uscire il pannello dallo schermo.
     var h = scale.offsetHeight || 700;
     var s = Math.min(vw / DESIGN_W, vh / h, MAX_UP);
     scale.style.transform = 'scale(' + s.toFixed(4) + ')';
