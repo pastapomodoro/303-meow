@@ -5018,14 +5018,12 @@ registerProcessor('tb303-processor', TB303Processor);
       //            cosi' si alternano a lungo senza perdere il groove
       //   7 - 9    build: densita' e registro salgono a ogni tasto
       switch(variation){
-        case 1: // scheletro: solo i quarti, sulle note del tema
-          out.gate=quarter;
-          if(out.gate&&!src.gate) fill();
-          out.accent=out.gate&&(position===0||position===8);
+        case 1: // scheletro: la frase ridotta all'osso. Quanto si toglie
+                // dipende dalla base e si decide in fondo alla funzione.
+          out.accent=position===0||position===8;
           out.slide=false;
           break;
-        case 2: // ridotta: un gate su due. Il diradamento e' in fondo alla
-                // funzione, perche' va contato sui gate e non sugli step.
+        case 2: // ridotta: via meno roba del tasto 2, sempre in proporzione
           out.slide=false;
           break;
         case 3: // micro: gli accenti passano in controtempo
@@ -5044,23 +5042,36 @@ registerProcessor('tb303-processor', TB303Processor);
             out.octave=out.octave+1; out.accent=position===14;
           }
           break;
-        case 6: // build: le pause si riempiono dal motivo del banco
-          if(!out.gate){ out.gate=true; fill(); }
-          out.accent=out.gate&&(out.accent||position===6||position===14);
-          break;
-        case 7: // build alto: sedicesimi pieni, la seconda battuta sale
-          // L'ottava solo sugli offbeat della seconda meta': cosi' il tasto 8
-          // sale dentro se stesso e lascia spazio sopra al picco. Mettendola
-          // su tutti i dispari, misurata, il tasto 8 superava il 9 in energia
-          // e l'arco si chiudeva un tasto troppo presto.
+        case 6: // build, primo gradino: le pause si riempiono dal motivo e
+                // l'ultimo quarto sale d'ottava.
+          // Il riempimento da solo non basta: su una base che e' gia' un
+          // arpeggio di sedicesimi pieno - Munich Sequence - non c'e' nessuna
+          // pausa da riempire, il tasto ricadeva sul tema e il build partiva
+          // un tasto piu' tardi. L'ottava sui controtempi dell'ultimo quarto
+          // e' il primo gradino di una scala che i tasti 8 e 9 allargano:
+          // 13,15 -> tutta la seconda meta' -> tutti i controtempi.
           if(!out.gate){ out.gate=true; fill(); }
           if(position>=8&&position%2===1) out.octave=out.octave+1;
           out.accent=out.gate&&(out.accent||position===6||position===14);
           break;
-        case 8: // picco: sedicesimi pieni, ottava su tutti gli offbeat,
-                // accenti sui quarti e slide regolari
+        case 7: // build alto: sedicesimi pieni, l'ottava su tutti i controtempi
+          // I tre tasti del build salgono di quattro note per volta: prima i
+          // controtempi della seconda meta', poi tutti, poi anche i quarti
+          // della seconda meta'. Con gradini piu' stretti - due note - il
+          // tasto 8 differiva dal 7 in due step su sedici e premerli in
+          // sequenza non si sentiva.
           if(!out.gate){ out.gate=true; fill(); }
           if(position%2===1) out.octave=out.octave+1;
+          out.accent=out.gate&&(out.accent||position===6||position===14);
+          break;
+        case 8: // picco: sedicesimi pieni, l'ottava su tutti i controtempi e
+                // anche sull'ultimo quarto, accenti sui quarti e slide
+                // regolari
+          // Non sul quarto a meta' battuta: quello e' l'appoggio basso della
+          // seconda meta', e alzarlo toglieva il fondo proprio al tasto che
+          // deve spingere piu' di tutti.
+          if(!out.gate){ out.gate=true; fill(); }
+          if(position%2===1||position===12) out.octave=out.octave+1;
           out.accent=quarter||position===7;
           out.slide=position===2||position===6||position===10||position===14;
           break;
@@ -5081,14 +5092,36 @@ registerProcessor('tb303-processor', TB303Processor);
       }
       return out;
     });
-    // Tasto 3 "ridotta": si tiene un gate su due. Va fatto qui e non nel map
-    // perche' si conta sui gate presenti, non sulle posizioni: filtrando gli
-    // step pari una linea gia' rada resterebbe identica al tema.
-    if(variation===2){
-      let n=0;
+    // Tasti 2 e 3, "si spoglia": si tiene una FRAZIONE dei gate della base,
+    // non una griglia fissa di quarti.
+    //
+    // Prima il tasto 2 faceva out.gate=quarter e finiva con cinque gate in
+    // tutti e sei i banchi: la stessa densita' per una linea da nove gate e
+    // per una da sedici. Su Munich Sequence, che e' un arpeggio di
+    // sedicesimi continuo, quel tasto buttava via il 69% della frase e il
+    // banco non si riconosceva piu'. In proporzione il calo resta un calo
+    // - serve, e' il punto basso dell'arco - ma la linea resta la sua.
+    //
+    // Quali gate tenere lo decide il peso ritmico: prima i quarti, poi gli
+    // ottavi, poi il resto. Cosi' quello che sopravvive e' l'ossatura della
+    // battuta e non una selezione casuale.
+    if(variation===1||variation===2){
+      const presenti=result.reduce((n,s)=>n+(s.gate?1:0),0);
+      // Frazione, ma anche un calo minimo in valore assoluto: su una base
+      // rada come Night Drive, nove gate, il 70% ne toglieva due e il tasto 3
+      // risultava a due step dal tema - premerlo non si sentiva.
+      const quanti=variation===1
+        ? Math.max(4,Math.min(Math.round(presenti*0.45),presenti-5))
+        : Math.max(6,Math.min(Math.round(presenti*0.70),presenti-3));
+      const peso=i=>i%4===0?3:(i%2===0?2:1);
+      const tenuti=new Set(result
+        .map((s,i)=>i)
+        .filter(i=>result[i].gate)
+        .sort((a,b)=>peso(b)-peso(a)||a-b)
+        .slice(0,quanti));
       result.forEach((s,i)=>{
-        if(i===0||i===15||!s.gate) return;   // gli appoggi di battuta restano
-        if(n++%2===1){ s.gate=false; s.slide=false; s.accent=false; }
+        if(i===0||i===15) return;            // gli appoggi di battuta restano
+        if(s.gate&&!tenuti.has(i)){ s.gate=false; s.slide=false; s.accent=false; }
       });
     }
     // Tasto 5 "legato" su una linea rada: senza aggiungere nulla la pulizia
