@@ -4644,59 +4644,60 @@ registerProcessor('tb303-processor', TB303Processor);
                        out.note=m.note; out.octave=m.octave; };
       const quarter=position%4===0;
       const pickup=position===3||position===7||position===11||position===14;
+      // I nove tasti sono un ARCO DI ENERGIA da suonare, non nove idee
+      // slegate. Prima erano varianti arbitrarie e premerle in sequenza non
+      // costruiva niente.
+      //
+      //   1        la linea base: e' il tema, ed e' quella che carica
+      //   2 - 3    si spoglia, per gli stacchi e per rientrare
+      //   4 - 6    microvariazioni: stessa densita' del tema, cambia una
+      //            dimensione sola per volta (accenti, slide, registro),
+      //            cosi' si alternano a lungo senza perdere il groove
+      //   7 - 9    build: densita' e registro salgono a ogni tasto
       switch(variation){
-        case 1: // breakdown: restano gli appoggi stabili
-          out.gate=out.gate&&(quarter||position===5||position===11);
-          out.accent=out.gate&&quarter;
+        case 1: // scheletro: solo i quarti, sulle note del tema
+          out.gate=quarter;
+          if(out.gate&&!src.gate) fill();
+          out.accent=out.gate&&(position===0||position===8);
           out.slide=false;
           break;
-        case 2: // gli accenti si spostano in controtempo
-          // Ridefinisce, non somma: prima era un OR con gli accenti della base,
-          // quindi su una linea che ne aveva gia' sui pari non cambiava niente
-          // e questo tasto suonava identico al primo.
+        case 2: // ridotta: un gate su due. Il diradamento e' in fondo alla
+                // funzione, perche' va contato sui gate e non sugli step.
+          out.slide=false;
+          break;
+        case 3: // micro: gli accenti passano in controtempo
           out.accent=out.gate&&(position===2||position===6||position===10||position===14);
           break;
-        case 3: // legato: la frase si connette e scivola, tranne sui quarti
-          // Su una linea rada il solo slide non produce legato: la pulizia
-          // degli slide orfani in fondo alla funzione li toglierebbe quasi
-          // tutti, perche' dopo ogni nota c'e' una pausa. Quindi prima si
-          // riempiono le pause dal motivo, poi si scivola.
-          // I quarti restano senza slide: scivolando su ogni nota la battuta
-          // diventava un glissando continuo, senza piu' un polso da seguire.
-          if(sparse&&!out.gate){ out.gate=true; fill(); }
+        case 4: // micro: legato, tranne sui quarti che tengono il polso
+          // Il riempimento delle pause sulle linee rade e' in fondo alla
+          // funzione e limitato: riempiendole tutte qui, su Night Drive questo
+          // tasto passava da 8 a 16 gate e diventava denso come i build,
+          // smettendo di essere una microvariazione.
           out.slide=out.gate&&!quarter;
           break;
-        case 4: // pickup sulla fondamentale, accenti solo sui quarti
-          if(pickup){ out.gate=true; out.note=48; out.octave=0; }
-          out.accent=out.gate&&quarter;
-          break;
-        case 5: // due sole risposte all'ottava
+        case 5: // micro: due risposte un'ottava sopra, sulle note del tema
           if(position===6||position===14){
-            out.gate=true; out.note=48; out.octave=1; out.accent=position===14;
+            out.gate=true; if(!src.gate) fill();
+            out.octave=out.octave+1; out.accent=position===14;
           }
           break;
-        case 6: // fondamentali sincopate intorno allo stesso scheletro
-          if(position===1||position===5||position===9||position===13){
-            out.gate=true; out.note=48; out.octave=0;
-          }
-          out.accent=out.gate&&(position===5||position===13);
-          break;
-        case 7: // build piu' densa, sul materiale del banco
-          // Prima riempiva con C e sovrascriveva anche le note che c'erano
-          // gia' su position%4===2: la variazione piu' densa finiva per essere
-          // la piu' monotona. Ora le pause si riempiono dal motivo e le note
-          // esistenti non si toccano.
+        case 6: // build: le pause si riempiono dal motivo del banco
           if(!out.gate){ out.gate=true; fill(); }
-          // Su una linea gia' a sedicesimi il riempimento non ha nulla da
-          // riempire e la variazione ricadeva sulla base. L'ottava sugli
-          // offbeat le da' un'identita' anche a densita' massima: e' il
-          // movimento in salita che ci si aspetta da un build.
-          if(position%2===1) out.octave=out.octave+1;
           out.accent=out.gate&&(out.accent||position===6||position===14);
           break;
-        case 8: // peak in sedicesimi, con slide radi e intenzionali
+        case 7: // build alto: sedicesimi pieni, la seconda battuta sale
+          // L'ottava solo sugli offbeat della seconda meta': cosi' il tasto 8
+          // sale dentro se stesso e lascia spazio sopra al picco. Mettendola
+          // su tutti i dispari, misurata, il tasto 8 superava il 9 in energia
+          // e l'arco si chiudeva un tasto troppo presto.
           if(!out.gate){ out.gate=true; fill(); }
-          if(position===7){ out.note=48; out.octave=1; }
+          if(position>=8&&position%2===1) out.octave=out.octave+1;
+          out.accent=out.gate&&(out.accent||position===6||position===14);
+          break;
+        case 8: // picco: sedicesimi pieni, ottava su tutti gli offbeat,
+                // accenti sui quarti e slide regolari
+          if(!out.gate){ out.gate=true; fill(); }
+          if(position%2===1) out.octave=out.octave+1;
           out.accent=quarter||position===7;
           out.slide=position===2||position===6||position===10||position===14;
           break;
@@ -4706,16 +4707,43 @@ registerProcessor('tb303-processor', TB303Processor);
         // che tiene consonante il passaggio da un banco all'altro durante un
         // set, ed e' la ragione per cui i banchi stanno tutti in Do minore.
         out.note=48; out.octave=0; out.gate=true; out.accent=true; out.slide=false;
-      }else if(position===15 && variation<=1){
-        // La risoluzione su C in fondo alla battuta la tengono solo base e
-        // breakdown. Applicandola a tutte e nove, ogni variazione di ogni
-        // banco chiudeva identica e il set perdeva la coda della frase.
+      }else if(position===15 && variation<=2){
+        // La risoluzione su C in fondo alla battuta la tengono solo il tema e
+        // le due riduzioni: sono quelle che devono chiudere il giro. Sulle
+        // microvariazioni e sui build la coda resta quella della frase,
+        // altrimenti tutti e nove i tasti finivano identici.
         out.note=48; out.octave=0; out.gate=true; out.slide=false;
       }else if(position===15){
         out.slide=false;   // niente slide che scavalca il punto di loop
       }
       return out;
     });
+    // Tasto 3 "ridotta": si tiene un gate su due. Va fatto qui e non nel map
+    // perche' si conta sui gate presenti, non sulle posizioni: filtrando gli
+    // step pari una linea gia' rada resterebbe identica al tema.
+    if(variation===2){
+      let n=0;
+      result.forEach((s,i)=>{
+        if(i===0||i===15||!s.gate) return;   // gli appoggi di battuta restano
+        if(n++%2===1){ s.gate=false; s.slide=false; s.accent=false; }
+      });
+    }
+    // Tasto 5 "legato" su una linea rada: senza aggiungere nulla la pulizia
+    // degli slide orfani li togliera' quasi tutti, perche' dopo ogni nota c'e'
+    // una pausa, e il tasto ricadrebbe sul tema. Si connette la frase, ma solo
+    // una pausa su due e non tutte: deve restare una microvariazione, non
+    // diventare un build.
+    if(variation===4&&sparse){
+      let n=0;
+      for(let i=1;i<15;i++){
+        if(result[i].gate||!result[i-1].gate) continue;
+        if(n++%2===0){
+          const m=motif[i%motif.length];
+          result[i].gate=true; result[i].note=m.note; result[i].octave=m.octave;
+          result[i].slide=(i%4!==0);
+        }
+      }
+    }
     // Niente slide orfani: uno slide ha senso solo se il passo seguente suona.
     result.forEach((step,i)=>{ if(step.slide&&!result[(i+1)%result.length].gate) step.slide=false; });
     return result;
