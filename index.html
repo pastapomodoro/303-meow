@@ -4888,7 +4888,8 @@ registerProcessor('tb303-processor', TB303Processor);
   }
   function post(m){ if(node) node.port.postMessage(m); }
   window._postWkl=(m)=>post(m);
-  function send(id,value){ liveParams[id]=value; post({type:'param',id,value}); }
+  function send(id,value){ liveParams[id]=value; post({type:'param',id,value});
+    if(window._statoSalva) window._statoSalva(); }
 
   // Fallback ScriptProcessor: aprendo il file con doppio clic (file:// o data:)
   // l'AudioWorklet spesso non è disponibile o addModule su blob: viene rifiutato.
@@ -5436,6 +5437,83 @@ registerProcessor('tb303-processor', TB303Processor);
     if(d.sub!=null) send('subOsc',d.sub);
     applyPresetFX(d);
   }
+  // ── Lo stato sopravvive alla chiusura ────────────────────────────────────
+  // Il pannello ripartiva sempre dai valori di fabbrica: bastava chiudere la
+  // scheda per perdere suono, linea, tempo e variazione. Su iPad succede anche
+  // senza chiuderla, perche' iOS scarica le webapp tenute in secondo piano
+  // quando ha bisogno di memoria, e al ritorno la pagina riparte da zero.
+  const _STATO_KEY='acidlab-stato-v1';
+  function statoFoto(){
+    return {
+      v:1,
+      params:{...liveParams},
+      // Gli FX si salvano nella stessa forma che usano i preset, cosi' il
+      // ripristino passa da applyPresetFX e non da una seconda strada.
+      fx:{ dlyT:fxState.delay.time, dlyF:fxState.delay.fb,
+           dlyM:fxState.delay.on?fxState.delay.mix:0,
+           rvbS:fxState.reverb.size, rvbM:fxState.reverb.on?fxState.reverb.mix:0,
+           dis:liveParams.distortion },
+      pattern:(window._prBuildPattern&&window._prBuildPattern())||null,
+      banco:Number.isInteger(window._bancoAttivo)?window._bancoAttivo
+            :(+(document.getElementById('factory-select')||{}).value||0),
+      timbro:(document.getElementById('synth-select')||{}).value,
+      variazione:window._activeVar|0
+    };
+  }
+  function statoScrivi(){
+    try{ localStorage.setItem(_STATO_KEY, JSON.stringify(statoFoto())); }
+    catch(e){}   // quota piena, o storage negato in navigazione privata
+  }
+  let statoPend=0;
+  function statoSalva(){
+    if(statoPend) return;                 // girando un knob arrivano decine di
+    statoPend=setTimeout(()=>{ statoPend=0; statoScrivi(); },250);   // eventi
+  }
+  // Il momento che conta e' il passaggio in secondo piano: li' iOS puo'
+  // scaricare la pagina senza altro preavviso, e un timer in attesa non
+  // farebbe in tempo a scattare.
+  addEventListener('pagehide',statoScrivi);
+  addEventListener('visibilitychange',()=>{ if(document.hidden) statoScrivi(); });
+
+  function statoApplica(s){
+    if(!s||!s.params) return false;
+    const p=s.params;
+    ['cutoff','resonance','envMod','decay','accent','volume','distortion'].forEach(id=>{
+      if(p[id]!=null&&knobCtl[id]) knobCtl[id](p[id]);
+    });
+    // liveParams tiene l'accordatura in cent, il knob la vuole in semitoni
+    if(p.tuning!=null&&knobCtl.tuning) knobCtl.tuning(p.tuning/100);
+    if(p.waveform!=null) setWaveUI((p.waveform|0)===1);
+    if(p.subOsc!=null) send('subOsc',p.subOsc);
+    if(p.tempo!=null) setTempo(p.tempo);
+    if(s.fx) applyPresetFX(s.fx);
+    if(s.banco!=null&&s.banco!==''){
+      const fs=document.getElementById('factory-select'); if(fs) fs.value=String(+s.banco||0);
+      if(window._setPresetIdx) window._setPresetIdx(+s.banco||0);
+    }
+    if(s.timbro!=null&&s.timbro!==''){
+      const ss=document.getElementById('synth-select'); if(ss) ss.value=s.timbro;
+    }
+    if(Number.isInteger(s.variazione)&&window._resetPatBtns) window._resetPatBtns(s.variazione);
+    // La linea per ultima: _setPresetIdx qui sopra ne carica una di fabbrica,
+    // e quella salvata deve vincere.
+    if(s.pattern&&s.pattern.length&&window._prSetPattern){
+      window._prSetPattern(s.pattern);
+      if(window._postWkl) window._postWkl({type:'pattern',steps:s.pattern});
+    }
+    return true;
+  }
+  function statoRipristina(){
+    let s=null;
+    try{ s=JSON.parse(localStorage.getItem(_STATO_KEY)||'null'); }catch(e){}
+    if(!s||s.v!==1) return false;
+    return statoApplica(s);
+  }
+  window._statoFoto=statoFoto;
+  window._statoApplica=statoApplica;
+  window._statoSalva=statoSalva;
+  window._statoRipristina=statoRipristina;
+
   const _ofs=window.onFactorySelect, _oss=window.onSynthSelect, _lp=window.loadPreset;
   const FD=()=>(typeof FACTORY_DATA!=='undefined')?FACTORY_DATA:[];
   const SD=()=>(typeof SYNTH_DATA!=='undefined')?SYNTH_DATA:[];
@@ -5877,6 +5955,12 @@ registerProcessor('tb303-processor', TB303Processor);
     if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[0]);
     seqBuild();
     if(window.setSrcMode) window.setSrcMode('seq');
+    // Il ripristino va per ULTIMO. Qui sopra la linea di fabbrica viene
+    // caricata in ogni caso e setSrcMode la manda al motore: ripristinando
+    // prima, lo stato salvato veniva sovrascritto da entrambi, e poi il
+    // salvataggio automatico persisteva la versione di fabbrica. Cosi' la
+    // modifica non si perdeva solo alla riapertura: si perdeva per sempre.
+    if(window._statoRipristina) window._statoRipristina();
   }, 400);
 })();
 
@@ -5891,7 +5975,11 @@ function ulSave(){
   const pat=window._prBuildPattern&&window._prBuildPattern();
   if(!pat||!pat.length){ return; }
   const arr=ulRead();
-  arr.push({name,pattern:pat,date:new Date().toISOString()});
+  // Anche il suono, non solo le note: un preset che riporta la linea ma non
+  // il timbro non e' un preset, e caricandolo sembrava non aver salvato
+  // niente perche' il filtro restava dov'era.
+  const stato=window._statoFoto?window._statoFoto():null;
+  arr.push({name,pattern:pat,stato,date:new Date().toISOString()});
   ulWrite(arr);
   ulRender();
   if(nameEl) nameEl.value='';
@@ -5900,8 +5988,13 @@ function ulSave(){
 function ulLoad(idx){
   const item=ulRead()[idx];
   if(!item) return;
-  if(window._prSetPattern) window._prSetPattern(item.pattern);
-  if(window._postWkl) window._postWkl({type:'pattern',steps:item.pattern});
+  // Le voci salvate prima di questa versione hanno solo il pattern.
+  if(item.stato && window._statoApplica){
+    window._statoApplica(item.stato);
+  }else{
+    if(window._prSetPattern) window._prSetPattern(item.pattern);
+    if(window._postWkl) window._postWkl({type:'pattern',steps:item.pattern});
+  }
   const nameEl=document.getElementById('loaded-name');
   const typeEl=document.getElementById('loaded-type');
   if(nameEl) nameEl.textContent=item.name;
