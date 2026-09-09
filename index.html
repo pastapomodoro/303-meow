@@ -3916,11 +3916,11 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
   {name:'Classic Acid',   tempo:128,wave:'SAW',cut:'420Hz',res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
-  {name:'Rollin Acid',    tempo:134,wave:'SAW',cut:'340Hz',res:.88,env:.82,dec:.14,acc:.82,vol:.72,dis:.30,sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
-  {name:'Munich Sequence',tempo:124,wave:'SAW',cut:'1150Hz',res:.38,env:.26,dec:.40,acc:.58,vol:.74,dis:.02,sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
-  {name:'Night Drive',    tempo:116,wave:'SAW',cut:'520Hz',res:.52,env:.40,dec:.62,acc:.60,vol:.75,dis:.06,sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
-  {name:'Deep Squelch',   tempo:126,wave:'SQR',cut:'240Hz',res:.80,env:.74,dec:.78,acc:.68,vol:.73,dis:.12,sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
-  {name:'Phrygian Drive', tempo:140,wave:'SQR',cut:'380Hz',res:.93,env:.88,dec:.16,acc:.86,vol:.71,dis:.34,sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03}
+  {name:'Rollin Acid',    tempo:134,wave:'SAW',cut:'340Hz',res:.80,env:.78,dec:.14,acc:.82,vol:.72,dis:.30,sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
+  {name:'Munich Sequence',tempo:124,wave:'SAW',cut:'1150Hz',res:.38,env:.26,dec:.17,acc:.58,vol:.74,dis:.02,sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
+  {name:'Night Drive',    tempo:116,wave:'SAW',cut:'520Hz',res:.52,env:.40,dec:.32,acc:.60,vol:.75,dis:.06,sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
+  {name:'Deep Squelch',   tempo:126,wave:'SQR',cut:'240Hz',res:.80,env:.74,dec:.30,acc:.68,vol:.73,dis:.12,sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
+  {name:'Phrygian Drive', tempo:140,wave:'SQR',cut:'380Hz',res:.82,env:.80,dec:.16,acc:.86,vol:.71,dis:.34,sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03}
 ];
 const SYNTH_DATA = [
   {name:'Classic Acid 303',cut:.270544,res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,wave:'SAW',sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
@@ -4286,12 +4286,26 @@ class TB303Processor extends AudioWorkletProcessor {
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
     const es=Math.pow(Math.min(Math.max(env,0),1),.72), a=this.envMod;
-    const eo=(.35+4.65*a)*a*es, ao=this.accentMod*1.1*acc;
+    // Escursione dell'inviluppo: 2.8 ottave al massimo, non 5.
+    //
+    // Con 4.65 il picco risonante correva da 420 Hz a 2.6 kHz e passava buona
+    // parte della nota parcheggiato intorno alla quinta armonica, che nella
+    // serie e' la TERZA MAGGIORE: misurata, stava a 0.67 contro una
+    // fondamentale a 0.34, cioe' il doppio. Ecco perche' anche i banchi in
+    // minore suonavano allegri. Con 2.45 la terza maggiore scende a 0.32.
+    // 2-3 ottave e' anche l'escursione della macchina vera.
+    const eo=(.35+2.45*a)*a*es, ao=this.accentMod*1.1*acc;
     const ko=.32*Math.log2(this.noteFreq/130.81278265);
     let mod=Math.pow(2,logC+eo+ao+ko); mod=Math.min(Math.max(mod,20),this.sr*.45);
-    let res=this.resonance-acc*this.accentMod*.035; res=Math.min(Math.max(res,0),.985);
-    const g=this.cutG(mod), feedback=4.12*Math.pow(res,1.35);
-    const inF=input*(1+res*.38); let o=0;
+    // L'accento ALZA la risonanza: e' quel circuito a produrre il pompaggio
+    // sulle note accentate. Qui la sottraeva, col segno invertito rispetto
+    // all'hardware.
+    let res=this.resonance+acc*this.accentMod*.05; res=Math.min(Math.max(res,0),.985);
+    const g=this.cutG(mod), feedback=3.6*Math.pow(res,1.35);
+    // Compensazione della fondamentale. Il feedback del ladder svuota il
+    // fondamentale a risonanza alta: con .38 restava a un terzo dell'ottava
+    // superiore e il suono non aveva corpo.
+    const inF=input*(1+res*1.6); let o=0;
     for(let k=1;k<=4;k++) o=this.fStep(this.prevIn+(inF-this.prevIn)*k*.25,g,feedback);
     this.prevIn=inF;
     const xn=o*(1.65+.35*res), yn=xn-this.dcX+.9995*this.dcY; this.dcX=xn; this.dcY=yn; return Number.isFinite(yn)?yn:0;
@@ -4551,22 +4565,22 @@ registerProcessor('tb303-processor', TB303Processor);
   // slegati, quindi qualunque sequenza di tasti resta musicale.
   const FACTORY_BANKS=[
     [ // Classic Acid — gradi 0,3,7,10 — la linea di riferimento: apre il set
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,1],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,0]])
+      _P([[48,1,1,0,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[51,1,0,0,0]])
     ],
-    [ // Rollin Acid — gradi 0,1,3,7,10 — sedicesimi pieni, il b2 da' la minaccia
-      _P([[48,1,1,0,0],[48,1,0,0,0],[49,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[51,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,1,0,0],[49,1,0,0,0],[48,1,0,0,1],[58,1,0,1,0],[48,1,1,0,0]])
+    [ // Rollin Acid — gradi 0,1,3,7,10 — rullante, il b2 da' la minaccia
+      _P([[48,1,1,0,0],[51,1,0,0,0],[49,1,0,1,0],[51,1,0,0,0],[55,1,1,0,0],[51,1,0,1,0],[48,0,0,0,0],[58,1,0,1,0],[48,1,1,0,0],[51,1,0,0,0],[58,1,0,1,0],[48,0,0,0,0],[49,1,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,1,0,0]])
     ],
     [ // Munich Sequence — gradi 0,3,7 — l'antenato: arpeggio di triade, nessuno slide
-      _P([[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],[55,1,0,0,1],[51,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0]])
+      _P([[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[51,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[51,1,0,0,1],[55,1,0,0,1],[51,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0]])
     ],
     [ // Night Drive — gradi 0,3,5,10 — rada: il groove sta nelle pause, decay lungo
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[53,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[53,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]])
+      _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[53,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[48,0,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[53,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]])
     ],
     [ // Deep Squelch — gradi 0,3,8,10 — il b6 porta la malinconia, quasi tutto legato
-      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[56,1,0,1,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,1,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,1,0],[56,1,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[48,1,0,0,0],[48,0,0,0,0]])
+      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[56,1,0,1,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,1,0],[48,0,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[58,1,0,1,0],[56,1,0,0,0],[48,0,0,0,0],[51,1,0,1,0],[48,1,0,0,0],[48,0,0,0,0]])
     ],
     [ // Phrygian Drive — gradi 0,1,3,6,10 — b2 e tritono: il banco piu' dissonante
-      _P([[48,1,1,0,0],[49,1,0,0,0],[51,1,1,0,0],[54,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[58,1,0,0,0],[54,1,0,1,0],[48,1,1,0,0],[51,1,0,0,0],[54,1,1,0,0],[58,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[54,1,0,0,0]])
+      _P([[48,1,1,0,0],[49,1,0,0,0],[51,1,1,0,0],[54,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,0,0,0,0],[54,1,0,1,0],[48,1,1,0,0],[51,1,0,0,0],[54,1,1,0,0],[58,1,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]])
     ]
   ];
   // I nove tasti sono variazioni performative della stessa frase, non nove
@@ -4613,14 +4627,15 @@ registerProcessor('tb303-processor', TB303Processor);
           // e questo tasto suonava identico al primo.
           out.accent=out.gate&&(position===2||position===6||position===10||position===14);
           break;
-        case 3: // legato: la frase si connette e scivola
+        case 3: // legato: la frase si connette e scivola, tranne sui quarti
           // Su una linea rada il solo slide non produce legato: la pulizia
           // degli slide orfani in fondo alla funzione li toglierebbe quasi
           // tutti, perche' dopo ogni nota c'e' una pausa. Quindi prima si
-          // riempiono le pause dal motivo, poi si scivola: e' anche la lettura
-          // musicale giusta di "legato" su una frase con pochi appoggi.
+          // riempiono le pause dal motivo, poi si scivola.
+          // I quarti restano senza slide: scivolando su ogni nota la battuta
+          // diventava un glissando continuo, senza piu' un polso da seguire.
           if(sparse&&!out.gate){ out.gate=true; fill(); }
-          out.slide=out.gate;
+          out.slide=out.gate&&!quarter;
           break;
         case 4: // pickup sulla fondamentale, accenti solo sui quarti
           if(pickup){ out.gate=true; out.note=48; out.octave=0; }

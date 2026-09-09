@@ -27,52 +27,82 @@ TARGET = BASE / "index.html"
 
 # [nota, gate, accent, slide, ottava] — root C3 = 48
 BANKS = [
+    # La terza minore sta davanti alla fondamentale in ogni linea.
+    #
+    # Prima erano inchiodate su C: 56% delle note in Classic Acid, con l'Eb al
+    # 13%, cioe' la nota piu' rara era proprio quella che rende minore la
+    # linea. Sommata al filtro che esalta la quinta armonica — che nella serie
+    # e' E naturale — l'orecchio riceveva C, E e G e sentiva un accordo di Do
+    # MAGGIORE, mentre l'Eb passava in una nota su otto. Da qui il "suona
+    # allegro" nonostante i banchi siano tutti scritti in minore.
+    # Le pause non sono un dettaglio: con sedici gate su sedici step
+    # l'inviluppo non torna mai giu' e la battuta esce come un suono continuo.
+    # Misurato, i banchi a 14-16 gate restavano fra il 39% e il 74% del picco
+    # anche nei momenti "vuoti", ed e' quello che si sentiva come pattern
+    # sovrapposti. Nessuna linea supera i tredici gate.
     ("Classic Acid", "0,3,7,10", "la linea di riferimento: apre il set", [
-        [48,1,1,0,0],[48,0,0,0,0],[48,1,0,1,0],[51,1,0,0,0],
-        [55,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,1],
+        [48,1,1,0,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],
+        [55,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],
         [48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],
-        [48,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,1,0,0,0],
+        [48,0,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[51,1,0,0,0],
     ]),
-    ("Rollin Acid", "0,1,3,7,10", "sedicesimi pieni, il b2 da' la minaccia", [
-        [48,1,1,0,0],[48,1,0,0,0],[49,1,0,1,0],[51,1,0,0,0],
-        [55,1,1,0,0],[51,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0],
-        [48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,1,0,0],
-        [49,1,0,0,0],[48,1,0,0,1],[58,1,0,1,0],[48,1,1,0,0],
+    ("Rollin Acid", "0,1,3,7,10", "rullante, il b2 da' la minaccia", [
+        [48,1,1,0,0],[51,1,0,0,0],[49,1,0,1,0],[51,1,0,0,0],
+        [55,1,1,0,0],[51,1,0,1,0],[48,0,0,0,0],[58,1,0,1,0],
+        [48,1,1,0,0],[51,1,0,0,0],[58,1,0,1,0],[48,0,0,0,0],
+        [49,1,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,1,0,0],
     ]),
     ("Munich Sequence", "0,3,7", "l'antenato: arpeggio di triade, nessuno slide", [
-        [48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],
+        [48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[51,1,0,0,1],
         [55,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],
-        [48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[48,1,0,0,1],
+        [48,1,1,0,0],[51,1,0,0,0],[55,1,0,0,0],[51,1,0,0,1],
         [55,1,0,0,1],[51,1,0,0,1],[55,1,0,0,0],[51,1,0,0,0],
     ]),
     ("Night Drive", "0,3,5,10", "rada: il groove sta nelle pause, decay lungo", [
         [48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[51,1,0,1,0],
         [53,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[48,0,0,0,0],
-        [48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],
+        [51,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],
         [53,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],
     ]),
     ("Deep Squelch", "0,3,8,10", "il b6 porta la malinconia, quasi tutto legato", [
         [48,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[56,1,0,1,0],
         [58,1,0,0,0],[48,0,0,0,0],[56,1,0,1,0],[48,0,0,0,0],
-        [48,1,1,0,0],[48,0,0,0,0],[58,1,0,1,0],[56,1,0,0,0],
+        [51,1,1,0,0],[48,0,0,0,0],[58,1,0,1,0],[56,1,0,0,0],
         [48,0,0,0,0],[51,1,0,1,0],[48,1,0,0,0],[48,0,0,0,0],
     ]),
+    # Quattro accenti e non sei: con risonanza .93 ogni accento tiene su il
+    # livello, e sei accenti su sedici gate lasciavano l'inviluppo al 74% del
+    # picco per tutta la battuta. Era il banco che fondeva di piu'.
     ("Phrygian Drive", "0,1,3,6,10", "b2 e tritono: il banco piu' dissonante", [
         [48,1,1,0,0],[49,1,0,0,0],[51,1,1,0,0],[54,1,0,0,0],
-        [48,1,1,0,0],[49,1,0,0,0],[58,1,0,0,0],[54,1,0,1,0],
+        [51,1,0,0,0],[49,1,0,0,0],[48,0,0,0,0],[54,1,0,1,0],
         [48,1,1,0,0],[51,1,0,0,0],[54,1,1,0,0],[58,1,0,0,0],
-        [48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[54,1,0,0,0],
+        [51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],
     ]),
 ]
 
 # tempo, wave, cutoff Hz, res, env, dec, acc, vol, dis, sub, dlyT, dlyF, dlyM, rvbS, rvbM
+#
+# Risonanza sotto .85. Con .88 e .93 il feedback del ladder arriva a ~3.0 e il
+# filtro auto-oscilla: canta da solo e riempie le pause a prescindere
+# dall'inviluppo, che e' insieme il "troppo squelch" e i pattern che suonano
+# sovrapposti. Il carattere acid viene dall'inviluppo che spazza una risonanza
+# alta, non da tenerla al limite dell'innesco.
+#
+# Il decay va letto insieme al tempo. Un sedicesimo a 120 BPM dura 125 ms, e il
+# motore e' monofonico con inviluppo che non riparte da zero (comportamento
+# autentico della macchina): se il decay copre quattro o cinque step, ogni nota
+# entra su un inviluppo ancora alto, senza attacco, e la frase si fonde in un
+# suono continuo. I valori di prima erano .40, .62 e .78 contro step da ~120 ms,
+# cioe' da 3 a 6 step coperti: era quello a far suonare i pattern sovrapposti.
+# Qui nessun banco supera i ~2.5 step, e i piu' densi stanno sotto 1.5.
 SYNTH = [
     (128, "SAW",  420, .74, .72, .22, .76, .70, .05, .00, .375, .28, .00, .35, .00),
-    (134, "SAW",  340, .88, .82, .14, .82, .72, .30, .12, .250, .36, .06, .36, .02),
-    (124, "SAW", 1150, .38, .26, .40, .58, .74, .02, .55, .300, .26, .18, .55, .14),
-    (116, "SAW",  520, .52, .40, .62, .60, .75, .06, .45, .500, .42, .16, .60, .10),
-    (126, "SQR",  240, .80, .74, .78, .68, .73, .12, .70, .250, .44, .12, .52, .08),
-    (140, "SQR",  380, .93, .88, .16, .86, .71, .34, .26, .214, .38, .05, .40, .03),
+    (134, "SAW",  340, .80, .78, .14, .82, .72, .30, .12, .250, .36, .06, .36, .02),
+    (124, "SAW", 1150, .38, .26, .17, .58, .74, .02, .55, .300, .26, .18, .55, .14),
+    (116, "SAW",  520, .52, .40, .32, .60, .75, .06, .45, .500, .42, .16, .60, .10),
+    (126, "SQR",  240, .80, .74, .30, .68, .73, .12, .70, .250, .44, .12, .52, .08),
+    (140, "SQR",  380, .82, .80, .16, .86, .71, .34, .26, .214, .38, .05, .40, .03),
 ]
 
 
