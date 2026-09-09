@@ -5008,9 +5008,6 @@ registerProcessor('tb303-processor', TB303Processor);
   }
   function makePerformanceVariation(base,variation){
     const motif=motifOf(base);
-    // motif.length e' il numero di gate della base: sotto i dodici la frase
-    // ha piu' pause che note, e alcune variazioni vanno adattate.
-    const sparse=motif.length<12;
     const result=base.map((src,position)=>{
       const out={
         // L'ottava della base sopravvive. Prima la nota veniva clampata in
@@ -5026,6 +5023,12 @@ registerProcessor('tb303-processor', TB303Processor);
                        out.note=m.note; out.octave=m.octave; };
       const quarter=position%4===0;
       const pickup=position===3||position===7||position===11||position===14;
+      // Sedicesimi pieni su tutti e nove i tasti. Prima la densita' era l'asse
+      // principale dell'arco - il tasto 2 scendeva a cinque gate - e i tasti
+      // radi suonavano semplicemente vuoti, non "spogliati". Ora i nove tasti
+      // si distinguono su accenti, slide e registro, che e' come si suona
+      // davvero una 303: la mano sta sugli accenti, non sui gate.
+      if(!out.gate){ out.gate=true; fill(); }
       // I nove tasti sono un ARCO DI ENERGIA da suonare, non nove idee
       // slegate. Prima erano varianti arbitrarie e premerle in sequenza non
       // costruiva niente.
@@ -5037,16 +5040,23 @@ registerProcessor('tb303-processor', TB303Processor);
       //            cosi' si alternano a lungo senza perdere il groove
       //   7 - 9    build: densita' e registro salgono a ogni tasto
       switch(variation){
-        case 1: // scheletro: la frase ridotta all'osso. Quanto si toglie
-                // dipende dalla base e si decide in fondo alla funzione.
-          out.accent=position===0||position===8;
+        case 1: // pedale: i controtempi tornano sulla tonica, accenti sui
+                // quarti, niente slide.
+          // Togliendo la densita' dall'arco, questo tasto restava il tema con
+          // due accenti spostati - due step su sedici, non si sentiva. Il
+          // pedale invece cambia meta' delle note: la frase alterna il suo
+          // disegno e il Do, che e' come suona meta' del repertorio 303.
+          if(!quarter&&position%2===1){ out.note=48; out.octave=0; }
+          out.accent=quarter;
           out.slide=false;
           break;
-        case 2: // ridotta: via meno roba del tasto 2, sempre in proporzione
+        case 2: // accenti sugli ottavi in mezzo ai quarti
+          out.accent=position===2||position===6||position===10||position===14;
           out.slide=false;
           break;
-        case 3: // micro: gli accenti passano in controtempo
-          out.accent=out.gate&&(position===2||position===6||position===10||position===14);
+        case 3: // accenti sui sedicesimi in levare: la spinta si sposta
+                // dentro la battuta senza cambiare una nota
+          out.accent=position===3||position===7||position===11||position===15;
           break;
         case 4: // micro: legato, tranne sui quarti che tengono il polso
           // Il riempimento delle pause sulle linee rade e' in fondo alla
@@ -5057,7 +5067,6 @@ registerProcessor('tb303-processor', TB303Processor);
           break;
         case 5: // micro: due risposte un'ottava sopra, sulle note del tema
           if(position===6||position===14){
-            out.gate=true; if(!src.gate) fill();
             out.octave=out.octave+1; out.accent=position===14;
           }
           break;
@@ -5069,7 +5078,6 @@ registerProcessor('tb303-processor', TB303Processor);
           // un tasto piu' tardi. L'ottava sui controtempi dell'ultimo quarto
           // e' il primo gradino di una scala che i tasti 8 e 9 allargano:
           // 13,15 -> tutta la seconda meta' -> tutti i controtempi.
-          if(!out.gate){ out.gate=true; fill(); }
           if(position>=8&&position%2===1) out.octave=out.octave+1;
           out.accent=out.gate&&(out.accent||position===6||position===14);
           break;
@@ -5079,7 +5087,6 @@ registerProcessor('tb303-processor', TB303Processor);
           // della seconda meta'. Con gradini piu' stretti - due note - il
           // tasto 8 differiva dal 7 in due step su sedici e premerli in
           // sequenza non si sentiva.
-          if(!out.gate){ out.gate=true; fill(); }
           if(position%2===1) out.octave=out.octave+1;
           out.accent=out.gate&&(out.accent||position===6||position===14);
           break;
@@ -5089,7 +5096,6 @@ registerProcessor('tb303-processor', TB303Processor);
           // Non sul quarto a meta' battuta: quello e' l'appoggio basso della
           // seconda meta', e alzarlo toglieva il fondo proprio al tasto che
           // deve spingere piu' di tutti.
-          if(!out.gate){ out.gate=true; fill(); }
           if(position%2===1||position===12) out.octave=out.octave+1;
           out.accent=quarter||position===7;
           out.slide=position===2||position===6||position===10||position===14;
@@ -5111,54 +5117,6 @@ registerProcessor('tb303-processor', TB303Processor);
       }
       return out;
     });
-    // Tasti 2 e 3, "si spoglia": si tiene una FRAZIONE dei gate della base,
-    // non una griglia fissa di quarti.
-    //
-    // Prima il tasto 2 faceva out.gate=quarter e finiva con cinque gate in
-    // tutti e sei i banchi: la stessa densita' per una linea da nove gate e
-    // per una da sedici. Su Munich Sequence, che e' un arpeggio di
-    // sedicesimi continuo, quel tasto buttava via il 69% della frase e il
-    // banco non si riconosceva piu'. In proporzione il calo resta un calo
-    // - serve, e' il punto basso dell'arco - ma la linea resta la sua.
-    //
-    // Quali gate tenere lo decide il peso ritmico: prima i quarti, poi gli
-    // ottavi, poi il resto. Cosi' quello che sopravvive e' l'ossatura della
-    // battuta e non una selezione casuale.
-    if(variation===1||variation===2){
-      const presenti=result.reduce((n,s)=>n+(s.gate?1:0),0);
-      // Frazione, ma anche un calo minimo in valore assoluto: su una base
-      // rada come Night Drive, nove gate, il 70% ne toglieva due e il tasto 3
-      // risultava a due step dal tema - premerlo non si sentiva.
-      const quanti=variation===1
-        ? Math.max(4,Math.min(Math.round(presenti*0.45),presenti-5))
-        : Math.max(6,Math.min(Math.round(presenti*0.70),presenti-3));
-      const peso=i=>i%4===0?3:(i%2===0?2:1);
-      const tenuti=new Set(result
-        .map((s,i)=>i)
-        .filter(i=>result[i].gate)
-        .sort((a,b)=>peso(b)-peso(a)||a-b)
-        .slice(0,quanti));
-      result.forEach((s,i)=>{
-        if(i===0||i===15) return;            // gli appoggi di battuta restano
-        if(s.gate&&!tenuti.has(i)){ s.gate=false; s.slide=false; s.accent=false; }
-      });
-    }
-    // Tasto 5 "legato" su una linea rada: senza aggiungere nulla la pulizia
-    // degli slide orfani li togliera' quasi tutti, perche' dopo ogni nota c'e'
-    // una pausa, e il tasto ricadrebbe sul tema. Si connette la frase, ma solo
-    // una pausa su due e non tutte: deve restare una microvariazione, non
-    // diventare un build.
-    if(variation===4&&sparse){
-      let n=0;
-      for(let i=1;i<15;i++){
-        if(result[i].gate||!result[i-1].gate) continue;
-        if(n++%2===0){
-          const m=motif[i%motif.length];
-          result[i].gate=true; result[i].note=m.note; result[i].octave=m.octave;
-          result[i].slide=(i%4!==0);
-        }
-      }
-    }
     // Niente slide orfani: uno slide ha senso solo se il passo seguente suona.
     result.forEach((step,i)=>{ if(step.slide&&!result[(i+1)%result.length].gate) step.slide=false; });
     return result;
@@ -5186,9 +5144,14 @@ registerProcessor('tb303-processor', TB303Processor);
   function pushPattern(){ post({type:'pattern',steps:currentPattern()}); }
   // Un 'pattern' senza queue scambia la linea senza toccare lo step corrente,
   // quindi la modifica entra a giro in corso anche con un tasto tenuto premuto.
-  window._onPatternChange=function(){ pushPattern(); renderSeqBay(); };
+  window._onPatternChange=function(){ pushPattern(); renderSeqBay();
+    if(window._statoSalva) window._statoSalva(); };
   window._setPresetIdx=function(i){
     presetIdx=((i|0)%FACTORY_BANKS.length+FACTORY_BANKS.length)%FACTORY_BANKS.length;
+    // Esposto perche' lo stato salvato deve leggere il banco VERO: la <select>
+    // non si muove quando l'indice cambia da codice - dai nove tasti, o da un
+    // preset caricato - e la foto salvava sempre "0".
+    window._bancoAttivo=presetIdx;
     const base=(FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0];
     if(webPlaying&&srcMode!=='midi'&&window._queueFactoryBase){
       // Il nuovo banco entra sul prossimo confine, senza riavviare il transport.
