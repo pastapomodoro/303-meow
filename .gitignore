@@ -42,8 +42,15 @@ JuceLibraryCode/
 .env.local
 
 # Texture candidates generate da Gemini (staging area, non versionate)
-# Solo il PNG approvato in Resources/ viene versionato
-assets/textures/
+# Solo il PNG approvato in Resources/ viene versionato.
+# Si esclude il contenuto e non la cartella: una negazione dentro una directory
+# esclusa non viene mai valutata da git.
+assets/textures/*
+# Queste tre sono passate da candidate a produzione: le carica il CSS di
+# index.html, quindi senza versionarle il repo non riproduce la UI deployata.
+!assets/textures/acidv_dark_chassis.webp
+!assets/textures/acidv_keycap_ivory.webp
+!assets/textures/acidv_panel_offwhite.webp
 
 # File di staging e lavoro intermedio
 _staged.html
@@ -51,3 +58,4 @@ building process/
 
 # Claude Code config
 .claude/
+build-desktop/

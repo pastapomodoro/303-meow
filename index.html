@@ -2,8 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AcidLab</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#090d0c">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AcidLab">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="AcidLab — sintetizzatore di basso acid, suonabile dal browser.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
+<title>AcidLab 1.1.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap');
 
@@ -108,7 +120,7 @@ body {
   position:absolute; inset:0; border-radius:12px;
   /* Texture plastica bianca servita dal resource provider JUCE;
      in browser preview cade sul fallback gradient del padre */
-  background-image: url("/assets/panel.png");
+  background-image: url("assets/panel.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -308,6 +320,8 @@ body {
 
 .knob {
   position:relative; flex-shrink:0; cursor:ns-resize; border-radius:50%;
+  /* il gesto verticale e' del knob, non della pagina */
+  touch-action:none; -webkit-user-select:none; user-select:none;
   --v:0;                                    /* 0..1 — scritto da setKnobFrame */
   --ang:calc(-135deg + var(--v) * 270deg);
   --aw:3px;                                 /* spessore anello di valore */
@@ -856,24 +870,77 @@ body {
    La barra dei 16 step è stata tolta: duplicava i pad fisici sotto.
 ═══════════════════════════════════════════════ */
 /* fascia centrale: onda a sinistra, dati a destra */
-.lcd-mid { display:flex; gap:14px; align-items:stretch; margin:2px 0 11px; }
-.scope-wrap { position:relative; flex:1.35; min-width:0; height:74px; }
-/* ── pannello dati accanto all'onda ── */
-.lcd-side { flex:1; min-width:0; display:flex; flex-direction:column; }
-.lcd-side-k {
-  font-family:var(--mono); font-size:7px; letter-spacing:1.5px;
-  text-transform:uppercase; color:#2d4a00; margin-bottom:5px;
+.lcd-topbar {
+  height:25px; display:flex; align-items:center; gap:12px;
+  padding:0 1px 6px; margin-bottom:7px;
+  border-bottom:1px solid rgba(98,196,24,.20);
 }
-.preset-nav { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+.lcd-brand {
+  font-size:13px; font-weight:700; color:var(--lcd-green); letter-spacing:2.4px;
+  text-shadow:0 0 10px var(--acid-glow);
+}
+.lcd-topstats {
+  margin-left:auto; display:flex; gap:13px; align-items:center;
+  font-size:7px; line-height:1; letter-spacing:1px; color:#376b10;
+}
+.lcd-topstats b { color:var(--lcd-green); font-weight:600; }
+.lcd-mid {
+  display:grid; grid-template-columns:minmax(0,1.55fr) 108px minmax(132px,.82fr);
+  gap:7px; align-items:stretch; height:94px; margin:0 0 7px;
+}
+.lcd-module {
+  position:relative; min-width:0; overflow:hidden;
+  border:1px solid rgba(79,151,22,.18);
+  background:linear-gradient(180deg,rgba(29,62,11,.13),rgba(3,12,2,.22));
+  box-shadow:inset 0 0 10px rgba(0,0,0,.24);
+}
+.lcd-module-label {
+  height:15px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 6px; border-bottom:1px solid rgba(79,151,22,.15);
+  font-size:6px; letter-spacing:1.4px; color:#376b10; text-transform:uppercase;
+}
+.lcd-module-label strong { color:#72d82d; font-size:7px; font-weight:600; letter-spacing:1px; }
+.lcd-main-panel { display:flex; flex-direction:column; }
+.scope-wrap { position:relative; flex:1; min-width:0; min-height:0; }
+.lcd-engine-panel { display:grid; grid-template-rows:1fr 1fr; gap:5px; }
+.lcd-engine-cell {
+  position:relative; overflow:hidden; border:1px solid rgba(79,151,22,.18);
+  background:rgba(4,16,2,.34);
+}
+.lcd-engine-head {
+  position:absolute; z-index:1; left:5px; right:5px; top:4px;
+  display:flex; justify-content:space-between; align-items:center;
+  color:#376b10; font-size:6px; letter-spacing:1.2px;
+}
+.lcd-engine-head b { color:var(--lcd-green); font-size:8px; letter-spacing:.8px; }
+.lcd-engine-cell svg { position:absolute; left:5px; right:5px; bottom:3px; width:calc(100% - 10px); height:22px; overflow:visible; }
+.lcd-engine-cell .lcd-graph-grid { stroke:rgba(86,174,24,.13); stroke-width:1; }
+.lcd-engine-cell .lcd-graph-line {
+  fill:none; stroke:#8cff3c; stroke-width:1.5; vector-effect:non-scaling-stroke;
+  filter:drop-shadow(0 0 2px rgba(102,245,14,.65));
+}
+/* ── pannello dati accanto all'onda ── */
+.lcd-side {
+  min-width:0; display:flex; flex-direction:column; padding:0 6px 5px;
+  border:1px solid rgba(79,151,22,.18);
+  background:linear-gradient(180deg,rgba(29,62,11,.13),rgba(3,12,2,.22));
+}
+.lcd-side-k {
+  height:15px; margin:0 -6px 4px; padding:0 6px; display:flex; align-items:center;
+  border-bottom:1px solid rgba(79,151,22,.15);
+  font-family:var(--mono); font-size:6px; letter-spacing:1.4px;
+  text-transform:uppercase; color:#376b10;
+}
+.preset-nav { display:grid; grid-template-columns:16px minmax(0,1fr) 16px; align-items:center; gap:3px; margin-bottom:3px; }
 .preset-name {
   flex:1; min-width:0; text-align:center;
-  font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.5px;
+  font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.35px;
   color:var(--lcd-green); text-shadow:0 0 9px var(--acid-glow);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 /* frecce: tasti incisi nel vetro del display, non bottoni web */
 .pnav {
-  flex-shrink:0; width:19px; height:19px; padding:0; cursor:pointer;
+  flex-shrink:0; width:16px; height:16px; padding:0; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   font-size:8px; line-height:1; color:var(--lcd-green);
   background:rgba(136,255,0,.07); border:1px solid rgba(136,255,0,.28);
@@ -882,6 +949,8 @@ body {
 .pnav:hover  { background:rgba(136,255,0,.18); border-color:rgba(136,255,0,.5); }
 .pnav:active { background:rgba(136,255,0,.30); transform:translateY(1px); }
 .lcd-side-rows { margin-top:auto; }
+.lcd-side .dsp-row { min-height:11px; line-height:11px; }
+.lcd-side .dsp-k, .lcd-side .dsp-v { font-size:6px; letter-spacing:1px; }
 .scope-wrap canvas { display:block; width:100%; height:100%; }
 /* reticolo inciso dietro alla traccia */
 .scope-wrap::before {
@@ -903,14 +972,19 @@ body {
 .scope-wrap.live .scope-idle { opacity:0; }
 
 /* fascia inferiore: 5 colonne di parametri */
-.lcd-params { display:grid; grid-template-columns:repeat(5,1fr); gap:13px; }
-.lcd-p-k { font-size:7px; color:#2d4a00; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
-.lcd-p-v {
-  font-size:16px; font-weight:600; color:var(--lcd-green); line-height:1;
-  text-shadow:0 0 10px var(--acid-glow); margin-bottom:5px;
+.lcd-params {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:5px;
+  padding-top:5px; border-top:1px solid rgba(79,151,22,.18);
 }
-.lcd-p-v i { font-size:9px; color:#44aa00; font-weight:400; font-style:normal; margin-left:1px; }
-.lcd-p-b { height:3px; background:#0a1804; border-radius:2px; overflow:hidden;
+.lcd-p { min-width:0; padding:0 5px; border-right:1px solid rgba(79,151,22,.13); }
+.lcd-p:last-child { border-right:0; }
+.lcd-p-k { font-size:6px; color:#376b10; letter-spacing:1.25px; text-transform:uppercase; margin-bottom:2px; }
+.lcd-p-v {
+  font-size:12px; font-weight:600; color:var(--lcd-green); line-height:1;
+  text-shadow:0 0 8px var(--acid-glow); margin-bottom:4px;
+}
+.lcd-p-v i { font-size:7px; color:#44aa00; font-weight:400; font-style:normal; margin-left:1px; }
+.lcd-p-b { height:2px; background:#0a1804; border-radius:1px; overflow:hidden;
            box-shadow:inset 0 1px 2px rgba(0,0,0,.8); }
 .lcd-p-b > span { display:block; height:100%; border-radius:2px;
                   background:var(--lcd-green); box-shadow:0 0 5px rgba(136,255,0,.45);
@@ -1067,10 +1141,10 @@ body {
 
 /* ═══════════════════════════════════════════════
    MANOMETRO CUTOFF
-   Unico residuo della vecchia baia idraulica: la lancetta segue il knob
-   Cutoff tramite --psi, che ora vive su :root (vedi wireGauge()).
+   Il VU usa --psi come livello normalizzato; browser e bridge JUCE lo
+   aggiornano dalla misura reale dell'uscita audio.
 ═══════════════════════════════════════════════ */
-/* ── manometro: la lancetta segue il cutoff ── */
+/* ── manometro: la lancetta segue il livello d'uscita ── */
 .hy-gauge { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
 /* Manometro senza targhetta: ghiera metallica, quadrante con tacche, zona
    rossa di fondo scala e vetro bombato. La lancetta trema tanto più forte
@@ -1554,6 +1628,11 @@ body {
   animation: patQueue .45s steps(1,end) infinite;
 }
 @keyframes patQueue { 0%,49%{opacity:1; box-shadow:0 0 6px var(--acid-glow);} 50%,100%{opacity:.18; box-shadow:none;} }
+/* Selezione drag-chain: LED ambra durante il trascinamento */
+.keycap.chain-sel .keycap-led {
+  background:linear-gradient(180deg,#ffe97a,#cc8800);
+  box-shadow:0 0 6px rgba(255,180,0,.8);
+}
 
 /* lo stato playing non ricolora il tasto: parla solo il LED (vedi sopra) */
 
@@ -1621,10 +1700,8 @@ body {
 /* solo i tasti della griglia pattern sono quadrati: applicare aspect-ratio a
    tutti i .keycap rendeva TAP TEMPO e +/- alti quanto sono larghi */
 .keycap.pat-btn { aspect-ratio: 1; }
-/* 8 tasti su 6 colonne: ognuno ne occupa 2, cosi' la riga finale di due si
-   centra partendo dalla colonna 2 invece di allinearsi a sinistra. */
-#pat-btns .keycap.pat-btn { grid-column: span 2; }
-#pat-btns .keycap.pat-btn:nth-child(7) { grid-column: 2 / span 2; }
+/* Nove pattern: matrice hardware regolare 3 × 3. */
+#pat-btns .keycap.pat-btn { grid-column:auto; }
 /* ── Keycap Meris-style: flat white, sottile shadow, acid on active ── */
 .keycap-base {
   border-radius: 8px;
@@ -1690,35 +1767,656 @@ body {
   transform: translateY(1px);
 }
 
+/* ═══════════════════════════════════════════════
+   MATERIAL FINISH PASS — luce da studio, metallo e profondità
+   Solo resa visiva: nessun layout, hit-area o comportamento cambia.
+═══════════════════════════════════════════════ */
+body { background:radial-gradient(ellipse 58% 38% at 50% 7%,rgba(255,255,255,.30),transparent 72%),radial-gradient(ellipse 85% 90% at 50% 45%,transparent 42%,rgba(20,22,24,.24) 100%),linear-gradient(145deg,#a9abad 0%,#85888b 48%,#717477 100%); }
+.chassis { border-color:#989b9b; box-shadow:0 34px 70px rgba(16,18,20,.38),0 12px 24px rgba(16,18,20,.24),0 3px 5px rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.98),inset 2px 0 0 rgba(255,255,255,.60),inset -2px 0 0 rgba(35,38,40,.10),inset 0 -3px 5px rgba(35,38,40,.12); }
+.chassis::before { opacity:.68; mix-blend-mode:multiply; filter:contrast(1.05); }
+.nameplate { background:linear-gradient(90deg,rgba(255,255,255,.35),transparent 18%,transparent 82%,rgba(0,0,0,.035)),linear-gradient(180deg,#fff 0%,#f8f8f4 38%,#eeeeea 100%); box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.09); }
+.card,.fxrack { background:radial-gradient(ellipse 90% 55% at 18% 0%,rgba(255,255,255,.84),transparent 64%),linear-gradient(165deg,#fbfbf8 0%,#f3f3ef 60%,#e9e9e5 100%); box-shadow:0 0 0 1px rgba(40,42,42,.17),0 2px 3px rgba(30,32,32,.10),inset 0 1px 1px rgba(255,255,255,1),inset 1px 0 0 rgba(255,255,255,.65),inset 0 -2px 3px rgba(40,42,42,.07); }
+.knobs-row,.seqbay { background:linear-gradient(90deg,rgba(0,0,0,.025),transparent 16%,transparent 84%,rgba(255,255,255,.35)),linear-gradient(180deg,#dedfdb 0%,#ecece8 16%,#f6f6f3 100%); box-shadow:inset 0 3px 7px rgba(28,31,31,.18),inset 0 1px 1px rgba(0,0,0,.12),inset 0 -1px 0 rgba(255,255,255,1),0 1px 0 rgba(255,255,255,.92); }
+.knob { filter:drop-shadow(0 4px 3px rgba(15,17,18,.24)); }
+.knob.k-e .k-body { background:radial-gradient(circle at 34% 24%,rgba(255,255,255,.24),transparent 28%),radial-gradient(circle at 50% 56%,transparent 38%,rgba(0,0,0,.35) 100%),repeating-conic-gradient(from 0deg,#44484b 0 4deg,#202326 4deg 8deg); box-shadow:0 4px 7px rgba(0,0,0,.42),inset 0 2px 2px rgba(255,255,255,.22),inset 0 -3px 4px rgba(0,0,0,.48),inset 0 0 0 1px rgba(0,0,0,.72); }
+.knob.k-e .k-cap { background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.95),transparent 22%),linear-gradient(150deg,#f5f4ef 0%,#d4d2ca 58%,#aaa9a3 100%); box-shadow:0 2px 4px rgba(0,0,0,.50),inset 0 1px 1px rgba(255,255,255,1),inset 0 -1px 1px rgba(0,0,0,.18); }
+.knob.k-c .k-body { background:radial-gradient(circle at 34% 24%,#4b4e51 0%,#292c2f 35%,#17191b 100%); box-shadow:0 3px 5px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.20),inset 0 -2px 3px rgba(0,0,0,.60),inset 0 0 0 1px rgba(0,0,0,.70); }
+.btn,.keycap-top,.pad-face,.fxpower,.mini-sw { background-image:radial-gradient(ellipse 80% 45% at 28% 3%,rgba(255,255,255,.82),transparent 64%),linear-gradient(158deg,#fafaf7 0%,#e9e9e4 58%,#d4d4ce 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,1),inset 1px 0 0 rgba(255,255,255,.48),inset 0 -1px 1px rgba(0,0,0,.14),0 3px 4px rgba(24,26,26,.24),0 0 0 1px rgba(40,42,42,.14); }
+.lcd-wrap,.dsp,.bpm-lcd,.seq-readout { border:1px solid rgba(255,255,255,.16); box-shadow:inset 0 3px 9px rgba(0,0,0,.94),inset 0 0 0 1px rgba(0,0,0,.72),0 1px 0 rgba(255,255,255,.92),0 2px 3px rgba(0,0,0,.18); }
+.card-hdr-txt,.knob-lbl,.kgroup-lbl,.ctrl-lbl,.seqbay-title,.pad-num { text-shadow:0 1px 0 rgba(255,255,255,1),0 -.25px 0 rgba(0,0,0,.14); }
+
+/* ═══════════════════════════════════════════════
+   ACIDLAB HARDWARE MATCH — reference layout pass
+   Ricostruisce il prodotto come una vera macchina da studio: scocca scura,
+   piastra avorio, moduli incisi e controlli montati. Solo presentazione.
+═══════════════════════════════════════════════ */
+:root {
+  --body-bg:#090d0c;
+  --panel-face:#efefe9;
+  --panel-hi:#fafaf6;
+  --panel-mid:#e4e4de;
+  --panel-shad:#c9cac3;
+  --panel-edge:#aeb0aa;
+  --inset-bg:#dedfd9;
+  /* Verde campionato direttamente dal logo ufficiale: #66F50E. */
+  --acid:#66f50e;
+  --acid-hi:#b4fa86;
+  --acid-mid:#52cf0b;
+  --acid-dark:#347c0b;
+  --acid-deep:#173b05;
+  --acid-glow:rgba(102,245,14,.50);
+  --lcd-green:#66f50e;
+  --page-h:570px;
+}
+
+html { background:#090d0c; }
+body {
+  min-height:100vh;
+  padding:8px;
+  justify-content:flex-start;
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 0%,rgba(40,50,47,.54),transparent 68%),
+    #090d0c;
+}
+
+.chassis {
+  max-width:1160px;
+  border:1px solid #202724;
+  border-radius:6px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(13,18,16,.86),rgba(7,11,10,.93)),
+    url("assets/textures/acidv_dark_chassis.webp") center/420px 420px repeat,
+    #0c1110;
+  box-shadow:
+    0 30px 70px rgba(0,0,0,.58),
+    0 8px 20px rgba(0,0,0,.40),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 0 0 1px rgba(0,0,0,.72);
+}
+.chassis::before { display:none; }
+
+.windowbar {
+  height:31px; padding:0 16px;
+  display:flex; align-items:center;
+  color:#9ca39f;
+  border-bottom:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,rgba(22,28,26,.92),rgba(12,17,15,.94));
+  box-shadow:0 1px 0 rgba(0,0,0,.65);
+}
+.window-grip {
+  width:13px; height:10px; opacity:.72;
+  background:repeating-linear-gradient(180deg,#a6aca8 0 1px,transparent 1px 4px);
+}
+.window-actions { margin-left:auto; display:flex; align-items:center; gap:23px; }
+.window-min { width:12px; height:1px; background:#aeb4b0; }
+.window-close { position:relative; width:11px; height:11px; }
+.window-close::before,.window-close::after {
+  content:''; position:absolute; left:5px; top:-1px; width:1px; height:14px;
+  background:#b9bfbb;
+}
+.window-close::before { transform:rotate(45deg); }
+.window-close::after  { transform:rotate(-45deg); }
+
+.nameplate {
+  height:68px; padding:0 18px; gap:11px;
+  color:#f3f4f0;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.025),transparent 28%,rgba(0,0,0,.10)),
+    rgba(12,17,15,.76);
+  border-bottom:0;
+  box-shadow:none;
+}
+.brand-vial { width:15px; height:26px; filter:drop-shadow(0 0 7px var(--acid-glow)); }
+.brand-lockup {
+  width:270px; height:56px; flex:0 0 270px; overflow:hidden;
+  display:flex; align-items:center;
+}
+.brand-logo {
+  display:block; width:292px; height:auto; max-width:none;
+  transform:translate(-11px,-1px);
+}
+.logo-text {
+  font-size:24px; line-height:1; font-weight:700; letter-spacing:2.5px;
+  color:#f3f4f0; text-shadow:0 2px 2px rgba(0,0,0,.65);
+}
+.logo-text::after { content:' V'; color:var(--acid); font-style:italic; }
+.logo-sub {
+  align-self:flex-end; margin:0 0 8px -94px; width:190px;
+  color:#c5cbc7; font-size:6px; letter-spacing:4.2px;
+  text-shadow:0 1px 1px rgba(0,0,0,.8);
+}
+.nav-tabs {
+  margin-left:auto; margin-right:auto; min-width:520px;
+  padding:0; gap:0; height:36px; overflow:hidden;
+  border:1px solid #303936; border-radius:5px;
+  background:linear-gradient(180deg,#111715,#090e0c);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.75),0 1px 0 rgba(255,255,255,.06);
+}
+.tab {
+  flex:1; height:100%; justify-content:center; border-radius:0;
+  color:#aeb5b1; font-size:8px; letter-spacing:1.8px;
+}
+.tab + .tab { border-left:1px solid rgba(255,255,255,.055); }
+.tab:hover:not(.active) { color:#d7ddd8; background:rgba(255,255,255,.025); }
+.tab.active {
+  color:var(--acid); top:0;
+  background:linear-gradient(180deg,#0d1711,#07100a);
+  box-shadow:inset 0 0 14px rgba(98,210,39,.08),inset 0 -1px 0 rgba(134,255,71,.18);
+}
+.tab-led { width:5px; height:5px; }
+.status-area {
+  margin-left:0!important; padding-left:18px;
+  border-left:1px solid rgba(255,255,255,.12);
+  color:#c4cac6; font-size:7px;
+}
+.status-area b { color:#6e7772; }
+
+.content {
+  position:relative; margin:0 11px 11px; padding:12px;
+  min-height:var(--page-h); border-radius:6px;
+  background:
+    linear-gradient(rgba(244,244,239,.90),rgba(232,233,227,.92)),
+    url("assets/textures/acidv_panel_offwhite.webp") center/500px 500px repeat,
+    #eeefe9;
+  border:1px solid #9fa39e;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 0 0 1px rgba(255,255,255,.28),
+    0 2px 8px rgba(0,0,0,.48);
+}
+.page.active { min-height:calc(var(--page-h) - 24px); gap:9px; }
+.page.active {
+  height:calc(var(--page-h) - 24px);
+  max-height:calc(var(--page-h) - 24px);
+  overflow:hidden;
+}
+.grid-3 { grid-template-columns:214px minmax(0,1fr) 190px; gap:10px; }
+.col { gap:8px; }
+
+.card,.fxrack {
+  border-radius:5px;
+  background:rgba(241,241,236,.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.76),
+    0 0 0 1px rgba(83,87,83,.20),
+    0 1px 2px rgba(39,42,40,.06);
+}
+.card-hdr { min-height:28px; padding:6px 12px 5px; border-bottom-color:rgba(59,63,59,.15); }
+.card-hdr::before { display:none; }
+.card-hdr-txt,.seqbay-title {
+  color:#171c1a; font-size:9px; font-weight:700; letter-spacing:3.2px;
+}
+.ctrl-lbl,.kgroup-lbl { color:#313733; }
+.ctrl-sec { padding:9px 12px 10px; }
+
+.knobs-row {
+  padding:8px 9px 7px; border-radius:4px;
+  background:rgba(235,236,230,.32);
+  box-shadow:inset 0 1px 2px rgba(39,43,40,.08),0 1px 0 rgba(255,255,255,.82);
+}
+.knob { filter:drop-shadow(0 4px 3px rgba(7,10,9,.35)); }
+.knob .k-trk { background:conic-gradient(from 225deg,#626b64 0 270deg,transparent 270deg); opacity:.55; }
+.knob .k-arc { --ring:var(--acid); filter:drop-shadow(0 0 3px var(--acid-glow)); }
+.knob.k-e .k-body {
+  background:
+    radial-gradient(circle at 32% 22%,rgba(255,255,255,.20),transparent 24%),
+    radial-gradient(circle at 48% 45%,#27302c 0%,#111715 63%,#050807 100%);
+  box-shadow:0 4px 7px rgba(0,0,0,.48),inset 0 1px 1px rgba(255,255,255,.22),inset 0 -3px 4px rgba(0,0,0,.72),0 0 0 1px #030504;
+}
+.knob.k-e .k-cap {
+  inset:34%; background:radial-gradient(circle at 33% 25%,#4c5550,#111715 58%,#050807);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.22),0 2px 3px rgba(0,0,0,.72);
+}
+.knob.k-e .knob-ind::before { top:20%; height:22%; background:var(--acid-hi); box-shadow:0 0 5px var(--acid-glow); }
+.knob-lbl { color:#202623; font-size:7px; font-weight:600; letter-spacing:1.3px; }
+.knob-val { color:#606660; font-size:7px; }
+
+.keycap-top,.pad-face,.btn:not(.acid):not(.btn-red):not(.btn-blue),.fxpower,.mini-sw {
+  background:
+    linear-gradient(rgba(255,255,252,.62),rgba(215,216,210,.42)),
+    url("assets/textures/acidv_keycap_ivory.webp") center/180px 180px repeat,
+    #e6e7e1;
+  border:1px solid rgba(255,255,255,.70);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 1px rgba(54,58,54,.17),
+    0 3px 4px rgba(22,25,23,.24),
+    0 0 0 1px rgba(57,61,57,.20);
+}
+.keycap.active .keycap-top,.pad.on .pad-face {
+  background:linear-gradient(155deg,var(--acid-hi) 0%,var(--acid) 48%,var(--acid-mid) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.74),inset 0 -2px 3px rgba(34,91,10,.26),0 0 9px var(--acid-glow),0 2px 4px rgba(0,0,0,.25),0 0 0 1px var(--acid-dark);
+}
+.keycap.active .keycap-num { color:#10180d; }
+
+.lcd-wrap {
+  padding:4px; border:0; border-radius:6px; background:#161d1a;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.94),0 1px 0 rgba(255,255,255,.70),0 0 0 1px rgba(28,33,30,.72);
+}
+.lcd {
+  background:
+    radial-gradient(ellipse 62% 85% at 50% 48%,rgba(40,104,27,.12),transparent 72%),
+    linear-gradient(155deg,#0b1710,#061009 62%,#030906);
+  border:1px solid rgba(99,132,92,.26);
+}
+.lcd::before { background:linear-gradient(124deg,rgba(255,255,255,.065),transparent 27%); }
+.scope-wrap::before { background:repeating-linear-gradient(90deg,rgba(122,227,67,.11) 0 1px,transparent 1px 44px),repeating-linear-gradient(0deg,rgba(122,227,67,.11) 0 1px,transparent 1px 26px); }
+
+/* La colonna MASTER legge come un unico modulo, come l'hardware di riferimento. */
+.grid-3 > .col:last-child {
+  position:relative; padding:0 7px 7px; gap:0; overflow:hidden;
+  border-radius:5px;
+  background:linear-gradient(90deg,rgba(224,225,219,.28),rgba(249,249,245,.52) 48%,rgba(221,222,216,.26));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.86),inset 1px 0 0 rgba(255,255,255,.42),0 0 0 1px rgba(83,87,83,.20);
+}
+.master-title {
+  height:31px; display:flex; align-items:center; padding:0 5px;
+  border-bottom:1px solid rgba(59,63,59,.15);
+  font-size:9px; font-weight:700; letter-spacing:2.7px; text-transform:uppercase; color:#171c1a;
+}
+.grid-3 > .col:last-child > .card { background:transparent; box-shadow:none; overflow:visible; }
+.grid-3 > .col:last-child > .card > .card-hdr { display:none; }
+.gauge-mount { padding:6px 0 18px; flex-direction:column; }
+.gauge-mount::after {
+  content:'OUTPUT LEVEL'; margin-top:8px;
+  font-size:6.5px; font-weight:600; letter-spacing:1.5px; color:#242a26;
+}
+.gauge-mount .hy-face,.hy-face {
+  width:82px; height:82px;
+  background:radial-gradient(circle,#111815 0 54%,#070b09 56% 61%,var(--acid) 62% 65%,#21321f 66% 69%,transparent 70%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.72),0 4px 8px rgba(0,0,0,.33),0 1px 0 rgba(255,255,255,.65);
+}
+.hy-face::before {
+  inset:2px; mask:none; -webkit-mask:none;
+  background:conic-gradient(from 225deg,transparent 0 36deg,var(--acid) 36deg 220deg,transparent 220deg 360deg);
+  border-radius:50%; filter:drop-shadow(0 0 3px var(--acid-glow));
+}
+.hy-face::after {
+  inset:-2px; mask:radial-gradient(circle,transparent 0 77%,#000 78% 81%,transparent 82%);
+  -webkit-mask:radial-gradient(circle,transparent 0 77%,#000 78% 81%,transparent 82%);
+  background:repeating-conic-gradient(from 225deg,#232925 0 1deg,transparent 1deg 15deg);
+}
+.hy-needle,.hy-glass { display:none; }
+.hy-cap {
+  width:58px; height:58px; margin:-29px 0 0 -29px;
+  background:
+    radial-gradient(circle at 32% 25%,rgba(255,255,255,.92),transparent 17%),
+    conic-gradient(from 15deg,#8f928d,#f7f7f3 14%,#afb1ad 29%,#f1f1ed 47%,#8d908b 67%,#ecece8 84%,#9a9d98);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 3px rgba(54,58,54,.30),0 4px 6px rgba(0,0,0,.46),0 0 0 1px rgba(20,23,21,.36);
+}
+.hy-cap::after {
+  content:''; position:absolute; left:50%; top:6px; width:2px; height:12px; margin-left:-1px;
+  border-radius:1px; background:#2a312d; box-shadow:0 0 0 .5px rgba(255,255,255,.50);
+}
+.fader-bay { gap:6px; justify-content:center; min-height:122px; }
+.meter-col { order:1; }
+.fader { order:2; width:18px; }
+.fader-scale { order:3; color:#565c57; }
+.fader-slot { width:11px; margin-left:-5.5px; background:#111714; }
+.fader-cap { height:5px; border-radius:2px; background:var(--acid-hi); box-shadow:0 0 5px var(--acid-glow),0 0 0 1px rgba(45,70,35,.50); }
+.fader-cap::after { display:none; }
+
+.seqbay {
+  padding:7px 14px 8px; border-radius:5px;
+  background:rgba(241,241,236,.34);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.78),0 0 0 1px rgba(83,87,83,.20);
+}
+.seqbay-hdr { margin-bottom:5px; }
+.seqbay-foot { margin-top:6px; padding-top:5px; }
+.pad { height:31px; }
+.pad-num { font-size:6px; }
+.fxscrew { opacity:.45; }
+
+/* Coerenza materica sulle quattro pagine secondarie. */
+#page-seq > .col,#page-preset > div,#page-settings { min-height:100%; }
+#page-seq .card,#page-preset .card,#page-settings .card,#page-fx .fxrack {
+  background:
+    linear-gradient(rgba(247,247,242,.54),rgba(227,228,222,.30)),
+    url("assets/textures/acidv_panel_offwhite.webp") center/440px 440px repeat,
+    #eeefe9;
+}
+#page-seq .card-body > div[style*="background:#111111"] {
+  border:3px solid #161d1a!important; border-top-width:3px!important;
+  border-radius:0 0 4px 4px;
+  background:linear-gradient(155deg,#0b1710,#030906)!important;
+  box-shadow:inset 0 3px 14px rgba(0,0,0,.92),0 1px 0 rgba(255,255,255,.55)!important;
+}
+#page-fx .fxrack { border:1px solid rgba(75,80,75,.18); }
+#page-fx .fxunit-name { color:#171d1a; }
+
+/* ── FX / PRESET DENSITY PASS ──────────────────────────────────────────────
+   Le due pagine usano tutta la piastra come un vero pannello strumenti:
+   niente aree stirate senza contenuto, ma controlli centrati, scale e routing
+   serigrafato. Gli elementi aggiunti sono puramente informativi. */
+#page-fx .fxrack { grid-template-rows:repeat(2,minmax(0,1fr)); padding:10px; }
+#page-fx .fxunit {
+  min-height:0; padding:14px 20px 12px;
+  display:grid; grid-template-rows:auto auto 1fr auto; gap:10px;
+}
+#page-fx .fxunit-dsp { min-height:80px; padding:10px 13px; align-self:start; }
+#page-fx .fxunit-knobs { width:100%; align-self:center; padding:2px 8px 1px; }
+#page-fx .fxk:not(.fxk-master) { padding-top:7px; }
+.fx-routing {
+  height:20px; display:grid; grid-template-columns:auto 1fr auto;
+  align-items:center; gap:9px; padding:0 3px;
+  color:#717871; font-family:var(--mono); font-size:6px;
+  letter-spacing:1.4px; text-transform:uppercase;
+  text-shadow:0 1px 0 rgba(255,255,255,.92);
+}
+.fx-routing-line {
+  position:relative; height:1px;
+  background:linear-gradient(90deg,rgba(49,56,51,.18),rgba(49,56,51,.34),rgba(49,56,51,.18));
+  box-shadow:0 1px 0 rgba(255,255,255,.84);
+}
+.fx-routing-line::before,.fx-routing-line::after {
+  content:''; position:absolute; top:-2px; width:5px; height:5px;
+  border-radius:50%; background:#697069;
+  box-shadow:inset 0 1px 1px rgba(0,0,0,.35),0 1px 0 #fff;
+}
+.fx-routing-line::before { left:0; }
+.fx-routing-line::after { right:0; }
+.fxunit:not(.off) .fx-routing-line::after {
+  background:var(--acid); box-shadow:0 0 5px var(--acid-glow),inset 0 1px 0 rgba(255,255,255,.55);
+}
+
+#page-preset > .preset-rack {
+  grid-template-columns:minmax(275px,.96fr) minmax(290px,1.04fr) minmax(275px,.96fr)!important;
+  gap:10px!important;
+}
+#page-preset .card-body { min-height:0; }
+#page-preset .preset-display {
+  min-height:0; padding:13px; flex:1; display:flex; flex-direction:column;
+}
+.tone-plot {
+  position:relative; min-height:145px; flex:1; margin-top:14px;
+  border-top:1px solid rgba(102,245,14,.13);
+  border-bottom:1px solid rgba(102,245,14,.10);
+  background:
+    repeating-linear-gradient(90deg,rgba(102,245,14,.055) 0 1px,transparent 1px 42px),
+    repeating-linear-gradient(0deg,rgba(102,245,14,.05) 0 1px,transparent 1px 28px);
+  overflow:hidden;
+}
+.tone-plot::before {
+  content:'FILTER CHARACTER'; position:absolute; left:0; top:8px; z-index:2;
+  color:#365d16; font-size:6px; letter-spacing:1.5px;
+}
+.tone-plot svg { position:absolute; inset:22px 0 8px; width:100%; height:calc(100% - 30px); overflow:visible; }
+.tone-plot-grid { fill:none; stroke:rgba(102,245,14,.11); stroke-width:.7; }
+.tone-curve {
+  fill:none; stroke:var(--acid); stroke-width:2;
+  vector-effect:non-scaling-stroke; filter:drop-shadow(0 0 4px var(--acid-glow));
+  transition:d .22s ease;
+}
+.tone-res-dot {
+  fill:var(--acid-hi); stroke:var(--acid); stroke-width:1;
+  filter:drop-shadow(0 0 5px var(--acid-glow));
+  transition:cx .22s ease,cy .22s ease;
+}
+.preset-specs {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  margin-top:12px; border:1px solid rgba(102,245,14,.12);
+  background:rgba(102,245,14,.08);
+}
+.preset-spec { min-width:0; padding:7px 8px; background:rgba(2,10,4,.72); }
+.preset-spec b,.preset-spec span { display:block; font-family:var(--mono); }
+.preset-spec b { color:#315613; font-size:5.5px; letter-spacing:1.2px; font-weight:500; }
+.preset-spec span { margin-top:3px; color:var(--lcd-green); font-size:7px; letter-spacing:.7px; }
+.preset-actions-body { padding:10px!important; gap:10px!important; }
+.user-library-label {
+  font-size:7px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; margin-top:2px;
+}
+#ul-list {
+  max-height:none!important; min-height:120px; flex:1;
+  border-radius:4px; padding:6px!important;
+  border:1px solid rgba(70,75,70,.16);
+  background:rgba(220,221,215,.26);
+  box-shadow:inset 0 1px 3px rgba(30,34,31,.08),0 1px 0 rgba(255,255,255,.8);
+}
+.ul-empty {
+  height:100%; min-height:108px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:9px; text-align:center; color:#777d77;
+}
+.ul-empty-icon {
+  width:44px; height:30px; border-radius:3px; position:relative;
+  border:1px solid rgba(48,54,49,.27);
+  background:repeating-linear-gradient(90deg,transparent 0 6px,rgba(54,61,55,.12) 6px 7px),rgba(239,240,235,.45);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.10),0 1px 0 #fff;
+}
+.ul-empty-icon::after {
+  content:''; position:absolute; width:5px; height:5px; border-radius:50%;
+  left:19px; bottom:6px; background:#747b74; box-shadow:inset 0 1px 1px rgba(0,0,0,.45);
+}
+.ul-empty strong { font-size:7px; letter-spacing:1.5px; font-weight:600; color:#555c56; }
+.ul-empty span { max-width:175px; font-size:6.5px; line-height:1.55; letter-spacing:.7px; }
+.memory-status {
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px;
+  padding:8px 9px; border-top:1px solid rgba(0,0,0,.12);
+  border-bottom:1px solid rgba(255,255,255,.72);
+  color:#707670; font-size:6px; letter-spacing:1.25px; text-transform:uppercase;
+}
+.memory-status b { color:#343a36; font-size:7px; font-weight:600; }
+.memory-status-led {
+  display:inline-block; width:5px; height:5px; margin-right:6px; border-radius:50%;
+  background:var(--acid); box-shadow:0 0 5px var(--acid-glow);
+}
+
+/* MASTER: VU generato con ImageGen, ma lancetta e LED restano live. */
+.gauge-mount { padding:7px 0 6px; }
+.gauge-mount .hy-face {
+  width:132px; height:75px; border-radius:7px;
+  background:url('assets/branding/acidlab-vu-meter-modern-v4.webp') center/contain no-repeat;
+  box-shadow:0 5px 10px rgba(13,18,15,.28),0 1px 0 rgba(255,255,255,.78),0 0 0 1px rgba(18,23,20,.16);
+  overflow:hidden;
+}
+.gauge-mount .hy-face::before,.gauge-mount .hy-face::after,.gauge-mount .hy-cap { display:none; }
+.gauge-mount .hy-needle {
+  display:block; position:absolute; z-index:4; left:50%; top:86%;
+  width:22%; height:1px; border-radius:1px;
+  background:linear-gradient(90deg,#7e100b,#ff3b27 72%,#ffb096);
+  box-shadow:0 1px 1px rgba(0,0,0,.72),0 0 3px rgba(255,54,35,.38);
+  transform-origin:0 50%;
+  transform:rotate(calc(-126deg + var(--psi) * 72deg));
+  animation:none;
+}
+.gauge-mount .hy-needle::after {
+  content:''; position:absolute; left:-4px; top:-3.25px; width:8px; height:8px;
+  border-radius:50%; background:radial-gradient(circle at 35% 30%,#555c57,#151a17 72%);
+  box-shadow:0 1px 2px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.28);
+}
+.gauge-mount::after { margin-top:4px; letter-spacing:1.7px; color:#3d433f; }
+.meter-col {
+  width:20px; padding:4px 3px; border-radius:5px;
+  background:#061008; border:1px solid #171d19;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.88),0 1px 0 rgba(255,255,255,.72);
+}
+#led-meter > div > div {
+  width:12px!important; height:10px!important; border-radius:2px!important;
+  background:#0b110d!important;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.10)!important;
+}
+#led-meter .meter-seg { width:8px!important; height:5px!important; border-radius:1px!important; }
+#led-meter .meter-seg.on:not(.warn):not(.clip) {
+  background:var(--acid)!important;
+  box-shadow:0 0 4px var(--acid),0 0 9px rgba(102,245,14,.75)!important;
+}
+.fader-fill {
+  background:
+    repeating-linear-gradient(0deg,transparent 0 4px,rgba(10,45,4,.34) 4px 5px),
+    linear-gradient(90deg,#4fd20a,var(--acid) 48%,#a8ff6e)!important;
+  box-shadow:0 0 6px rgba(102,245,14,.72),0 0 12px rgba(102,245,14,.28),inset 0 0 2px rgba(255,255,255,.5);
+}
+.fader-cap {
+  height:22px; border:1px solid rgba(24,30,26,.62); border-radius:4px;
+  background:
+    repeating-linear-gradient(180deg,rgba(10,14,12,.24) 0 1px,transparent 1px 4px),
+    linear-gradient(180deg,#fafbf7 0%,#b9bdb9 22%,#606762 48%,#daddd9 72%,#777d78 100%);
+  box-shadow:0 3px 5px rgba(0,0,0,.58),inset 0 1px 0 #fff!important;
+}
+#page-synth .fader {
+  position:absolute; z-index:3; left:64%; top:0; bottom:0;
+  width:36px; height:auto; transform:translateX(-50%);
+  background:url('assets/branding/acidlab-fader-track.webp') center/13px 100% no-repeat;
+  filter:drop-shadow(0 2px 2px rgba(24,30,26,.18));
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+#page-synth .fader-bay {
+  position:relative; isolation:isolate; flex:none;
+  width:100%; height:224px; min-height:224px; gap:0; padding:0;
+  background:none;
+}
+#page-synth .fader-bay::before {
+  display:none;
+}
+#page-synth .fader-slot { display:none; }
+#page-synth .fader-cap {
+  left:-13px; right:-13px; height:21px;
+  bottom:calc(7px + var(--fv) * (100% - 14px) - 10.5px);
+  border:0; border-radius:0;
+  background:url('assets/branding/acidlab-fader-grip-v3.webp') center/contain no-repeat;
+  box-shadow:none!important;
+  filter:drop-shadow(0 3px 2px rgba(17,22,19,.38));
+  transition:filter .08s ease,transform .08s ease;
+}
+#page-synth .fader:active .fader-cap {
+  transform:translateY(1px);
+  filter:drop-shadow(0 1px 1px rgba(17,22,19,.38)) brightness(.96);
+}
+#page-synth .fader-cap::after { display:none; }
+#page-synth .fader-scale {
+  position:absolute; z-index:1; display:flex; left:82%; top:8px; bottom:8px;
+  width:16px; padding:0; font-size:0; color:transparent;
+  background:repeating-linear-gradient(to bottom,rgba(76,82,77,.66) 0 1px,transparent 1px 9px);
+  background-size:6px 100%; background-repeat:no-repeat;
+}
+#page-synth .fader-scale::after {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(to bottom,rgba(50,56,52,.72) 0 1px,transparent 1px 40px);
+  background-size:11px 100%; background-repeat:no-repeat;
+}
+#page-synth .fader-scale span { visibility:hidden; }
+#page-synth .meter-col {
+  position:absolute; z-index:2; left:21%; top:31px; bottom:27px;
+  width:22px; height:auto; padding:0;
+  border:0; border-radius:0; background:none; box-shadow:none;
+}
+#page-synth .meter-col::before {
+  content:'dB'; position:absolute; left:50%; top:-16px; transform:translateX(-50%);
+  font-family:var(--mono); font-size:5.5px; letter-spacing:1.2px; color:#6b716c;
+}
+#page-synth .meter-col::after {
+  content:''; position:absolute; right:-7px; top:5%;
+  width:0; height:0; border-top:4px solid transparent; border-bottom:4px solid transparent;
+  border-right:6px solid #4d554f; filter:drop-shadow(0 1px 0 rgba(255,255,255,.65));
+}
+#page-synth .col:last-child > .card > .card-body { justify-content:center; }
+#page-synth .col:last-child > .card > .card-body { padding:0!important; }
+#page-synth .col:nth-child(2) .lcd-wrap {
+  flex:0 0 214px!important; height:214px; min-height:214px;
+}
+#page-synth .col:nth-child(2) .lcd { height:100%; }
+#page-synth .lcd-mid {
+  flex:none; min-height:0; height:94px; gap:7px; margin:0 0 7px;
+}
+#page-synth .scope-wrap { height:auto; min-height:0; }
+#page-synth .lcd-side { padding:0 6px 5px; }
+#page-synth .lcd-side-k { font-size:6px; margin:0 -6px 4px; }
+#page-synth .preset-name { font-size:9px; }
+#page-synth .lcd-side-rows {
+  margin-top:auto; padding-top:0; border-top:0;
+}
+#page-synth .lcd-params { padding-top:5px; border-top:1px solid rgba(79,151,22,.18); }
+#page-synth .lcd-p-v { font-size:12px; }
+#page-synth .col:nth-child(2) > .card > .card-body {
+  justify-content:space-evenly; gap:12px!important;
+}
+#page-synth .analog-meter {
+  --vu-cut:100%; position:absolute; inset:0; overflow:hidden; border-radius:2px;
+  border:1px solid rgba(28,33,30,.68);
+  background:
+    repeating-linear-gradient(to top,transparent 0 7px,rgba(218,224,216,.10) 7px 8px),
+    linear-gradient(90deg,#121815,#070a08 46%,#151a17);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.82),0 1px 0 rgba(255,255,255,.75);
+}
+#page-synth .analog-meter-fill {
+  position:absolute; left:3px; right:3px; top:3px; bottom:3px;
+  border-radius:1px; overflow:hidden;
+  background:
+    repeating-linear-gradient(to top,transparent 0 6px,rgba(0,0,0,.22) 6px 7px),
+    linear-gradient(to top,#49c70a 0%,#66f50e 63%,#e1d400 82%,#ff9a00 91%,#ef2c1d 100%);
+  box-shadow:0 0 4px rgba(102,245,14,.55);
+  clip-path:inset(var(--vu-cut) 0 0 0);
+  transition:clip-path .055s linear;
+}
+#page-synth .analog-meter-fill::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,rgba(255,255,255,.20) 0 38%,rgba(0,0,0,.28) 39% 55%,rgba(255,255,255,.16) 56% 100%);
+}
+#page-synth .analog-meter-clip {
+  position:absolute; left:3px; right:3px; top:3px; height:7px; z-index:2;
+  border-radius:1px; background:#28100e; opacity:.42;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.7);
+  transition:opacity .08s,box-shadow .08s,background .08s;
+}
+#page-synth .analog-meter.clip .analog-meter-clip {
+  opacity:1; background:#ff2b18;
+  box-shadow:0 0 5px rgba(255,43,24,.9),inset 0 1px 0 rgba(255,255,255,.42);
+}
+#page-synth .fader-volume-readout {
+  min-width:112px; margin-top:3px; padding:7px 8px 5px;
+  border-top:1px solid rgba(66,72,67,.22);
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+}
+#page-synth .fader-volume-readout .knob-lbl {
+  font-size:9px!important; letter-spacing:2.4px; font-weight:700;
+}
+#page-synth #vol-val {
+  font-size:11px!important; font-weight:700!important; color:#376e1d;
+  letter-spacing:1.2px;
+}
+#page-preset select,#page-preset input,#page-settings select {
+  background:
+    linear-gradient(rgba(255,255,252,.64),rgba(215,216,210,.38)),
+    url("assets/textures/acidv_keycap_ivory.webp") center/180px 180px repeat,
+    #e5e6e0!important;
+  border-color:rgba(74,79,74,.25)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 2px 4px rgba(0,0,0,.17)!important;
+}
+#page-settings .acid-range {
+  height:7px; border:1px solid rgba(0,0,0,.28);
+  background:linear-gradient(90deg,var(--acid) var(--p,0%),#111714 var(--p,0%));
+}
+.about-logo-shell {
+  width:100%; height:76px; overflow:hidden; display:flex; align-items:center;
+  border-radius:4px; background:#f6f6f2;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.about-logo { display:block; width:100%; height:auto; }
+
+@media (max-width:900px) {
+  .nav-tabs { min-width:0; flex:1; }
+  .status-area { display:none; }
+  .grid-3 { grid-template-columns:195px 1fr 116px; }
+  .seq-pads { grid-template-columns:repeat(16,1fr); }
+}
+
 </style>
 </head>
 <body>
 
 <div class="chassis">
 
+  <div class="windowbar" aria-hidden="true">
+    <span class="window-grip"></span>
+    <span class="window-actions"><i class="window-min"></i><i class="window-close"></i></span>
+  </div>
+
   <!-- ════════════════════ NAMEPLATE / NAV ════════════════════ -->
   <div class="nameplate">
-    <!-- Marchio: provetta d'acido in pixel art (SVG autorato, griglia 12×18) -->
-    <svg class="brand-vial" viewBox="0 0 12 18" shape-rendering="crispEdges" aria-hidden="true">
-      <g fill="var(--vial-glass)">
-        <rect x="3" y="0" width="6" height="1"/>
-        <rect x="3" y="1" width="1" height="15"/>
-        <rect x="8" y="1" width="1" height="15"/>
-        <rect x="4" y="16" width="4" height="1"/>
-        <rect x="5" y="17" width="2" height="1"/>
-      </g>
-      <rect x="4" y="6" width="4" height="10" fill="var(--vial-acid)"/>
-      <rect x="4" y="6" width="4" height="1" fill="var(--vial-shine)"/>
-      <g fill="var(--vial-shine)">
-        <rect x="4" y="2" width="1" height="3"/>
-        <rect x="5" y="9" width="1" height="1"/>
-        <rect x="6" y="12" width="1" height="1"/>
-        <rect x="5" y="3" width="1" height="1"/>
-        <rect x="6" y="1" width="1" height="1"/>
-      </g>
-    </svg>
-    <div class="logo-text">ACIDLAB</div>
-    <div class="logo-sub">Bass Synthesizer</div>
+    <div class="brand-lockup">
+      <img class="brand-logo" src="assets/branding/acidlab-logo-header.webp"
+           alt="AcidLab — Bass Synthesizer">
+    </div>
     <div class="nav-tabs">
       <button class="tab active" onclick="nav('synth',this)"><span class="tab-led"></span>Synth</button>
       <button class="tab" onclick="nav('seq',this)"><span class="tab-led"></span>Sequencer</button>
@@ -1728,7 +2426,7 @@ body {
     </div>
     <div class="status-area" style="margin-left:auto;">
       <div class="led-run"></div>
-      <span><span id="run-state">Standby</span><b>·</b>BPM <span id="bpm-hdr">130</span></span>
+      <span><span id="run-state">Standby</span><b>·</b>BPM <span id="bpm-hdr">130</span><b>·</b><span id="build-id">v1.1.0</span></span>
     </div>
   </div>
 
@@ -1791,7 +2489,7 @@ body {
 
             <div class="ctrl-sec ctrl-grow">
               <div class="ctrl-lbl">Pattern</div>
-              <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;" id="pat-btns"></div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;" id="pat-btns"></div>
             </div>
 
             </div>
@@ -1857,35 +2555,52 @@ body {
               </div>
 
               <div class="lcd-wrap" style="flex:none;">
-                <div class="lcd" style="padding:12px 16px;display:flex;flex-direction:column;gap:0;height:100%;box-sizing:border-box;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid #162808;">
-                    <div style="font-size:15px;font-weight:600;color:var(--lcd-green);letter-spacing:3px;text-shadow:0 0 12px var(--acid-glow);">ACIDLAB</div>
-                    <div style="display:flex;gap:16px;">
-                      <span style="font-size:10px;color:#44aa00;">PAT <span id="lcd-pat" style="color:var(--lcd-green);font-weight:600;">01</span></span>
-                      <span style="font-size:10px;color:#44aa00;">BPM <span id="bpm-lcd" style="color:var(--lcd-green);font-weight:600;">125</span></span>
-                      <span style="font-size:10px;color:#44aa00;">WAVE <span id="wave-lcd" style="color:var(--lcd-green);font-weight:600;">SAW</span></span>
+                <div class="lcd" style="padding:10px 14px;display:flex;flex-direction:column;gap:0;height:100%;box-sizing:border-box;">
+                  <div class="lcd-topbar">
+                    <div class="lcd-brand">ACIDLAB</div>
+                    <div class="lcd-topstats">
+                      <span>PAT <b id="lcd-pat">01</b></span>
+                      <span>BPM <b id="bpm-lcd">125</b></span>
+                      <span>ENGINE <b>303</b></span>
                     </div>
                     <div id="play-ind" style="width:9px;height:9px;border-radius:50%;background:#0f2006;transition:all .15s;"></div>
                   </div>
-                  <!-- FASCIA CENTRALE — onda a sinistra, dati a destra -->
+                  <!-- FASCIA CENTRALE — main ridotto, VCO/VCF, preset compatto -->
                   <div class="lcd-mid">
-                    <!-- oscilloscopio del segnale reale: reagisce da solo a
-                         cutoff, risonanza, accento e drive -->
-                    <div class="scope-wrap">
-                      <canvas id="scope"></canvas>
-                      <div class="scope-idle" id="scope-idle">NO SIGNAL</div>
+                    <div class="lcd-module lcd-main-panel">
+                      <div class="lcd-module-label"><span>Main out</span><strong>LIVE</strong></div>
+                      <div class="scope-wrap">
+                        <canvas id="scope"></canvas>
+                        <div class="scope-idle" id="scope-idle">NO SIGNAL</div>
+                      </div>
                     </div>
 
-                    <!-- pannello dati: preset con frecce avanti/indietro -->
+                    <div class="lcd-engine-panel">
+                      <div class="lcd-engine-cell">
+                        <div class="lcd-engine-head"><span>VCO</span><b id="wave-lcd">SAW</b></div>
+                        <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+                          <path class="lcd-graph-grid" d="M0 22H100 M0 12H100"/>
+                          <path class="lcd-graph-line" id="lcd-vco-wave" d="M0 21 L25 3 L25 21 L50 3 L50 21 L75 3 L75 21 L100 3"/>
+                        </svg>
+                      </div>
+                      <div class="lcd-engine-cell">
+                        <div class="lcd-engine-head"><span>VCF</span><b>LP 18</b></div>
+                        <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+                          <path class="lcd-graph-grid" d="M0 22H100 M0 12H100"/>
+                          <path class="lcd-graph-line" id="lcd-vcf-curve" d="M0 7 C45 7 60 7 69 8 C78 10 80 18 100 22"/>
+                        </svg>
+                      </div>
+                    </div>
+
                     <div class="lcd-side">
-                      <div class="lcd-side-k">Preset</div>
+                      <div class="lcd-side-k">Pattern preset</div>
                       <div class="preset-nav">
                         <button class="pnav" id="pnav-prev" title="Preset precedente" aria-label="Preset precedente">◀</button>
-                        <div class="preset-name" id="lcd-preset">Robot Funk</div>
+                        <div class="preset-name" id="lcd-preset">Classic Acid</div>
                         <button class="pnav" id="pnav-next" title="Preset successivo" aria-label="Preset successivo">▶</button>
                       </div>
                       <div class="lcd-side-rows">
-                        <div class="dsp-row"><span class="dsp-k">Bank</span><span class="dsp-v"><span id="lcd-bank">01</span>/08</span></div>
+                        <div class="dsp-row"><span class="dsp-k">Bank</span><span class="dsp-v"><span id="lcd-bank">01</span>/06</span></div>
                         <div class="dsp-row"><span class="dsp-k">Res</span><span class="dsp-v"><span class="res-lcd">1/16</span></span></div>
                         <div class="dsp-row"><span class="dsp-k">Steps</span><span class="dsp-v">16</span></div>
                       </div>
@@ -1895,27 +2610,27 @@ body {
                   <!-- FASCIA INFERIORE — readout dei parametri principali -->
                   <div class="lcd-params">
                     <div class="lcd-p">
-                      <div class="lcd-p-k">Cutoff</div>
+                      <div class="lcd-p-k">Freq</div>
                       <div class="lcd-p-v"><span id="lcd-cut">620</span><i>Hz</i></div>
                       <div class="lcd-p-b"><span id="lcd-cut-b" style="width:41%"></span></div>
                     </div>
                     <div class="lcd-p">
-                      <div class="lcd-p-k">Reso</div>
+                      <div class="lcd-p-k">Res</div>
                       <div class="lcd-p-v"><span id="lcd-res">0.55</span></div>
                       <div class="lcd-p-b"><span id="lcd-res-b" style="width:55%"></span></div>
                     </div>
                     <div class="lcd-p">
-                      <div class="lcd-p-k">Env Mod</div>
+                      <div class="lcd-p-k">Env</div>
                       <div class="lcd-p-v"><span id="lcd-env">0.50</span></div>
                       <div class="lcd-p-b"><span id="lcd-env-b" style="width:50%"></span></div>
                     </div>
                     <div class="lcd-p">
-                      <div class="lcd-p-k">Decay</div>
+                      <div class="lcd-p-k">Dec</div>
                       <div class="lcd-p-v"><span id="lcd-dec">0.32</span><i>s</i></div>
                       <div class="lcd-p-b"><span id="lcd-dec-b" style="width:35%"></span></div>
                     </div>
                     <div class="lcd-p">
-                      <div class="lcd-p-k">Accent</div>
+                      <div class="lcd-p-k">Acc</div>
                       <div class="lcd-p-v"><span id="lcd-acc">0.50</span></div>
                       <div class="lcd-p-b"><span id="lcd-acc-b" style="width:50%"></span></div>
                     </div>
@@ -1930,6 +2645,8 @@ body {
 
         <!-- COL 3: destra -->
         <div class="col">
+
+          <div class="master-title">Master</div>
 
           <!-- Manometro: impiantato direttamente nella lamiera del chassis.
                Niente card attorno — è uno strumento incassato nel pannello,
@@ -1959,13 +2676,16 @@ body {
                 </div>
                 <!-- meter di segnale verticale -->
                 <div class="meter-col">
-                  <div id="led-meter" style="display:flex;flex-direction:column-reverse;align-items:center;justify-content:space-between;height:100%;"></div>
+                  <div id="led-meter" class="analog-meter">
+                    <div class="analog-meter-fill" id="analog-meter-fill"></div>
+                    <div class="analog-meter-clip"></div>
+                  </div>
                 </div>
               </div>
 
-              <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-                <div class="knob-lbl" style="font-size:7px;">Volume</div>
-                <div class="knob-val" id="vol-val" style="font-size:8px;font-weight:600;">0.80</div>
+              <div class="fader-volume-readout">
+                <div class="knob-lbl">Volume</div>
+                <div class="knob-val" id="vol-val">0.80</div>
               </div>
             </div>
           </div>
@@ -2133,16 +2853,16 @@ body {
       <div class="fxrack">
         <span class="fxscrew tl"></span><span class="fxscrew tr"></span><span class="fxscrew bl"></span><span class="fxscrew br"></span>
 
-        <div class="fxunit" id="fxunit-delay">
+        <div class="fxunit off" id="fxunit-delay">
           <div class="fxunit-head">
-            <button class="fxpower on" onclick="fxToggle('delay',this)" title="On / Off"><span class="fxled"></span></button>
+            <button class="fxpower" onclick="fxToggle('delay',this)" title="On / Off"><span class="fxled"></span></button>
             <div><div class="fxunit-name">DELAY</div><div class="fxunit-tag">Stereo · BBD echo</div></div>
           </div>
           <div class="dsp fxunit-dsp">
-            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Mix</span><span class="dsp-big" id="dsp-delayMix">35%</span></div>
-            <div class="dsp-bar"><i id="bar-delayMix" style="width:35%"></i></div>
+            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Mix</span><span class="dsp-big" id="dsp-delayMix">0%</span></div>
+            <div class="dsp-bar"><i id="bar-delayMix" style="width:0%"></i></div>
             <div class="dsp-row"><span class="dsp-k">Time</span><span class="dsp-v" id="dsp-delayTime">375ms</span></div>
-            <div class="dsp-row"><span class="dsp-k">Fdbk</span><span class="dsp-v" id="dsp-delayFeedback">35%</span></div>
+            <div class="dsp-row"><span class="dsp-k">Fdbk</span><span class="dsp-v" id="dsp-delayFeedback">28%</span></div>
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
@@ -2151,48 +2871,50 @@ body {
             </div>
             <div class="knob-wrap fxk fxk-master">
               <div class="knob fx-master" data-fx="delayMix" style="width:64px;height:64px;"></div>
-              <div class="knob-lbl">Mix</div><div class="knob-val">35%</div>
+              <div class="knob-lbl">Mix</div><div class="knob-val">0%</div>
             </div>
             <div class="knob-wrap fxk">
               <div class="knob" data-fx="delayFeedback" style="width:48px;height:48px;"></div>
-              <div class="knob-lbl">Fdbk</div><div class="knob-val">35%</div>
+              <div class="knob-lbl">Fdbk</div><div class="knob-val">28%</div>
             </div>
           </div>
+          <div class="fx-routing"><span>Input</span><i class="fx-routing-line"></i><span>Echo bus</span></div>
         </div>
-        <div class="fxunit" id="fxunit-reverb">
+        <div class="fxunit off" id="fxunit-reverb">
           <div class="fxunit-head">
-            <button class="fxpower on" onclick="fxToggle('reverb',this)" title="On / Off"><span class="fxled"></span></button>
+            <button class="fxpower" onclick="fxToggle('reverb',this)" title="On / Off"><span class="fxled"></span></button>
             <div><div class="fxunit-name">REVERB</div><div class="fxunit-tag">Convolution hall</div></div>
           </div>
           <div class="dsp fxunit-dsp">
-            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Mix</span><span class="dsp-big" id="dsp-reverbMix">25%</span></div>
-            <div class="dsp-bar"><i id="bar-reverbMix" style="width:25%"></i></div>
-            <div class="dsp-row"><span class="dsp-k">Size</span><span class="dsp-v" id="dsp-reverbSize">50%</span></div>
+            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Mix</span><span class="dsp-big" id="dsp-reverbMix">0%</span></div>
+            <div class="dsp-bar"><i id="bar-reverbMix" style="width:0%"></i></div>
+            <div class="dsp-row"><span class="dsp-k">Size</span><span class="dsp-v" id="dsp-reverbSize">35%</span></div>
             <div class="dsp-row"><span class="dsp-k">Damp</span><span class="dsp-v" id="dsp-reverbDamp">50%</span></div>
           </div>
           <div class="fxunit-knobs">
             <div class="knob-wrap fxk">
               <div class="knob" data-fx="reverbSize" style="width:48px;height:48px;"></div>
-              <div class="knob-lbl">Size</div><div class="knob-val">50%</div>
+              <div class="knob-lbl">Size</div><div class="knob-val">35%</div>
             </div>
             <div class="knob-wrap fxk fxk-master">
               <div class="knob fx-master" data-fx="reverbMix" style="width:64px;height:64px;"></div>
-              <div class="knob-lbl">Mix</div><div class="knob-val">25%</div>
+              <div class="knob-lbl">Mix</div><div class="knob-val">0%</div>
             </div>
             <div class="knob-wrap fxk">
               <div class="knob" data-fx="reverbDamp" style="width:48px;height:48px;"></div>
               <div class="knob-lbl">Damp</div><div class="knob-val">50%</div>
             </div>
           </div>
+          <div class="fx-routing"><span>Send</span><i class="fx-routing-line"></i><span>Hall out</span></div>
         </div>
-        <div class="fxunit off" id="fxunit-dist">
+        <div class="fxunit" id="fxunit-dist">
           <div class="fxunit-head">
-            <button class="fxpower" onclick="fxToggle('dist',this)" title="On / Off"><span class="fxled"></span></button>
+            <button class="fxpower on" onclick="fxToggle('dist',this)" title="On / Off"><span class="fxled"></span></button>
             <div><div class="fxunit-name">DISTORTION</div><div class="fxunit-tag">tanh drive · DC block</div></div>
           </div>
           <div class="dsp fxunit-dsp">
-            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Drive</span><span class="dsp-big" id="dsp-distortion">0%</span></div>
-            <div class="dsp-bar"><i id="bar-distortion" style="width:0%"></i></div>
+            <div class="dsp-row" style="align-items:flex-end;"><span class="dsp-k">Drive</span><span class="dsp-big" id="dsp-distortion">5%</span></div>
+            <div class="dsp-bar"><i id="bar-distortion" style="width:5%"></i></div>
             <div class="dsp-row"><span class="dsp-k">Tone</span><span class="dsp-v" id="dsp-distTone">50%</span></div>
             <div class="dsp-row"><span class="dsp-k">Level</span><span class="dsp-v" id="dsp-distLevel">50%</span></div>
           </div>
@@ -2203,13 +2925,14 @@ body {
             </div>
             <div class="knob-wrap fxk fxk-master">
               <div class="knob fx-master" data-fx="distortion" style="width:64px;height:64px;"></div>
-              <div class="knob-lbl">Drive</div><div class="knob-val">0%</div>
+              <div class="knob-lbl">Drive</div><div class="knob-val">5%</div>
             </div>
             <div class="knob-wrap fxk">
               <div class="knob" data-fx="distLevel" style="width:48px;height:48px;"></div>
               <div class="knob-lbl">Level</div><div class="knob-val">50%</div>
             </div>
           </div>
+          <div class="fx-routing"><span>Pre filter</span><i class="fx-routing-line"></i><span>Drive out</span></div>
         </div>
         <div class="fxunit off" id="fxunit-chorus">
           <div class="fxunit-head">
@@ -2236,6 +2959,7 @@ body {
               <div class="knob-lbl">Depth</div><div class="knob-val">40%</div>
             </div>
           </div>
+          <div class="fx-routing"><span>Mono in</span><i class="fx-routing-line"></i><span>Stereo out</span></div>
         </div>
       </div>
     </div>
@@ -2243,7 +2967,7 @@ body {
     <!-- ══════════════ 04 PRESET ══════════════ -->
     <div class="page" id="page-preset">
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 240px;gap:12px;height:100%;">
+      <div class="preset-rack" style="display:grid;grid-template-columns:1fr 1fr 240px;gap:12px;height:100%;">
 
         <!-- [1] FACTORY PATTERN PRESET -->
         <div class="card">
@@ -2259,7 +2983,7 @@ body {
                 border:1px solid var(--panel-shad);border-radius:5px;
                 box-shadow:0 2px 5px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.08);
                 appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
-                <option value="0">01 — Robot Funk</option>
+                <option value="0">01 — Classic Acid</option>
                 <option value="1">02 — Rollin Acid</option>
                 <option value="2">03 — Basic Acid</option>
                 <option value="3">04 — Night Drive</option>
@@ -2326,18 +3050,18 @@ body {
                 border:1px solid var(--panel-shad);border-radius:5px;
                 box-shadow:0 2px 5px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(0,0,0,.08);
                 appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
-                <option value="0">01 — Acid Saw</option>
-                <option value="1">02 — TB Squelch</option>
-                <option value="2">03 — Deep Sub</option>
-                <option value="3">04 — Jungle Bass</option>
-                <option value="4">05 — Ambient Cloud</option>
-                <option value="5">06 — Echo Acid</option>
-                <option value="6">07 — Square Stomp</option>
-                <option value="7">08 — Overdrive</option>
-                <option value="8">09 — Wobble Bass</option>
-                <option value="9">10 — Warm Pad</option>
-                <option value="10">11 — Scream</option>
-                <option value="11">12 — Hybrid FX</option>
+                <option value="0">01 — Classic Acid 303</option>
+                <option value="1">02 — Wet Squelch</option>
+                <option value="2">03 — Rubber Square</option>
+                <option value="3">04 — Sub Pressure</option>
+                <option value="4">05 — Hollow Resonance</option>
+                <option value="5">06 — Short Circuit</option>
+                <option value="6">07 — Warehouse Bite</option>
+                <option value="7">08 — Rubber Sub</option>
+                <option value="8">09 — Dub Acid</option>
+                <option value="9">10 — Needle Peak</option>
+                <option value="10">11 — Midnight Roll</option>
+                <option value="11">12 — Controlled Burn</option>
               </select>
               <div style="pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);">
                 <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2345,7 +3069,22 @@ body {
             </div>
 
             <!-- Barre parametri -->
-            <div class="dsp" style="padding:13px;flex:1;display:flex;flex-direction:column;"><div class="dsp-row" style="margin-bottom:9px;"><span class="dsp-k">Timbro</span><span class="dsp-v" id="sp-name">Acid Saw</span></div><div style="display:flex;flex-direction:column;gap:9px;" id="synth-bars"></div><div class="dsp-row" style="margin-top:auto;padding-top:9px;"><span class="dsp-k">Scope</span><span class="dsp-v">Synth only · pattern invariato</span></div></div>
+            <div class="dsp preset-display">
+              <div class="dsp-row" style="margin-bottom:9px;"><span class="dsp-k">Timbro</span><span class="dsp-v" id="sp-name">Classic Acid 303</span></div>
+              <div style="display:flex;flex-direction:column;gap:9px;" id="synth-bars"></div>
+              <div class="tone-plot" aria-hidden="true">
+                <svg viewBox="0 0 300 110" preserveAspectRatio="none">
+                  <path class="tone-plot-grid" d="M0 88H300 M0 55H300 M75 0V110 M150 0V110 M225 0V110"/>
+                  <path class="tone-curve" id="sp-curve" d="M0 30 C65 30 120 31 175 34 C210 37 223 54 300 100"/>
+                  <circle class="tone-res-dot" id="sp-res-dot" cx="180" cy="33" r="3"/>
+                </svg>
+              </div>
+              <div class="preset-specs">
+                <div class="preset-spec"><b>Engine</b><span>ACID VCO</span></div>
+                <div class="preset-spec"><b>Filter</b><span>18 dB LP</span></div>
+                <div class="preset-spec"><b>Scope</b><span>SYNTH ONLY</span></div>
+              </div>
+            </div>
 
           </div>
         </div>
@@ -2353,14 +3092,14 @@ body {
         <!-- [3] ACTIONS — solo PLAY/STOP + status -->
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Actions</span></div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="card-body preset-actions-body" style="display:flex;flex-direction:column;gap:10px;">
 
             <!-- Status: display incassato, non un riquadro di testo -->
             <div class="dsp" style="padding:12px 13px;">
               <div class="dsp-k" style="margin-bottom:5px;">Selected</div>
               <div style="font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.5px;
                           color:var(--lcd-green);text-shadow:0 0 9px var(--acid-glow);margin-bottom:4px;"
-                   id="loaded-name">Robot Funk</div>
+                   id="loaded-name">Classic Acid</div>
               <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:#44aa00;"
                    id="loaded-type">Factory Pattern</div>
               <div style="display:flex;align-items:center;gap:6px;margin-top:9px;">
@@ -2371,6 +3110,23 @@ body {
 
             <!-- LOAD button -->
             <button class="btn acid" onclick="loadPreset()" style="width:100%;padding:13px;font-size:10px;">▶ LOAD PRESET</button>
+
+            <!-- USER LIBRARY -->
+            <div class="user-library-label">User Library</div>
+            <div style="display:flex;gap:5px;">
+              <input id="ul-name" type="text" placeholder="Pattern name…" maxlength="30"
+                style="flex:1;min-width:0;padding:7px 9px;font-family:var(--mono);font-size:9px;letter-spacing:.5px;
+                       color:var(--text);background:linear-gradient(to bottom,#fafaf6,#e8e8e4,#d8d8d4);
+                       border:1px solid var(--panel-shad);border-radius:5px;outline:none;
+                       box-shadow:0 2px 4px rgba(0,0,0,.1),inset 0 1px 3px rgba(0,0,0,.12);">
+              <button class="btn acid" onclick="ulSave()" style="padding:7px 10px;font-size:8px;letter-spacing:1px;flex:none;">SAVE</button>
+            </div>
+            <div id="ul-list" style="overflow-y:auto;max-height:100px;display:flex;flex-direction:column;gap:2px;"></div>
+
+            <div class="memory-status">
+              <span><i class="memory-status-led"></i>Local memory</span>
+              <b id="ul-count">0 PATTERNS</b>
+            </div>
 
             <div style="height:1px;background:var(--panel-shad);margin-top:auto;"></div>
 
@@ -2453,7 +3209,7 @@ body {
                 <div style="width:6px;height:6px;border-radius:50%;background:var(--acid);box-shadow:0 0 6px var(--acid-glow);"></div>
                 <span style="font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.5px;
                              color:var(--lcd-green);text-shadow:0 0 8px var(--acid-glow);"
-                      id="audio-status">AudioWorklet · ready</span>
+                      id="audio-status">Audio · premi PLAY</span>
               </div>
               <div class="dsp-row"><span class="dsp-k">Engine</span><span class="dsp-v">TB-303 DSP</span></div>
               <div class="dsp-row"><span class="dsp-k">VCF</span><span class="dsp-v">Huovilainen ladder</span></div>
@@ -2482,8 +3238,8 @@ body {
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">About</span></div>
           <div class="card-body" style="padding:14px;">
-            <div style="font-family:var(--display,var(--mono));font-size:18px;font-weight:700;letter-spacing:3px;color:var(--text);">ACIDLAB</div>
-            <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:2px;">BASS SYNTHESIZER · v1.0.0</div>
+            <div class="about-logo-shell"><img class="about-logo" src="assets/branding/acidlab-logo-master.webp" alt="AcidLab — Bass Synthesizer"></div>
+            <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:5px;">VERSION 1.1.0</div>
             <div style="height:1px;background:var(--border);margin:12px 0;"></div>
             <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.7;">
               Clone software del Roland TB-303.<br>DSP C++/JUCE · UI WebView HTML.<br>Engine WebAudio nel browser.<br><br>Eugenio Bellini — NABA UI/UX 2026
@@ -2496,6 +3252,41 @@ body {
 </div><!-- /chassis -->
 
 <script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRASCINAMENTO UNIFICATO — mouse, penna, dito
+   I mousemove sintetici di iOS non arrivano durante un drag: knob e rotelle
+   restavano fermi al tocco. I Pointer Events coprono i tre dispositivi con un
+   solo percorso, e setPointerCapture tiene il gesto agganciato al controllo
+   anche quando il dito ne esce, cosi' la corsa non si interrompe a meta'.
+   ═══════════════════════════════════════════════════════════════════════════ */
+window.acidDrag = function(el, opts){
+  if(!el) return;
+  var id = null;
+  el.addEventListener('pointerdown', function(e){
+    if(id !== null) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    id = e.pointerId;
+    try { if(el.setPointerCapture) el.setPointerCapture(id); } catch(_){}
+    if(opts.start) opts.start(e);
+    e.preventDefault();
+  });
+  el.addEventListener('pointermove', function(e){
+    if(e.pointerId !== id) return;
+    if(opts.move) opts.move(e);
+    e.preventDefault();
+  });
+  function release(e){
+    if(e.pointerId !== id) return;
+    try { if(el.hasPointerCapture && el.hasPointerCapture(id)) el.releasePointerCapture(id); } catch(_){}
+    id = null;
+    if(opts.end) opts.end(e);
+  }
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  // Senza questo il browser del tablet interpreta la corsa come scroll e
+  // annulla il gesto dopo pochi pixel.
+  el.style.touchAction = 'none';
+};
 // ── NAV
 function nav(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2616,21 +3407,11 @@ function buildKeycaps() {
   const grid = document.getElementById('pat-btns');
   if(!grid) return;
   grid.innerHTML = '';
-  // 8 tasti = gli slot pattern del sequencer (StepSequencer::NUM_PATTERNS),
-  // quanti ne dichiara il display "BANK nn/08". I 10 preset factory restano
-  // raggiungibili dalla pagina PRESET.
-  //
-  // Griglia a 6 colonne con span 2, non a 3: i .pat-btn hanno aspect-ratio 1,
-  // quindi la loro altezza la decide la larghezza della colonna. Con 3 colonne
-  // vengono quadrati da ~63px e tre righe riempiono i ~200px della sezione;
-  // con 4 colonne restavano 46px e sotto/sopra avanzavano 53px di vuoto per
-  // parte. Le 6 colonne servono a centrare l'ultima riga di due tasti (vedi
-  // la regola #pat-btns .keycap:nth-child(7)), altrimenti 8 su 3 colonne
-  // lasciano un buco in basso a destra.
-  grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+  // 9 tasti = i nove slot reali del sequencer, disposti 3 × 3.
+  grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
   grid.style.gap = '5px';
 
-  for(let i = 0; i < 8; i++) {
+  for(let i = 0; i < 9; i++) {
     const key = document.createElement('div');
     key.className = 'keycap pat-btn' + (i === 0 ? ' active' : '');
     key.innerHTML = `<div class="keycap-base"><div class="keycap-top"><span class="keycap-num">${i + 1}</span><span class="keycap-led"></span></div></div>`;
@@ -2737,7 +3518,11 @@ buildKeycaps();
           background:${data[i]?'#88ff00':'#1e1e1e'};
           border:1px solid ${data[i]?'rgba(136,255,0,.6)':'#333'};
           box-shadow:${data[i]?'0 0 5px rgba(136,255,0,.35)':'none'};transition:all .08s;`;
-        c.onclick=()=>{data[i]=!data[i];buildRows(); if(window._onPatternChange) window._onPatternChange();};
+        c.onclick=()=>{
+          if(window._juceEditBlocked && window._juceEditBlocked()) return;
+          if(window._prModifierHook){ window._prModifierHook(i,ri===0?'slide':'accent'); return; }
+          data[i]=!data[i];buildRows(); if(window._onPatternChange) window._onPatternChange();
+        };
         el.appendChild(c);
       }
     });
@@ -2824,12 +3609,16 @@ buildKeycaps();
   const canvas=document.getElementById('piano-roll-canvas');
   if(canvas){
     canvas.style.cursor='crosshair';
-    canvas.addEventListener('mousedown',e=>{
+    canvas.style.touchAction='none';
+    canvas.addEventListener('pointerdown',e=>{
+      e.preventDefault();
       const rect=canvas.getBoundingClientRect();
       const W=rect.width,cW=W/STEPS;
       const s=Math.floor((e.clientX-rect.left)/cW);
       const r=Math.floor((e.clientY-rect.top)/NOTE_H);
       if(s>=0&&s<STEPS&&r>=0&&r<ROWS){
+        if(window._juceEditBlocked && window._juceEditBlocked()) return;
+        if(window._prNoteHook){ window._prNoteHook(s,r); return; }
         const k=`${s}:${r}`;
         notes.has(k)?notes.delete(k):notes.add(k);
         draw();
@@ -2843,7 +3632,7 @@ buildKeycaps();
     for(let s=0;s<STEPS;s++){
       let row=-1;
       for(let r=0;r<ROWS;r++){ if(notes.has(s+':'+r)){ row=r; break; } }
-      if(row<0) steps.push({note:48,gate:false,accent:false,slide:false,octave:0});
+      if(row<0) steps.push({note:48,gate:false,accent:!!accentData[s],slide:!!slideData[s],octave:0});
       else steps.push({note:71-row,gate:true,accent:!!accentData[s],slide:!!slideData[s],octave:0});
     }
     return steps;
@@ -2851,10 +3640,11 @@ buildKeycaps();
   window._prSetPattern=function(pat){
     notes.clear(); slideData.fill(false); accentData.fill(false);
     for(let s=0;s<STEPS && pat && s<pat.length;s++){
-      const st=pat[s]; if(!st||!st.gate) continue;
+      const st=pat[s]; if(!st) continue;
+      slideData[s]=!!st.slide; accentData[s]=!!st.accent;
+      if(!st.gate) continue;
       let n=st.note+(st.octave||0)*12; while(n<48)n+=12; while(n>71)n-=12;
       const row=71-n; if(row>=0&&row<ROWS) notes.add(s+':'+row);
-      slideData[s]=!!st.slide; accentData[s]=!!st.accent;
     }
     buildRows(); draw();
   };
@@ -2987,21 +3777,23 @@ function initFXKnobs(){
     k.id='knob-canvas-'+id;
     k.className='knob sprite-knob fx-sprite-knob';
     k.style.cssText=`width:${SIZE}px;height:${SIZE}px;`;
-    k.addEventListener('mousedown',e=>{ fxDragging=id; fxDragY=e.clientY; fxDragStart=fxVals[id]; e.preventDefault(); });
+    window.acidDrag(k,{
+      start:e=>{ fxDragging=id; fxDragY=e.clientY; fxDragStart=fxVals[id]; },
+      move:e=>{
+        const delta=fxDragY-e.clientY;
+        fxVals[id]=Math.max(0,Math.min(100,fxDragStart+Math.round(delta*.6)));
+        updateFX(id);
+      },
+      end:()=>{ fxDragging=null; }
+    });
     wrap.appendChild(k);
     drawFXKnob(id);
   });
 }
 
 // Knob drag
+// Lo stato del drag vive qui; il movimento lo guida acidDrag in initFXKnobs.
 let fxDragging=null, fxDragY=0, fxDragStart=0;
-document.addEventListener('mousemove',e=>{
-  if(!fxDragging) return;
-  const delta=fxDragY-e.clientY;
-  fxVals[fxDragging]=Math.max(0,Math.min(100,fxDragStart+Math.round(delta*.6)));
-  updateFX(fxDragging);
-});
-document.addEventListener('mouseup',()=>{ fxDragging=null; });
 
 // Canvas FX overview
 function drawFXCanvas(){
@@ -3099,26 +3891,26 @@ setTimeout(()=>{ buildSynthBars(SYNTH_DATA[0]); },100);
 
 // ── PRESET PAGE ───────────────────────────────────────────────────────────────
 const FACTORY_DATA = window.FACTORY_DATA = [
-  {name:'Robot Funk',    tempo:124, wave:'SAW', cut:'850Hz', res:0.62, env:0.55, dec:0.28, sub:0.55},
-  {name:'Rollin Acid',   tempo:132, wave:'SAW', cut:'520Hz', res:0.88, env:0.75, dec:0.20, sub:0.40},
-  {name:'Basic Acid',    tempo:130, wave:'SAW', cut:'700Hz', res:0.55, env:0.55, dec:0.35, sub:0.30},
-  {name:'Night Drive',   tempo:118, wave:'SAW', cut:'900Hz', res:0.58, env:0.50, dec:0.40, sub:0.45},
-  {name:'Deep Squelch',  tempo:126, wave:'SQR', cut:'380Hz', res:0.90, env:0.82, dec:0.55, sub:0.70},
-  {name:'Phrygian Drive',tempo:128, wave:'SQR', cut:'560Hz', res:0.80, env:0.70, dec:0.42, sub:0.50},
+  {name:'Classic Acid',  tempo:128,wave:'SAW',cut:'420Hz',res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
+  {name:'Rollin Acid',   tempo:132,wave:'SAW',cut:'360Hz',res:.82,env:.78,dec:.15,acc:.78,vol:.72,dis:.26,sub:.14,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
+  {name:'Basic Acid',    tempo:130,wave:'SAW',cut:'620Hz',res:.66,env:.64,dec:.26,acc:.72,vol:.75,dis:.06,sub:.12,dlyT:.375,dlyF:.30,dlyM:.00,rvbS:.42,rvbM:.00},
+  {name:'Night Drive',   tempo:118,wave:'SAW',cut:'480Hz',res:.54,env:.42,dec:.38,acc:.62,vol:.74,dis:.08,sub:.40,dlyT:.500,dlyF:.40,dlyM:.14,rvbS:.55,rvbM:.08},
+  {name:'Deep Squelch',  tempo:126,wave:'SQR',cut:'260Hz',res:.76,env:.72,dec:.52,acc:.70,vol:.73,dis:.14,sub:.68,dlyT:.250,dlyF:.40,dlyM:.12,rvbS:.50,rvbM:.06},
+  {name:'Phrygian Drive',tempo:128,wave:'SQR',cut:'410Hz',res:.72,env:.58,dec:.30,acc:.74,vol:.72,dis:.22,sub:.30,dlyT:.333,dlyF:.36,dlyM:.09,rvbS:.44,rvbM:.04},
 ];
 const SYNTH_DATA = [
-  {name:'Acid Saw',     cut:0.65,res:0.75,env:0.70,dec:0.20,acc:0.75},
-  {name:'TB Squelch',   cut:0.25,res:0.95,env:0.90,dec:0.40,acc:0.85},
-  {name:'Deep Sub',     cut:0.12,res:0.18,env:0.20,dec:0.80,acc:0.60},
-  {name:'Jungle Bass',  cut:0.90,res:0.50,env:0.50,dec:0.15,acc:0.70},
-  {name:'Ambient Cloud',cut:0.35,res:0.40,env:0.50,dec:1.00,acc:0.55},
-  {name:'Echo Acid',    cut:0.70,res:0.65,env:0.65,dec:0.25,acc:0.70},
-  {name:'Square Stomp', cut:0.55,res:0.62,env:0.60,dec:0.18,acc:0.75},
-  {name:'Overdrive',    cut:0.80,res:0.40,env:0.45,dec:0.20,acc:0.70},
-  {name:'Wobble Bass',  cut:0.28,res:0.82,env:0.85,dec:0.90,acc:0.75},
-  {name:'Warm Pad',     cut:0.16,res:0.14,env:0.30,dec:1.00,acc:0.50},
-  {name:'Scream',       cut:0.52,res:0.98,env:0.65,dec:0.15,acc:0.85},
-  {name:'Hybrid FX',    cut:0.50,res:0.60,env:0.55,dec:0.35,acc:0.70},
+  {name:'Classic Acid 303',cut:.270544,res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,wave:'SAW',sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
+  {name:'Wet Squelch',     cut:.151157,res:.88,env:.95,dec:.60,acc:.82,vol:.67,dis:.06,wave:'SAW',sub:.10,dlyT:.250,dlyF:.30,dlyM:.00,rvbS:.35,rvbM:.00},
+  {name:'Rubber Square',   cut:.274116,res:.62,env:.58,dec:.24,acc:.72,vol:.73,dis:.10,wave:'SQR',sub:.22,dlyT:.188,dlyF:.28,dlyM:.00,rvbS:.30,rvbM:.00},
+  {name:'Sub Pressure',    cut:.142118,res:.34,env:.38,dec:.42,acc:.58,vol:.72,dis:.12,wave:'SQR',sub:.78,dlyT:.375,dlyF:.24,dlyM:.00,rvbS:.30,rvbM:.00},
+  {name:'Hollow Resonance',cut:.356985,res:.97,env:.22,dec:.85,acc:.64,vol:.58,dis:.02,wave:'SAW',sub:.00,dlyT:.375,dlyF:.30,dlyM:.00,rvbS:.36,rvbM:.00},
+  {name:'Short Circuit',   cut:.425386,res:.42,env:.30,dec:.08,acc:.74,vol:.70,dis:.28,wave:'SAW',sub:.00,dlyT:.188,dlyF:.24,dlyM:.00,rvbS:.25,rvbM:.00},
+  {name:'Warehouse Bite',  cut:.303538,res:.70,env:.66,dec:.16,acc:.82,vol:.68,dis:.34,wave:'SAW',sub:.10,dlyT:.188,dlyF:.28,dlyM:.04,rvbS:.28,rvbM:.00},
+  {name:'Rubber Sub',      cut:.187526,res:.52,env:.48,dec:.30,acc:.66,vol:.71,dis:.16,wave:'SQR',sub:.62,dlyT:.250,dlyF:.28,dlyM:.00,rvbS:.30,rvbM:.00},
+  {name:'Dub Acid',        cut:.259379,res:.64,env:.56,dec:.28,acc:.68,vol:.68,dis:.08,wave:'SAW',sub:.18,dlyT:.375,dlyF:.46,dlyM:.22,rvbS:.55,rvbM:.06},
+  {name:'Needle Peak',     cut:.396486,res:.96,env:.86,dec:.09,acc:.74,vol:.56,dis:.03,wave:'SQR',sub:.00,dlyT:.188,dlyF:.24,dlyM:.00,rvbS:.25,rvbM:.00},
+  {name:'Midnight Roll',   cut:.220546,res:.68,env:.44,dec:.46,acc:.62,vol:.70,dis:.12,wave:'SQR',sub:.46,dlyT:.500,dlyF:.38,dlyM:.10,rvbS:.45,rvbM:.04},
+  {name:'Controlled Burn', cut:.347268,res:.44,env:.68,dec:.24,acc:.72,vol:.42,dis:.62,wave:'SQR',sub:.08,dlyT:.250,dlyF:.25,dlyM:.00,rvbS:.28,rvbM:.00},
 ];
 
 // Anteprima del pattern selezionato: legge FACTORY_PATTERNS_JS, la stessa
@@ -3197,6 +3989,16 @@ function buildSynthBars(d){
     `;
     el.appendChild(row);
   });
+  // Risposta passa-basso ricavata dai valori del preset: il picco segue
+  // cutoff e resonance ed e' una lettura, non un controllo separato.
+  const curve=document.getElementById('sp-curve');
+  const dot=document.getElementById('sp-res-dot');
+  const x=48+d.cut*205;
+  const baseY=31;
+  const peakY=Math.max(8,baseY-d.res*25);
+  const fallX=Math.min(288,x+38+d.cut*16);
+  if(curve) curve.setAttribute('d',`M0 ${baseY} C${x*.42} ${baseY} ${Math.max(0,x-38)} ${baseY} ${x} ${peakY} C${x+17} ${peakY} ${fallX} 91 300 102`);
+  if(dot){ dot.setAttribute('cx',x.toFixed(1)); dot.setAttribute('cy',peakY.toFixed(1)); }
 }
 
 function loadPreset(){
@@ -3261,78 +4063,35 @@ function setMode(mode){
   });
 }
 
-// ── LED METER FISICO ──────────────────────────────────────────────────────────
+// ── BARGRAPH ANALOGICO ────────────────────────────────────────────────────────
 (function(){
   const container = document.getElementById('led-meter');
-  if(!container) return;
+  const fill = document.getElementById('analog-meter-fill');
+  if(!container||!fill) return;
 
-  // Configurazione 8 LED: colore e soglia
-  const leds = [
-    { color:'#33aa00', glow:'rgba(50,170,0,.6)',  threshold:0.12 },
-    { color:'#44cc00', glow:'rgba(68,204,0,.6)',  threshold:0.25 },
-    { color:'#66dd00', glow:'rgba(102,221,0,.6)', threshold:0.38 },
-    { color:'#88ff00', glow:'rgba(136,255,0,.7)', threshold:0.50 },
-    { color:'#aaff22', glow:'rgba(170,255,34,.7)',threshold:0.62 },
-    { color:'#ddcc00', glow:'rgba(220,200,0,.6)', threshold:0.72 },
-    { color:'#ff8800', glow:'rgba(255,136,0,.6)', threshold:0.84 },
-    { color:'#ff2200', glow:'rgba(255,34,0,.7)',  threshold:0.94 },
-  ];
-
-  // Costruisce i LED fisici
-  const ledEls = leds.map((cfg, i) => {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = `
-      display:flex;flex-direction:column;align-items:center;gap:3px;
-    `;
-    // housing metallico
-    const housing = document.createElement('div');
-    housing.style.cssText = `
-      width:9px;height:9px;border-radius:50%;
-      background:linear-gradient(135deg,#d0d0cc,#a8a8a4);
-      box-shadow:0 2px 4px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.6);
-      display:flex;align-items:center;justify-content:center;
-      position:relative;
-    `;
-    // dome LED
-    const dome = document.createElement('div');
-    dome.style.cssText = `
-      width:5px;height:5px;border-radius:50%;
-      background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.3),${cfg.color}55);
-      box-shadow:inset 0 1px 2px rgba(0,0,0,.4);
-      transition:all .06s;
-    `;
-    housing.appendChild(dome);
-    wrap.appendChild(housing);
-    container.appendChild(wrap);
-    return { dome, cfg };
-  });
-
-  // Animazione — parte da zero: a macchina ferma il meter e' spento
+  // Un'unica sorgente di livello per browser e VST. Nel browser la aggiorna
+  // l'AnalyserNode, nel plugin arriva dal buffer C++ tramite stateUpdate.
+  window._outputMeterLevel=0;
   let level = 0;
   let clipHeldUntil = 0; // timestamp ms — clip indicator persiste 2s dopo l'evento
 
   setInterval(()=>{
-    if(!playing) {
-      level = Math.max(0, level - 0.08);
-    } else {
-      const target = 0.4 + Math.random() * 0.55;
-      level = level * 0.7 + target * 0.3;
-    }
+    const target=Math.max(0,Math.min(1,Number(window._outputMeterLevel)||0));
+    // attacco rapido e rilascio piu' lento, come un meter hardware
+    level = target>level ? level*.30+target*.70 : level*.82+target*.18;
+    if(level<0.001) level=0;
+
+    // Scala logaritmica -36…+3 dB per la lancetta analogica.
+    const db=20*Math.log10(Math.max(level,0.0001));
+    const vu=Math.max(0,Math.min(1,(db+36)/39));
+    document.documentElement.style.setProperty('--psi',vu.toFixed(4));
 
     const isClipping = level >= 0.94;
     if(isClipping) clipHeldUntil = Date.now() + 2000;
     const clipHeld = Date.now() < clipHeldUntil;
 
-    ledEls.forEach(({ dome, cfg }, i) => {
-      const isClipLed = i === ledEls.length - 1; // ultimo LED = rosso clip
-      const on = isClipLed ? (isClipping || clipHeld) : level >= cfg.threshold;
-      dome.style.background = on
-        ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), ${cfg.color})`
-        : `radial-gradient(circle at 35% 30%, rgba(255,255,255,.15), ${cfg.color}44)`;
-      dome.style.boxShadow = on
-        ? `0 0 6px ${cfg.glow}, 0 0 3px ${cfg.glow}, inset 0 1px 0 rgba(255,255,255,.4)`
-        : `inset 0 1px 2px rgba(0,0,0,.4)`;
-    });
+    container.style.setProperty('--vu-cut',(100-vu*100).toFixed(1)+'%');
+    container.classList.toggle('clip',isClipping||clipHeld);
   }, 80);
 })();
 </script>
@@ -3345,18 +4104,27 @@ function setMode(mode){
 <script>
 (function(){
 
-  // ── Pattern di default "Robot Funk" (banco 0, tasto 1) ──
+  // Nel plugin il DSP e' il C++: senza questa guardia il motore WebAudio parte
+  // dentro la WebView e suona sull'uscita di sistema, scavalcando il bus
+  // dell'host (in Ableton l'audio si sente ma non passa dal master).
+  if(typeof window.__JUCE__ !== 'undefined') return;
+
+  // ── Pattern di default "Classic Acid" (banco 0, tasto 1) ──
   // Scritto sulla root C3 = 48, come StepSequencer::PATTERN_ROOT.
   const S=(note,gate,accent,slide,octave)=>({note,gate:!!gate,accent:!!accent,slide:!!slide,octave});
   const DEFAULT_PATTERN=[
-    S(48,1,1,0,0),S(48,0,0,0,0),S(48,1,0,0,0),S(51,1,0,0,0),
-    S(48,0,0,0,0),S(55,1,0,0,0),S(48,0,0,0,0),S(58,1,0,1,0),
-    S(48,1,1,0,0),S(48,0,0,0,0),S(48,1,0,0,0),S(51,1,0,0,0),
-    S(53,1,0,0,0),S(48,0,0,0,0),S(55,1,0,1,0),S(58,1,0,0,0)
+    S(48,1,1,0,0),S(48,0,0,0,0),S(48,1,0,1,0),S(55,1,0,0,0),
+    S(60,1,1,0,0),S(48,0,0,0,0),S(51,1,0,0,0),S(48,1,0,0,0),
+    S(48,1,1,0,0),S(58,1,0,0,0),S(55,1,0,1,0),S(51,1,0,0,0),
+    S(48,1,1,0,0),S(48,0,0,0,0),S(55,1,0,0,0),S(48,1,0,0,0)
   ];
-  // Valori del banco "Robot Funk".
-  const DEFAULTS={cutoff:850,resonance:0.62,envMod:0.55,decay:0.28,accent:0.78,
-                  volume:0.82,distortion:0.18,tuning:0,waveform:0,tempo:124,resolution:4,subOsc:0.55};
+  // Valori del banco "Classic Acid".
+  const DEFAULTS={cutoff:420,resonance:0.74,envMod:0.72,decay:0.22,accent:0.76,
+                  volume:0.70,distortion:0.05,tuning:0,waveform:0,tempo:128,resolution:4,subOsc:0.00};
+  // Stato desiderato indipendente dall'AudioContext. I controlli possono
+  // essere usati prima del primo Play: quando il motore nasce riceve questi
+  // valori, non di nuovo DEFAULTS (che faceva sembrare i preset tutti uguali).
+  const liveParams={...DEFAULTS,tuning:DEFAULTS.tuning*100};
 
   // ── Codice dell'AudioWorkletProcessor (porting fedele dei .cpp) ──
   const WORKLET_CODE = `
@@ -3365,10 +4133,12 @@ class TB303Processor extends AudioWorkletProcessor {
     super();
     const sr=sampleRate; this.sr=sr;
     this.phase=0; this.phaseInc=0; this.curFreq=440; this.tgtFreq=440; this.sliding=false;
-    this.slideCoeff=Math.pow(0.001,1/(0.070*sr)); this.waveform=0; this.tuningCents=0;
+    this.slideCoeff=Math.exp(-1/(0.025*sr)); this.waveform=0; this.tuningCents=0;
     this.stage=[0,0,0,0]; this.stageT=[0,0,0,0]; this.prevIn=0; this.dcX=0; this.dcY=0;
     this.baseCutoff=800; this.resonance=0.5; this.envMod=0.5; this.accentMod=0.5;
     this.nVal=0; this.nState=0; this.nAtt=Math.exp(-1/(0.003*sr)); this.nDec=Math.exp(-1/(0.3*sr));
+    this.vVal=0; this.vState=0; this.vAtt=Math.exp(-1/(0.003*sr)); this.vDec=Math.exp(-1/(0.180*sr));
+    this.noteFreq=130.8128;
     // accent attack 1 ms, non 3: in Acid V VCAEnv303_AccentAttack ha mediana 0
     this.aVal=0; this.aState=0; this.aAtt=Math.exp(-1/(0.001*sr)); this.aDec=Math.exp(-1/(0.2*sr));
     this.volume=0.8; this.distortion=0.0; this.dX=0; this.dY=0;
@@ -3381,7 +4151,9 @@ class TB303Processor extends AudioWorkletProcessor {
     this.prevNote=36; this.prevSlide=false;
     this.transpose=0;   // semitoni, come StepSequencer::transpose
     this.swing=0;       // 0..0.45, come StepSequencer::swing
+    this.swingParity=0; // parita' del clock continuo, non dell'indice pattern
     this.pendPat=null;  // pattern accodato, entra allo step 0 come sul TB-303
+    this.patternId=0; this.pendPatId=-1; // collega il cambio audio al LED giusto
     this.subVol=0; this.subPhase=0;      // sub un'ottava sotto
     this.bassLp=0; this.bassC=1-Math.exp(-2*Math.PI*180/sr);   // bass boost 180 Hz
     this.BASS=0.5;      // Filter303_BassBoost: attivo in 149/156 preset di Acid V
@@ -3391,10 +4163,17 @@ class TB303Processor extends AudioWorkletProcessor {
     if(d.type==='param') this.setParam(d.id,d.value);
     else if(d.type==='pattern'){
       // queue:true e in riproduzione -> non cambia ora, entra a fine giro
-      if(d.queue && this.playing){ this.pendPat=d.steps; }
-      else { this.pattern=d.steps; this.len=d.steps.length||16; this.pendPat=null; }
+      if(d.queue && this.playing){
+        this.pendPat=d.steps;
+        this.pendPatId=Number.isInteger(d.variation)?d.variation:-1;
+      } else {
+        this.pattern=d.steps; this.len=d.steps.length||16;
+        if(Number.isInteger(d.variation)) this.patternId=d.variation;
+        this.pendPat=null; this.pendPatId=-1;
+      }
     }
-    else if(d.type==='transport'){ if(d.playing) this.start(); else { this.playing=false; this.pendPat=null; } }
+    else if(d.type==='cancelPatternQueue'){ this.pendPat=null; this.pendPatId=-1; }
+    else if(d.type==='transport'){ if(d.playing) this.start(); else { this.playing=false; this.pendPat=null; this.pendPatId=-1; } }
     else if(d.type==='note'){ this.noteOn(d.note,!!d.accent,false,d.note); }
     else if(d.type==='transpose'){ this.transpose=d.semis|0; }
     else if(d.type==='swing'){ this.swing=Math.max(0,Math.min(0.45,+d.amount||0)); }
@@ -3413,15 +4192,16 @@ class TB303Processor extends AudioWorkletProcessor {
     else if(id==='resolution') this.res=v|0;
     else if(id==='subOsc') this.subVol=Math.max(0,Math.min(1,v));
   }
-  start(){ this.playing=true; this.step=0; this.counter=0; this.firstBeat=true; this.prevSlide=false; }
+  start(){ this.playing=true; this.step=0; this.swingParity=0; this.counter=0; this.firstBeat=true; this.prevSlide=false; }
   noteToHz(n,c){ return 440*Math.pow(2,(n-69+c/100)/12); }
   setNote(n){ this.tgtFreq=this.noteToHz(n,this.tuningCents); if(!this.sliding) this.curFreq=this.tgtFreq; }
   setSlide(en,from,to){ this.sliding=en; this.curFreq=this.noteToHz(from,this.tuningCents); this.tgtFreq=this.noteToHz(to,this.tuningCents); }
   // Come in TB303Engine::noteOn: durante lo slide l'inviluppo NON riparte,
   // altrimenti ogni nota legata rifa' l'attacco del filtro.
   noteOn(n,acc,sl,prev){
+    this.noteFreq=this.noteToHz(n,this.tuningCents);
     if(sl){ this.setSlide(true,prev,n); }
-    else { this.setSlide(false,n,n); this.setNote(n); this.nState=1; if(acc) this.aState=1; }
+    else { this.setSlide(false,n,n); this.setNote(n); this.nState=1; this.vState=1; if(acc) this.aState=1; }
   }
   sendStep(step){
     const s=this.pattern[step];
@@ -3435,12 +4215,17 @@ class TB303Processor extends AudioWorkletProcessor {
     // La lunghezza la decide il pattern che sta suonando ORA: e' lui che deve
     // chiudere il giro prima dell'eventuale cambio.
     this.step=(this.step+1)%this.len;
+    this.swingParity^=1;
     if(this.step===0 && this.pendPat){
-      this.pattern=this.pendPat; this.len=this.pendPat.length||16; this.pendPat=null;
-      this.port.postMessage({type:'patternApplied'});
+      const appliedId=this.pendPatId;
+      this.pattern=this.pendPat; this.len=this.pendPat.length||16;
+      this.patternId=appliedId; this.pendPat=null; this.pendPatId=-1;
+      this.port.postMessage({type:'patternApplied',variation:appliedId});
     }
-    this.sendStep(this.step);
-    this.port.postMessage({type:'step',step:this.step});
+    // L'attacco avviene all'inizio del campione seguente, dentro process().
+    // Farlo qui, dopo il decremento del campione corrente, accorciava ogni
+    // passo di un campione (N-1 invece di N).
+    this.firstBeat=true;
   }
   polyBlep(t,dt){ if(t<dt){t/=dt; return t+t-t*t-1;} else if(t>1-dt){t=(t-1)/dt; return t*t+t+t+1;} return 0; }
   vcoTick(){
@@ -3465,22 +4250,27 @@ class TB303Processor extends AudioWorkletProcessor {
     if(this.nState===0) this.nVal=0;
     else if(this.nState===1){ this.nVal=1-(1-this.nVal)*this.nAtt; if(this.nVal>=0.999){this.nVal=1; this.nState=2;} }
     else { this.nVal*=this.nDec; if(this.nVal<1e-6){this.nVal=0; this.nState=0;} }
+    if(this.vState===0) this.vVal=0;
+    else if(this.vState===1){ this.vVal=1-(1-this.vVal)*this.vAtt; if(this.vVal>=0.999){this.vVal=1; this.vState=2;} }
+    else { this.vVal*=this.vDec; if(this.vVal<1e-6){this.vVal=0; this.vState=0;} }
     if(this.aState===0) this.aVal=0;
     else if(this.aState===1){ this.aVal=1-(1-this.aVal)*this.aAtt; if(this.aVal>=0.999){this.aVal=1; this.aState=2;} }
     else { this.aVal*=this.aDec; if(this.aVal<1e-6){this.aVal=0; this.aState=0;} }
   }
-  cutG(hz){ const sr2=this.sr*2; let f=Math.min(Math.max(hz,20),sr2*0.49); const g=Math.tan(Math.PI*f/sr2); return g/(1+g); }
-  fStep(input,g,res4){ const fb=Math.tanh((input-res4*this.stage[3])*0.5); for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const v=g*(si-this.stageT[i]); const ns=v+this.stage[i]; this.stage[i]=ns+v; this.stageT[i]=Math.tanh(this.stage[i]*0.5);} }
+  cutG(hz){ const sr4=this.sr*4; let f=Math.min(Math.max(hz,20),sr4*0.45); const g=Math.tan(Math.PI*f/sr4); return g/(1+g); }
+  fStep(input,g,feedback){ const bias=.035, z=Math.tanh(bias); const fb=Math.tanh((input-feedback*this.stageT[3])*.78+bias)-z; for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const target=Math.tanh(si*(.92+.045*i)+bias)-z; const v=g*(target-this.stageT[i]); this.stage[i]+=2*v; this.stageT[i]=Math.tanh(this.stage[i]*.72+bias)-z; } return this.stageT[2]+.18*(this.stageT[1]-this.stageT[2]); }
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
-    let mod=Math.pow(2,logC+this.envMod*3*env+this.accentMod*1.5*acc); mod=Math.min(Math.max(mod,20),this.sr*0.45);
-    let res=this.resonance+acc*this.accentMod*0.15; res=Math.min(Math.max(res,0),0.99);
-    const g=this.cutG(mod), res4=res*4;
-    // compensazione risonanza, come in VCF::processSample
-    const inG=1+res*0.5, inF=input*inG;
-    const mid=0.5*(this.prevIn+inF); this.fStep(mid,g,res4); this.fStep(inF,g,res4); this.prevIn=inF;
-    // stageT[2] = terzo polo: 18 dB/ott come il TB-303, non 24 come il Moog
-    const xn=this.stageT[2]*2; const yn=xn-this.dcX+0.9995*this.dcY; this.dcX=xn; this.dcY=yn; return yn;
+    const es=Math.pow(Math.min(Math.max(env,0),1),.72), a=this.envMod;
+    const eo=(.35+4.65*a)*a*es, ao=this.accentMod*1.1*acc;
+    const ko=.32*Math.log2(this.noteFreq/130.81278265);
+    let mod=Math.pow(2,logC+eo+ao+ko); mod=Math.min(Math.max(mod,20),this.sr*.45);
+    let res=this.resonance-acc*this.accentMod*.035; res=Math.min(Math.max(res,0),.985);
+    const g=this.cutG(mod), feedback=4.12*Math.pow(res,1.35);
+    const inF=input*(1+res*.38); let o=0;
+    for(let k=1;k<=4;k++) o=this.fStep(this.prevIn+(inF-this.prevIn)*k*.25,g,feedback);
+    this.prevIn=inF;
+    const xn=o*(1.65+.35*res), yn=xn-this.dcX+.9995*this.dcY; this.dcX=xn; this.dcY=yn; return Number.isFinite(yn)?yn:0;
   }
   // Antiderivative anti-aliasing di primo ordine su tanh. Porting di
   // Source/DSP/Saturation.h: integrando la curva tra due campioni invece di
@@ -3495,13 +4285,11 @@ class TB303Processor extends AudioWorkletProcessor {
     s.xp=x; s.fp=F; return y;
   }
   tone(x){ this.tz += this.toneC*(x-this.tz); return this.tz; }
-  vca(input){ let amp=this.nVal+this.aVal; if(amp>2)amp=2; return this.adaa(input*amp*this.volume,this.sVca); }
+  vca(input){ let amp=this.vVal+this.aVal*this.accentMod; if(amp>2)amp=2; return this.adaa(input*amp*this.volume,this.sVca); }
   dist(x){
-    const dr=1+this.distortion*9;
-    // lo shaper gira sempre: tiene caldo lo stato dell'ADAA, cosi' riaprendo
-    // il knob il primo campione non esce con uno scalino
-    const shaped=this.adaa(x*dr,this.sDist)/Math.tanh(dr);
-    const o=(this.distortion<1e-4)? x : shaped;
+    const dr=1+this.distortion*6;
+    const shaped=this.adaa(x*dr,this.sDist)/(1+this.distortion*.65);
+    const mix=this.distortion*.82, o=x+(shaped-x)*mix;
     const yn=o-this.dX+0.9995*this.dY; this.dX=o; this.dY=yn;
     return this.tone(yn);
   }
@@ -3512,14 +4300,16 @@ class TB303Processor extends AudioWorkletProcessor {
       if(this.playing){
         // Swing: lo step pari si allunga e il dispari si accorcia della
         // stessa frazione, quindi ogni coppia dura sempre 2*spp e il tempo
-        // non deriva. Il refill usa this.step, che advance() ha già aggiornato.
-        if(this.counter<=0){ if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; } this.counter+=spp*(1+((this.step&1)?-this.swing:this.swing)); }
+        // non deriva. La parita' segue il clock continuo: un pattern di
+        // lunghezza dispari non deve invertire lo swing a ogni wrap.
+        if(this.counter<=0 && !this.firstBeat) this.advance();
+        if(this.firstBeat){ this.sendStep(this.step); this.port.postMessage({type:'step',step:this.step}); this.firstBeat=false; }
+        if(this.counter<=0) this.counter+=spp*(1+(this.swingParity?-this.swing:this.swing));
         this.counter-=1;
-        if(this.counter<=0) this.advance();
       }
       this.envTick();
       let s=0;
-      if(this.playing || this.nVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a,this.nVal,this.aVal);
+      if(this.playing || this.vVal>1e-5){ const a=this.vcoTick(); const b=this.vcf(a*(1.08+this.distortion*1.65),this.nVal,this.aVal);
         // bass boost prima del VCA, come in TB303Engine::processSample
         this.bassLp+=this.bassC*(b-this.bassLp);
         s=this.dist(this.vca(b+this.BASS*this.bassLp)); }
@@ -3534,7 +4324,7 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Controller lato UI ──
   let ctx=null, node=null, ready=false, starting=false, webPlaying=false;
   // ── FX chain (delay/reverb/chorus WebAudio; distortion nel worklet) ──
-  const fxState={ delay:{time:0.375,fb:0.22,mix:0.16,on:true}, reverb:{size:0.42,damp:0.55,mix:0.12,on:true,_last:-1}, dist:{drive:0,on:false}, chorus:{rate:0.3,depth:0.4,mix:0,on:false} };
+  const fxState={ delay:{time:0.375,fb:0.28,mix:0,on:false}, reverb:{size:0.35,damp:0.55,mix:0,on:false,_last:-1}, dist:{drive:0.05,on:true}, chorus:{rate:0.3,depth:0.4,mix:0,on:false} };
   let fxNodes=null, fxDistNorm=0;
   function makeImpulse(sec,decay){
     const rate=ctx.sampleRate, len=Math.max(1,(rate*sec)|0), buf=ctx.createBuffer(2,len,rate);
@@ -3566,6 +4356,7 @@ registerProcessor('tb303-processor', TB303Processor);
       // ampiezza di picco: sotto soglia il display dichiara "no signal"
       let peak=0;
       for(let i=0;i<buf.length;i++){ const d=Math.abs(buf[i]-128); if(d>peak) peak=d; }
+      window._outputMeterLevel=Math.min(1,peak/128);
       wrap.classList.toggle('live', peak>2);
 
       ctx2d.clearRect(0,0,W,H);
@@ -3647,7 +4438,8 @@ registerProcessor('tb303-processor', TB303Processor);
     else if(p==='chorusMix'){ F.chorus.mix=norm; if(fxNodes&&F.chorus.on) fxNodes.cw.gain.value=norm; }
   }
   function post(m){ if(node) node.port.postMessage(m); }
-  function send(id,value){ post({type:'param',id,value}); }
+  window._postWkl=(m)=>post(m);
+  function send(id,value){ liveParams[id]=value; post({type:'param',id,value}); }
 
   // Fallback ScriptProcessor: aprendo il file con doppio clic (file:// o data:)
   // l'AudioWorklet spesso non è disponibile o addModule su blob: viene rifiutato.
@@ -3698,31 +4490,44 @@ registerProcessor('tb303-processor', TB303Processor);
       if(st) st.textContent = (mode==='worklet' ? 'AudioWorklet' : 'ScriptProcessor') + ' · ready';
       buildFX();
       node.port.onmessage=(ev)=>{ const m=ev.data||{};
-        if(m.type==='patternApplied' && window._patternApplied){ window._patternApplied(); return; }
+        if(m.type==='patternApplied' && window._patternApplied){ window._patternApplied(m.variation); return; }
         if(m.type==='step'){ const st=m.step|0; window._prStep=st; curStep=st; seqCur=st; seqPlayhead(); if(window._drawPR) window._drawPR(); if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); } const sl=document.getElementById('slcd'); if(sl) sl.textContent=String(st+1).padStart(2,'0'); } };
       post({type:'pattern',steps:currentPattern()});
-      send('cutoff',DEFAULTS.cutoff); send('resonance',DEFAULTS.resonance);
-      send('envMod',DEFAULTS.envMod); send('decay',DEFAULTS.decay);
-      send('accent',DEFAULTS.accent); send('volume',DEFAULTS.volume);
-      send('distortion',DEFAULTS.distortion); send('tuning',DEFAULTS.tuning*100);
-      send('waveform',DEFAULTS.waveform); send('tempo',bpm); send('resolution',curRes);
-      send('subOsc',DEFAULTS.subOsc);
+      Object.entries(liveParams).forEach(([id,value])=>post({type:'param',id,value}));
+      post({type:'swing',amount:swingPct/200});
       ready=true;
-    }catch(e){ console.error('WebAudio init error',e); }
+    }catch(e){
+      console.error('WebAudio init error',e);
+      ready=false; node=null;
+      const st=document.getElementById('audio-status');
+      if(st) st.textContent='Audio non disponibile';
+    }
     starting=false;
     return ready;
   }
   async function audioPlay(){ await ensureAudio(); if(ctx && ctx.state==='suspended') await ctx.resume(); post({type:'transport',playing:true}); }
+
+  // iOS crea l'AudioContext sospeso e lo sblocca solo dentro a un gesto vero.
+  // Il guscio web chiama questi due al primo tocco, cosi' PLAY suona subito
+  // invece di restare muto finche' non lo si premo due volte.
+  window._acidUnlockAudio = async function(){
+    await ensureAudio();
+    if(ctx && ctx.state==='suspended'){ try{ await ctx.resume(); }catch(_){} }
+    return !!(ctx && ctx.state==='running');
+  };
+  window._acidResumeAudio = function(){
+    if(ctx && ctx.state==='suspended'){ try{ ctx.resume(); }catch(_){} }
+  };
   function audioStop(){ post({type:'transport',playing:false}); }
 
   // ── Sorgente note + modalità (MIDI / SEQ / PRESET) ──
   const _P=a=>a.map(x=>({note:x[0],gate:!!x[1],accent:!!x[2],slide:!!x[3],octave:x[4]||0}));
-  // 6 banchi × 8 variazioni. FACTORY_BANKS[banco][tasto]: i tasti Pattern
+  // 6 banchi × 9 variazioni. FACTORY_BANKS[banco][tasto]: i tasti Pattern
   // sono variazioni della stessa linea nella stessa tonalita', non pattern
   // slegati, quindi qualunque sequenza di tasti resta musicale.
   const FACTORY_BANKS=[
-    [ // Robot Funk
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[58,1,0,1,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[53,1,0,0,0],[48,0,0,0,0],[55,1,0,1,0],[58,1,0,0,0]]),   // 1 base
+    [ // Classic Acid
+      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,1,0],[55,1,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,1,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,1,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3732,7 +4537,7 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[51,1,1,0,0],[67,1,0,0,0],[55,1,0,0,0],[70,1,0,1,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[53,1,1,0,0],[65,1,0,0,0],[55,1,0,1,0],[70,1,0,0,0]])   // 8 picco
     ],
     [ // Rollin Acid
-      _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,1,0,0],[51,1,0,0,0],[60,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[60,1,0,0,0],[58,1,0,0,0],[55,1,1,0,0],[53,1,0,0,0],[51,1,0,1,0],[48,1,0,0,0]]),   // 1 base
+      _P([[48,1,1,0,0],[48,1,0,0,0],[60,1,0,1,0],[58,1,0,0,0],[55,1,1,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[58,1,0,1,0],[55,1,0,0,0],[51,1,1,0,0],[48,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[48,1,1,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3742,7 +4547,7 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[48,1,1,0,0],[60,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[55,1,1,0,0],[63,1,0,0,0],[60,1,0,0,0],[60,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[60,1,0,0,0],[70,1,0,0,0],[55,1,1,0,0],[65,1,0,0,0],[51,1,0,1,0],[60,1,0,0,0]])   // 8 picco
     ],
     [ // Basic Acid
-      _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[55,1,0,1,0],[48,0,0,0,0],[53,1,0,0,0],[48,1,0,0,0]]),   // 1 base
+      _P([[48,1,1,0,0],[48,0,0,0,0],[55,1,0,1,0],[60,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,1,0],[51,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3752,7 +4557,7 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[67,1,0,0,0],[60,1,1,0,0],[60,1,0,0,0],[58,1,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[55,1,1,1,0],[67,1,0,0,0],[53,1,0,0,0],[60,1,0,0,0]])   // 8 picco
     ],
     [ // Night Drive
-      _P([[55,1,1,0,0],[53,1,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[53,1,0,0,0],[55,1,0,1,0],[58,1,0,0,0],[60,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[53,1,0,0,0],[51,1,0,0,0],[48,1,0,1,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
+      _P([[48,1,1,0,0],[55,1,0,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[51,1,0,1,0],[55,1,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[55,1,0,0,0],[51,1,0,0,0],[48,1,1,0,0],[51,1,0,1,0],[55,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[55,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[60,1,1,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3762,7 +4567,7 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[55,1,1,0,0],[65,1,0,0,0],[51,1,0,0,0],[60,1,0,0,0],[51,1,1,0,0],[65,1,0,0,0],[55,1,0,1,0],[70,1,0,0,0],[60,1,1,0,0],[70,1,0,0,0],[55,1,0,0,0],[65,1,0,0,0],[51,1,1,0,0],[60,1,0,1,0],[51,1,0,0,0],[60,1,0,0,0]])   // 8 picco
     ],
     [ // Deep Squelch
-      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[56,1,0,1,0],[48,0,0,0,0],[55,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,0,0],[55,1,0,1,0],[48,0,0,0,0],[51,1,0,0,0]]),   // 1 base
+      _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0],[55,1,1,0,0],[56,1,0,1,0],[55,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[58,1,0,0,0],[56,1,0,1,0],[55,1,0,0,0],[51,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[55,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[58,1,0,0,0],[48,0,0,0,0],[56,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,0,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3772,7 +4577,7 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[48,1,1,0,0],[60,1,0,0,0],[51,1,0,0,0],[63,1,0,0,0],[55,1,1,0,0],[68,1,0,1,0],[56,1,0,0,0],[67,1,0,0,0],[48,1,1,0,0],[60,1,0,0,0],[58,1,0,0,0],[70,1,0,0,0],[56,1,1,0,0],[67,1,0,1,0],[55,1,0,0,0],[63,1,0,0,0]])   // 8 picco
     ],
     [ // Phrygian Drive
-      _P([[48,1,1,0,0],[49,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[53,1,0,0,0],[49,1,0,1,0],[48,1,0,0,0],[53,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[60,1,0,0,0],[58,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),   // 1 base
+      _P([[48,1,1,0,0],[49,1,0,0,0],[48,1,0,0,0],[51,1,0,0,0],[53,1,1,0,0],[49,1,0,1,0],[48,1,0,0,0],[53,1,0,0,0],[48,1,1,0,0],[49,1,0,0,0],[51,1,0,0,0],[49,1,0,0,0],[48,1,1,0,0],[58,1,0,1,0],[49,1,0,0,0],[48,1,0,0,0]]),   // 1 base
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,0,0,0,0],[48,0,0,0,0]]),   // 2 scheletro
       _P([[48,1,1,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[53,1,0,0,0],[48,0,0,0,0],[48,1,0,0,0],[48,0,0,0,0],[48,1,1,0,0],[48,0,0,0,0],[51,1,0,0,0],[48,0,0,0,0],[60,1,0,0,0],[48,0,0,0,0],[49,1,0,0,0],[48,0,0,0,0]]),   // 3 ottavi
       _P([[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,1,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,0,0],[48,1,0,1,0],[48,1,0,0,0],[48,1,0,0,0]]),   // 4 figura sulla root
@@ -3782,6 +4587,70 @@ registerProcessor('tb303-processor', TB303Processor);
       _P([[48,1,1,0,0],[61,1,0,0,0],[48,1,0,0,0],[63,1,0,0,0],[53,1,1,0,0],[61,1,0,1,0],[48,1,0,0,0],[65,1,0,0,0],[48,1,1,0,0],[61,1,0,0,0],[51,1,0,0,0],[61,1,0,0,0],[60,1,1,0,0],[70,1,0,1,0],[49,1,0,0,0],[60,1,0,0,0]])   // 8 picco
     ]
   ];
+  // I nove tasti sono variazioni performative della stessa frase, non nove
+  // pattern scollegati. Le note del motivo restano o diventano fondamentali;
+  // quelle aggiunte sono solo C/ottava, e ogni battuta entra e risolve su C.
+  function makePerformanceVariation(base,variation){
+    const result=base.map((src,position)=>{
+      const out={
+        note:Math.max(48,Math.min(60,src.note|0)),
+        gate:!!src.gate, accent:!!src.accent, slide:!!src.slide, octave:0
+      };
+      const quarter=position%4===0;
+      const pickup=position===3||position===7||position===11||position===14;
+      switch(variation){
+        case 1: // breakdown: restano gli appoggi stabili
+          out.gate=out.gate&&(quarter||position===5||position===11);
+          out.accent=out.gate&&quarter;
+          out.slide=false;
+          break;
+        case 2: // stessa linea, dialogo diverso fra gli accenti
+          out.accent=out.gate&&(out.accent||position===2||position===10);
+          break;
+        case 3: // legato controllato
+          out.slide=out.gate&&(out.slide||position===2||position===6||position===10||position===14);
+          break;
+        case 4: // pickup sulla fondamentale nei quattro gruppi
+          if(pickup){ out.gate=true; out.note=48; }
+          out.accent=out.gate&&(out.accent||position===7);
+          break;
+        case 5: // due sole risposte all'ottava
+          if(position===6||position===14){
+            out.gate=true; out.note=60; out.accent=position===14;
+          }
+          break;
+        case 6: // fondamentali sincopate intorno allo stesso scheletro
+          if(position===1||position===5||position===9||position===13){
+            out.gate=true; out.note=48;
+          }
+          out.accent=out.gate&&(position===5||position===13);
+          break;
+        case 7: // build piu' densa, senza introdurre note estranee
+          if(!out.gate||position%4===2){ out.gate=true; out.note=48; }
+          out.accent=out.gate&&(out.accent||position===6||position===14);
+          break;
+        case 8: // peak in sedicesimi, con slide radi e intenzionali
+          if(!out.gate){ out.gate=true; out.note=48; }
+          if(position===7) out.note=60;
+          out.accent=quarter||position===7;
+          out.slide=position===2||position===6||position===10||position===14;
+          break;
+      }
+      if(position===0){
+        out.note=48; out.gate=true; out.accent=true; out.slide=false;
+      }else if(position===15){
+        out.note=48; out.gate=true; out.slide=false;
+      }
+      return out;
+    });
+    // Niente slide orfani: uno slide ha senso solo se il passo seguente suona.
+    result.forEach((step,i)=>{ if(step.slide&&!result[(i+1)%result.length].gate) step.slide=false; });
+    return result;
+  }
+  FACTORY_BANKS.forEach(bank=>{
+    const base=bank[0];
+    bank.splice(0,bank.length,...Array.from({length:9},(_,i)=>makePerformanceVariation(base,i)));
+  });
   // vista piatta per chi vuole solo la linea principale di ogni banco
   const FACTORY_PATTERNS=FACTORY_BANKS.map(b=>b[0]);
   window.FACTORY_PATTERNS_JS=FACTORY_PATTERNS;
@@ -3796,13 +4665,17 @@ registerProcessor('tb303-processor', TB303Processor);
   window._onPatternChange=function(){ if(srcMode!=='midi') pushPattern(); renderSeqBay(); };
   window._setPresetIdx=function(i){
     presetIdx=((i|0)%FACTORY_BANKS.length+FACTORY_BANKS.length)%FACTORY_BANKS.length;
-    // nuovo banco: torna al tasto 1 (la linea piena) e svuota la coda
-    if(window._resetPatBtns) window._resetPatBtns(0);
-    setTxt('lcd-pat','01');
-    if(window._prSetPattern) window._prSetPattern((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0]);
-    if(srcMode!=='midi'){ pushPattern(); if(webPlaying) post({type:'transport',playing:true}); }
-    document.querySelectorAll('#pat-btns .keycap').forEach((k,j)=>k.classList.toggle('active',j===presetIdx));
-    setTxt('lcd-pat', String(presetIdx+1).padStart(2,'0'));
+    const base=(FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[0];
+    if(webPlaying&&srcMode!=='midi'&&window._queueFactoryBase){
+      // Il nuovo banco entra sul prossimo confine, senza riavviare il transport.
+      window._queueFactoryBase(base);
+    }else{
+      if(window._resetPatBtns) window._resetPatBtns(0);
+      setTxt('lcd-pat','01');
+      if(window._prSetPattern) window._prSetPattern(base);
+      if(srcMode!=='midi') post({type:'pattern',steps:cloneP(base),variation:0});
+      document.querySelectorAll('#pat-btns .keycap').forEach((k,j)=>k.classList.toggle('active',j===0));
+    }
     if(window._mostraPreset) window._mostraPreset(presetIdx);
     renderSeqBay();
   };
@@ -3815,7 +4688,16 @@ registerProcessor('tb303-processor', TB303Processor);
     if(window.updatePlayInd) window.updatePlayInd();
   }
   async function uiPlay(){
-    await ensureAudio(); if(ctx && ctx.state==='suspended') await ctx.resume();
+    const started=await ensureAudio();
+    if(!started){ webPlaying=false; window._seqPlaying=false; setPlayVisual(false); return; }
+    try{
+      if(ctx && ctx.state==='suspended') await ctx.resume();
+    }catch(e){
+      console.error('Audio resume error',e);
+      const st=document.getElementById('audio-status');
+      if(st) st.textContent='Audio bloccato · premi di nuovo PLAY';
+      webPlaying=false; window._seqPlaying=false; setPlayVisual(false); return;
+    }
     webPlaying=true; window._seqPlaying=true; setPlayVisual(true); seqPlayhead();
     if(srcMode==='midi'){ post({type:'transport',playing:false}); return; }
     pushPattern(); post({type:'transport',playing:true});
@@ -3825,7 +4707,13 @@ registerProcessor('tb303-processor', TB303Processor);
     post({type:'transport',playing:false});
     // Il worklet svuota la sua coda allo stop: se restasse il LED acceso
     // lampeggerebbe in attesa di un cambio che non arrivera' mai.
-    if(window._resetPatBtns) window._resetPatBtns(window._activeVar!=null?window._activeVar:0);
+    if(factoryBankQueued){
+      // Lo stop non deve perdere il banco appena scelto: da fermo diventa
+      // subito la nuova variazione attiva e sara' quella del prossimo Play.
+      applyVariation(queuedVar>=0?queuedVar:0);
+    }else if(window._resetPatBtns){
+      window._resetPatBtns(window._activeVar!=null?window._activeVar:0);
+    }
     window._prStep=0; curStep=0; seqCur=0; seqPlayhead();
     if(window._drawPR) window._drawPR();
     if(window.buildLCD){ window.buildLCD('lcd-s'); window.buildLCD('lcd-s2'); }
@@ -3915,6 +4803,7 @@ registerProcessor('tb303-processor', TB303Processor);
   const v2n=(r,v)=>Math.pow(Math.max(0,Math.min(1,(v-r.min)/(r.max-r.min))),r.skew);
 
   const knobCtl={};   // param -> setScaled(value[,silent])
+  const fxKnobCtl={}; // parametro FX -> setNormalized(value)
 
   // ── Display ← stessa sorgente dei knob ────────────────────────────────────
   // Il valore mostrato e la posizione del knob escono dallo stesso norm: non
@@ -3927,11 +4816,21 @@ registerProcessor('tb303-processor', TB303Processor);
     accent:   {v:'lcd-acc', b:'lcd-acc-b', fmt:v=>v.toFixed(2)}
   };
   const setTxt=(id,t)=>{ const e=document.getElementById(id); if(e) e.textContent=t; };
+  let lcdCutNorm=v2n(RANGES.Cutoff,DEFAULTS.cutoff), lcdResNorm=DEFAULTS.resonance;
+  function updateLCDFilterCurve(){
+    const knee=28+lcdCutNorm*52;
+    const peakY=7-Math.min(.9,lcdResNorm)*4;
+    const curve=document.getElementById('lcd-vcf-curve');
+    if(curve) curve.setAttribute('d',`M0 7 C${Math.max(8,knee-26)} 7 ${Math.max(12,knee-10)} 7 ${knee-4} ${peakY} C${knee+3} ${peakY} ${knee+7} 18 100 22`);
+  }
   function lcdParam(p,norm,val){
     const f=LCD_FIELDS[p]; if(!f) return;
     setTxt(f.v, f.fmt(val));
     const b=document.getElementById(f.b);
     if(b) b.style.width=(Math.max(0,Math.min(1,norm))*100).toFixed(1)+'%';
+    if(p==='cutoff') lcdCutNorm=norm;
+    if(p==='resonance') lcdResNorm=norm;
+    if(p==='cutoff' || p==='resonance') updateLCDFilterCurve();
   }
 
   function wireKnobs(){
@@ -3945,10 +4844,14 @@ registerProcessor('tb303-processor', TB303Processor);
       knobCtl[base.p]=setScaled;
       render();
       knob.style.cursor='ns-resize';
-      let drag=false, sy=0, sv=0;
-      knob.addEventListener('mousedown',e=>{ drag=true; sy=e.clientY; sv=norm; e.preventDefault(); });
-      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1, sv+(sy-e.clientY)/150)); const v=render(); send(base.p, base.p==='tuning'? v*100 : v); });
-      window.addEventListener('mouseup',()=>drag=false);
+      let sy=0, sv=0;
+      window.acidDrag(knob,{
+        start:e=>{ sy=e.clientY; sv=norm; },
+        move:e=>{
+          norm=Math.max(0,Math.min(1, sv+(sy-e.clientY)/150));
+          const v=render(); send(base.p, base.p==='tuning'? v*100 : v);
+        }
+      });
     });
   }
 
@@ -3970,17 +4873,55 @@ registerProcessor('tb303-processor', TB303Processor);
   function setWaveUI(isSqr){
     document.querySelectorAll('.wave-btn').forEach((b,i)=>b.classList.toggle('active', i===(isSqr?1:0)));
     document.querySelectorAll('#wave-lcd').forEach(e=>e.textContent=isSqr?'SQR':'SAW');
+    const wave=document.getElementById('lcd-vco-wave');
+    if(wave) wave.setAttribute('d',isSqr
+      ? 'M0 21 L0 3 L25 3 L25 21 L50 21 L50 3 L75 3 L75 21 L100 21'
+      : 'M0 21 L25 3 L25 21 L50 3 L50 21 L75 3 L75 21 L100 3');
     send('waveform', isSqr?1:0);
   }
   function setTempo(v){ bpm=Math.max(60,Math.min(200,Math.round(v)||bpm)); showBpm(); send('tempo',bpm); }
+  function applyPresetFX(d){
+    if(!d) return;
+    const delayOn=(+d.dlyM||0)>0.0001, reverbOn=(+d.rvbM||0)>0.0001;
+    const distortionOn=(+d.dis||0)>0.0001;
+    fxState.delay.on=delayOn; fxState.reverb.on=reverbOn; fxState.dist.on=distortionOn;
+    const values={
+      delayTime:Math.max(0,Math.min(1,((+d.dlyT||.375)-.02)/.73)),
+      delayFeedback:Math.max(0,Math.min(1,(+d.dlyF||0)/.9)),
+      delayMix:Math.max(0,Math.min(1,+d.dlyM||0)),
+      reverbSize:Math.max(0,Math.min(1,+d.rvbS||0)),
+      reverbMix:Math.max(0,Math.min(1,+d.rvbM||0)),
+      distortion:Math.max(0,Math.min(1,+d.dis||0))
+    };
+    Object.entries(values).forEach(([p,v])=>{
+      if(fxKnobCtl[p]) fxKnobCtl[p](v); else applyFX(p,v);
+    });
+    // applyFX non muove il wet gain quando il power e' gia' OFF: azzerarlo
+    // esplicitamente evita che passando da Dub/Night a Classic resti una coda
+    // bagnata invisibile nonostante Mix 0%.
+    if(fxNodes){
+      fxNodes.dw.gain.value=delayOn?fxState.delay.mix:0;
+      fxNodes.rw.gain.value=reverbOn?fxState.reverb.mix:0;
+    }
+    [['delay',delayOn],['reverb',reverbOn],['dist',distortionOn]].forEach(([id,on])=>{
+      const unit=document.getElementById('fxunit-'+id);
+      const button=unit&&unit.querySelector('.fxpower');
+      if(unit) unit.classList.toggle('off',!on);
+      if(button) button.classList.toggle('on',on);
+    });
+  }
   function applyFactory(d,idx){
     if(!d) return;
     if(knobCtl.cutoff)    knobCtl.cutoff(parseFloat(String(d.cut))||600);
     if(knobCtl.resonance) knobCtl.resonance(d.res);
     if(knobCtl.envMod)    knobCtl.envMod(d.env);
     if(knobCtl.decay)     knobCtl.decay(d.dec);
+    if(knobCtl.accent)    knobCtl.accent(d.acc);
+    if(knobCtl.volume)    knobCtl.volume(d.vol);
+    if(knobCtl.distortion)knobCtl.distortion(d.dis);
     setWaveUI((d.wave||'SAW').toUpperCase()==='SQR');
     if(d.sub!=null) send('subOsc', d.sub);   // sub per banco
+    applyPresetFX(d);
     setTempo(d.tempo);
     if(d.name) setTxt('lcd-preset', d.name);
     if(idx!=null && window._setPresetIdx) window._setPresetIdx(idx);
@@ -3992,6 +4933,11 @@ registerProcessor('tb303-processor', TB303Processor);
     if(knobCtl.envMod)    knobCtl.envMod(d.env);
     if(knobCtl.decay)     knobCtl.decay(d.dec);
     if(knobCtl.accent)    knobCtl.accent(d.acc);
+    if(knobCtl.volume)    knobCtl.volume(d.vol);
+    if(knobCtl.distortion)knobCtl.distortion(d.dis);
+    setWaveUI((d.wave||'SAW').toUpperCase()==='SQR');
+    if(d.sub!=null) send('subOsc',d.sub);
+    applyPresetFX(d);
   }
   const _ofs=window.onFactorySelect, _oss=window.onSynthSelect, _lp=window.loadPreset;
   const FD=()=>(typeof FACTORY_DATA!=='undefined')?FACTORY_DATA:[];
@@ -4041,7 +4987,7 @@ registerProcessor('tb303-processor', TB303Processor);
   // init dopo che il sketch ha costruito la UI
   // ── FX knobs (browser): aggiornano il display; Drive va all'engine ──
   const FXFMT={ delayTime:v=>Math.round((0.02+v*0.73)*1000)+'ms', delayFeedback:v=>Math.round(v*90)+'%', delayMix:v=>Math.round(v*100)+'%', reverbSize:v=>Math.round(v*100)+'%', reverbDamp:v=>Math.round(v*100)+'%', reverbMix:v=>Math.round(v*100)+'%', distortion:v=>Math.round(v*100)+'%', chorusRate:v=>Math.round(v*100)+'%', chorusDepth:v=>Math.round(v*100)+'%', chorusMix:v=>Math.round(v*100)+'%' };
-  const FXDEF={ delayTime:0.486, delayFeedback:0.244, delayMix:0.16, reverbSize:0.42, reverbDamp:0.55, reverbMix:0.12, distortion:0, chorusRate:0.3, chorusDepth:0.4, chorusMix:0 };
+  const FXDEF={ delayTime:0.486, delayFeedback:0.311, delayMix:0, reverbSize:0.35, reverbDamp:0.55, reverbMix:0, distortion:0.05, chorusRate:0.3, chorusDepth:0.4, chorusMix:0 };
   function wireFXKnobs(){
     document.querySelectorAll('.fxk .knob').forEach(knob=>{
       const wrap=knob.closest('.knob-wrap'); const val=wrap&&wrap.querySelector('.knob-val');
@@ -4058,11 +5004,16 @@ registerProcessor('tb303-processor', TB303Processor);
         }
       };
       render(); if(fx==='distortion') fxDistNorm=norm;
+      if(fx) fxKnobCtl[fx]=(v)=>{ norm=Math.max(0,Math.min(1,+v||0)); render(); applyFX(fx,norm); };
       knob.style.cursor='ns-resize';
-      let drag=false,sy=0,sv=0;
-      knob.addEventListener('mousedown',e=>{drag=true;sy=e.clientY;sv=norm;e.preventDefault();});
-      window.addEventListener('mousemove',e=>{ if(!drag)return; norm=Math.max(0,Math.min(1,sv+(sy-e.clientY)/150)); render(); if(fx) applyFX(fx,norm); });
-      window.addEventListener('mouseup',()=>drag=false);
+      let sy=0,sv=0;
+      window.acidDrag(knob,{
+        start:e=>{ sy=e.clientY; sv=norm; },
+        move:e=>{
+          norm=Math.max(0,Math.min(1,sv+(sy-e.clientY)/150));
+          render(); if(fx) applyFX(fx,norm);
+        }
+      });
     });
   }
   const _fxt=window.fxToggle;
@@ -4083,37 +5034,112 @@ registerProcessor('tb303-processor', TB303Processor);
   // pattern corrente chiude il giro, come sul TB-303. Il piano roll resta su
   // quello che sta suonando finche' il cambio non entra, altrimenti si
   // vedrebbe un pattern e se ne sentirebbe un altro.
-  let queuedVar=-1, activeVar=0;
+  let queuedVar=-1, activeVar=0, factoryBankQueued=false;
+  let patChain=[], chainIdx=0, chainActive=false;
+
   function paintPatBtns(){
     document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{
-      k.classList.toggle('active', i===activeVar);
-      k.classList.toggle('queued', i===queuedVar);
+      const isCur = i===activeVar;
+      k.classList.toggle('active',  isCur);
+      k.classList.toggle('queued',  i===queuedVar);
+      k.classList.toggle('chain-sel', patChain.includes(i) && !isCur && i!==queuedVar);
     });
   }
   function applyVariation(v){
     const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
-    activeVar=v; queuedVar=-1; window._activeVar=v;
+    chainActive=false; patChain=[]; chainIdx=0;
+    activeVar=v; queuedVar=-1; factoryBankQueued=false; window._activeVar=v;
     if(window._prSetPattern) window._prSetPattern(bank[v]);
-    post({type:'pattern',steps:cloneP(bank[v])});
+    post({type:'pattern',steps:cloneP(bank[v]),variation:v});
     setTxt('lcd-pat', String(v+1).padStart(2,'0'));
     paintPatBtns(); renderSeqBay();
   }
-  window._patternApplied=function(){ if(queuedVar>=0) applyVariation(queuedVar); };
-  window._resetPatBtns=function(v){ activeVar=v|0; queuedVar=-1; window._activeVar=activeVar; paintPatBtns(); };
+  window._patternApplied=function(appliedVariation){
+    const applied=Number.isInteger(appliedVariation)?appliedVariation:queuedVar;
+    if(applied<0) return;
+    const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
+    activeVar=applied; queuedVar=-1; factoryBankQueued=false; window._activeVar=applied;
+    if(window._prSetPattern) window._prSetPattern(bank[applied]);
+    setTxt('lcd-pat', String(applied+1).padStart(2,'0'));
+
+    if(chainActive && patChain.length>1){
+      const appliedAt=patChain.indexOf(applied);
+      chainIdx=appliedAt>=0?appliedAt:chainIdx;
+      const nextV=patChain[(chainIdx+1)%patChain.length];
+      queuedVar=nextV;
+      post({type:'pattern',steps:cloneP(bank[nextV]),variation:nextV,queue:true});
+    }
+    paintPatBtns(); renderSeqBay();
+  };
+  window._resetPatBtns=function(v){ activeVar=v|0; queuedVar=-1; factoryBankQueued=false; chainActive=false; patChain=[]; window._activeVar=activeVar; paintPatBtns(); };
+  window._queueFactoryBase=function(base){
+    chainActive=false; patChain=[]; chainIdx=0; queuedVar=0; factoryBankQueued=true;
+    post({type:'pattern',steps:cloneP(base),variation:0,queue:true});
+    paintPatBtns(); renderSeqBay();
+  };
 
   window.loadPatternButton=function(n){
-    const v=((n|0)%8+8)%8;
+    const v=((n|0)%9+9)%9;
     const fd=(typeof FACTORY_DATA!=='undefined')&&FACTORY_DATA[presetIdx];
     if(fd&&fd.name) setTxt('lcd-preset', fd.name);
-
-    if(!webPlaying){ applyVariation(v); return; }        // da fermo: subito
-    if(v===activeVar){ queuedVar=-1; paintPatBtns(); return; }  // annulla la coda
+    chainActive=false; patChain=[];
+    if(!webPlaying){ applyVariation(v); return; }
+    if(v===activeVar&&!factoryBankQueued){
+      queuedVar=-1; post({type:'cancelPatternQueue'}); paintPatBtns(); return;
+    }
     queuedVar=v;
-    post({type:'pattern',steps:cloneP((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[v]),queue:true});
+    post({type:'pattern',steps:cloneP((FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0])[v]),variation:v,queue:true});
     paintPatBtns();
   };
   function wirePatternButtons(){
-    document.querySelectorAll('#pat-btns .keycap').forEach((k,i)=>{ k.onclick=()=>window.loadPatternButton(i); });
+    const btns=[...document.querySelectorAll('#pat-btns .keycap')];
+    let dragging=false;
+    // La pointer capture inchioda gli eventi al primo tasto premuto, quindi i
+    // fratelli non ricevono piu' mouseover: la catena si legge con un hit-test
+    // sotto il puntatore, che col dito funziona identico al mouse.
+    const chainAt=(cx,cy)=>{
+      const hit=document.elementFromPoint(cx,cy);
+      const cap=hit&&hit.closest?hit.closest('#pat-btns .keycap'):null;
+      const i=cap?btns.indexOf(cap):-1;
+      if(i<0||patChain.includes(i)) return;
+      patChain.push(i); paintPatBtns();
+    };
+    btns.forEach((k,i)=>{
+      k.onclick=null;  // annulla il handler di buildKeycaps
+      window.acidDrag(k,{
+        start:()=>{ dragging=true; patChain=[i]; chainActive=false; paintPatBtns(); },
+        move:e=>{ if(dragging) chainAt(e.clientX,e.clientY); },
+        end:()=>commitChain()
+      });
+    });
+    function commitChain(){
+      if(!dragging) return;
+      dragging=false;
+      if(patChain.length>1 && webPlaying){
+        // Anche il primo elemento entra al confine di battuta. Sostituirlo qui
+        // immediatamente era il salto a meta' frase percepito come stonato.
+        chainActive=true; chainIdx=-1;
+        const firstV=patChain[0];
+        const bank=FACTORY_BANKS[presetIdx]||FACTORY_BANKS[0];
+        if(firstV===activeVar){
+          chainIdx=0;
+          const nextV=patChain[1];
+          queuedVar=nextV;
+          post({type:'pattern',steps:cloneP(bank[nextV]),variation:nextV,queue:true});
+        }else{
+          queuedVar=firstV;
+          post({type:'pattern',steps:cloneP(bank[firstV]),variation:firstV,queue:true});
+        }
+        paintPatBtns(); renderSeqBay();
+      } else {
+        // Click singolo o non in play: carica il primo pulsante toccato
+        chainActive=false;
+        const v=patChain.length>0?patChain[0]:-1;
+        patChain=[];
+        if(v>=0) window.loadPatternButton(v);
+        paintPatBtns();
+      }
+    }
   }
 
   // ── SEQUENCER BAY — 16 step fisici ────────────────────────────────────────
@@ -4218,22 +5244,42 @@ registerProcessor('tb303-processor', TB303Processor);
     const out=document.getElementById('vol-val');
     if(!bay||!fader) return;
     let v=DEFAULTS.volume;
-    const render=()=>{ bay.style.setProperty('--fv', v.toFixed(4)); if(out) out.textContent=v.toFixed(2); };
+    const render=()=>{
+      bay.style.setProperty('--fv', v.toFixed(4));
+      if(out) out.textContent=v.toFixed(2);
+    };
     const set=(nv,silent)=>{ v=Math.max(0,Math.min(1,nv)); render(); if(!silent) send('volume', v); };
     knobCtl.volume=set;
     render();
 
-    let drag=false, sy=0, sv=0;
-    const travel=()=>Math.max(1, fader.clientHeight-14);   // corsa utile della fessura
-    fader.addEventListener('mousedown',e=>{ drag=true; sy=e.clientY; sv=v; e.preventDefault(); });
-    window.addEventListener('mousemove',e=>{ if(!drag) return; set(sv+(sy-e.clientY)/travel()); });
-    window.addEventListener('mouseup',()=>drag=false);
+    let pointer=null;
+    const setFromPointer=(clientY)=>{
+      const r=fader.getBoundingClientRect();
+      const inset=7;
+      const travel=Math.max(1,r.height-inset*2);
+      set(1-(clientY-r.top-inset)/travel);
+    };
+    fader.addEventListener('pointerdown',e=>{
+      pointer=e.pointerId;
+      if(fader.setPointerCapture) fader.setPointerCapture(pointer);
+      setFromPointer(e.clientY);
+      e.preventDefault();
+    });
+    fader.addEventListener('pointermove',e=>{
+      if(e.pointerId!==pointer) return;
+      setFromPointer(e.clientY);
+      e.preventDefault();
+    });
+    const release=e=>{
+      if(e.pointerId!==pointer) return;
+      if(fader.hasPointerCapture&&fader.hasPointerCapture(pointer)) fader.releasePointerCapture(pointer);
+      pointer=null;
+    };
+    fader.addEventListener('pointerup',release);
+    fader.addEventListener('pointercancel',release);
   }
 
-  // ── Manometro Cutoff ─────────────────────────────────────────────────────
-  // Il quadrante non sta più dentro a una baia: --psi vive su :root e viene
-  // riscritto dallo stesso setKnobFrame che muove il knob, così lancetta e
-  // valore non possono divergere.
+  // Ripristina i default una volta terminato il montaggio dei controlli.
   // ── Rotella a combinazione: regola il BPM ─────────────────────────────────
   // Passa da window.changeBPM così clamp 60..200, showBpm e send('tempo')
   // restano una sola implementazione.
@@ -4246,34 +5292,35 @@ registerProcessor('tb303-processor', TB303Processor);
     const cur=()=>parseFloat((document.getElementById('bpm-hdr')||{}).textContent)||120;
     let drag=false, sy=0, bpm0=120, spin=0, spin0=0;
 
-    w.addEventListener('mousedown',e=>{
-      drag=true; sy=e.clientY; bpm0=cur(); spin0=spin; e.preventDefault();
+    window.acidDrag(w,{
+      start:e=>{ drag=true; sy=e.clientY; bpm0=cur(); spin0=spin; },
+      move:e=>{
+        if(!drag) return;
+        const dy=sy-e.clientY;                  // trascinare su = più veloce
+        spin=spin0-dy;
+        if(ridges) ridges.style.setProperty('--tw', (((spin%RIDGE)+RIDGE)%RIDGE)+'px');
+        const target=Math.max(60,Math.min(200, bpm0+Math.round(dy/PX_PER_BPM)));
+        const d=target-cur();
+        if(d) window.changeBPM(d);
+      },
+      end:()=>{ drag=false; }
     });
-    window.addEventListener('mousemove',e=>{
-      if(!drag) return;
-      const dy=sy-e.clientY;                    // trascinare su = più veloce
-      spin=spin0-dy;
-      if(ridges) ridges.style.setProperty('--tw', (((spin%RIDGE)+RIDGE)%RIDGE)+'px');
-      const target=Math.max(60,Math.min(200, bpm0+Math.round(dy/PX_PER_BPM)));
-      const d=target-cur();
-      if(d) window.changeBPM(d);
-    });
-    window.addEventListener('mouseup',()=>drag=false);
   }
 
-  // ── Frecce preset sul display: scorrono gli 8 banchi di fabbrica ─────────
-  // Passano da _setPresetIdx, la stessa via dei tasti Pattern: nessuno stato
-  // parallelo da tenere allineato.
+  // ── Frecce preset sul display: scorrono i 6 banchi di fabbrica ────────────
+  // Applicano insieme timbro, tempo e pattern; cambiare solo il numero di banco
+  // lasciava attivo il suono precedente e faceva sembrare i preset identici.
   function wirePresetNav(){
     const prev=document.getElementById('pnav-prev');
     const next=document.getElementById('pnav-next');
     if(!prev||!next) return;
-    const N=(window.FACTORY_PATTERNS_JS||[]).length||8;
+    const N=(window.FACTORY_DATA||[]).length||6;
     const salta=(d)=>{
       const cur=(parseInt((document.getElementById('lcd-bank')||{}).textContent,10)||1)-1;
       const i=((cur+d)%N+N)%N;
-      if(window._setPresetIdx) window._setPresetIdx(i);
-      mostraPreset(i);
+      const fs=document.getElementById('factory-select');
+      if(fs){ fs.value=String(i); window.onFactorySelect(fs); }
+      else applyFactory(FACTORY_DATA[i],i);
     };
     prev.onclick=()=>salta(-1);
     next.onclick=()=>salta(1);
@@ -4286,41 +5333,269 @@ registerProcessor('tb303-processor', TB303Processor);
   }
   window._mostraPreset=mostraPreset;
 
-  function wireGauge(){
-    const root=document.documentElement;
-
+  function resetControlDefaults(){
     // I knob possono essere sporcati durante l'init (cutoff finiva a fondo
     // scala): li riporto sui DEFAULTS in modo idempotente, silent = non
     // rimanda i valori all'engine.
     Object.keys(DEFAULTS).forEach(p=>{ if(knobCtl[p]) knobCtl[p](DEFAULTS[p], true); });
-
-    const cutoffKnob=[...document.querySelectorAll('#page-synth .knob-wrap')]
-      .find(w=>/cutoff/i.test((w.querySelector('.knob-lbl')||{}).textContent||''))
-      ?.querySelector('.knob');
-    if(!cutoffKnob) return;
-
-    const prevFrame=window.setKnobFrame;
-    if(prevFrame){
-      window.setKnobFrame=function(el,norm){
-        const r=prevFrame.apply(this,arguments);
-        if(el===cutoffKnob) root.style.setProperty('--psi', Math.max(0,Math.min(1,norm)));
-        return r;
-      };
-    }
-    // porta subito la lancetta sul valore corrente
-    root.style.setProperty('--psi', cutoffKnob.dataset.knobNorm || 0.41);
   }
 
   setTimeout(()=>{
     showBpm(); wireKnobs(); wireResolution(); wireBpmKeyboard(); wireFXKnobs();
-    wirePatternButtons(); wireFader(); wireWheel(); wirePresetNav(); wireGauge();
+    // In JUCE i tasti parlano al sequencer C++; non sovrascrivere quei listener
+    // con la coda WebAudio usata dalla preview nel browser.
+    if(!window._jucePatternBridge) wirePatternButtons();
+    wireFader(); wireWheel(); wirePresetNav(); resetControlDefaults(); ulRender();
     if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[0]);
     seqBuild();
     if(window.setSrcMode) window.setSrcMode('seq');
   }, 400);
 })();
+
+// ── USER LIBRARY (localStorage) ───────────────────────────────────────────────
+const _UL_KEY='acidlab-user-lib';
+function ulRead(){ try{ return JSON.parse(localStorage.getItem(_UL_KEY)||'[]'); }catch(e){ return []; } }
+function ulWrite(a){ localStorage.setItem(_UL_KEY,JSON.stringify(a)); }
+
+function ulSave(){
+  const nameEl=document.getElementById('ul-name');
+  const name=(nameEl?nameEl.value.trim():'')||('Pattern '+new Date().toLocaleTimeString());
+  const pat=window._prBuildPattern&&window._prBuildPattern();
+  if(!pat||!pat.length){ return; }
+  const arr=ulRead();
+  arr.push({name,pattern:pat,date:new Date().toISOString()});
+  ulWrite(arr);
+  ulRender();
+  if(nameEl) nameEl.value='';
+}
+
+function ulLoad(idx){
+  const item=ulRead()[idx];
+  if(!item) return;
+  if(window._prSetPattern) window._prSetPattern(item.pattern);
+  if(window._postWkl) window._postWkl({type:'pattern',steps:item.pattern});
+  const nameEl=document.getElementById('loaded-name');
+  const typeEl=document.getElementById('loaded-type');
+  if(nameEl) nameEl.textContent=item.name;
+  if(typeEl) typeEl.textContent='User Library';
+}
+
+function ulDelete(idx){
+  const arr=ulRead(); arr.splice(idx,1); ulWrite(arr); ulRender();
+}
+
+function ulRender(){
+  const el=document.getElementById('ul-list');
+  if(!el) return;
+  const arr=ulRead();
+  const count=document.getElementById('ul-count');
+  if(count) count.textContent=arr.length+' '+(arr.length===1?'PATTERN':'PATTERNS');
+  if(!arr.length){
+    el.innerHTML='<div class="ul-empty"><i class="ul-empty-icon"></i><strong>EMPTY MEMORY</strong><span>Name the current pattern and press SAVE to store it locally.</span></div>';
+    return;
+  }
+  el.innerHTML=arr.map((item,i)=>`
+    <div class="preset-item" style="display:flex;align-items:center;gap:4px;padding:5px 7px;">
+      <span style="flex:1;font-family:var(--mono);font-size:8px;letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.name}">${item.name}</span>
+      <button onclick="ulLoad(${i})" style="padding:3px 8px;font-size:7px;font-family:var(--mono);letter-spacing:1px;
+              background:linear-gradient(to bottom,#fafaf6,#e0e0dc);border:1px solid var(--panel-shad);
+              border-radius:4px;cursor:pointer;color:var(--text);">▶</button>
+      <button onclick="ulDelete(${i})" style="padding:3px 7px;font-size:7px;font-family:var(--mono);letter-spacing:1px;
+              background:linear-gradient(to bottom,#fafaf6,#e0e0dc);border:1px solid var(--panel-shad);
+              border-radius:4px;cursor:pointer;color:var(--text);">✕</button>
+    </div>
+  `).join('');
+}
 </script>
 
 
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   GUSCIO APPLICAZIONE — tablet e browser
+   Il pannello e' disegnato a misura fissa (1160 px), come un plugin vero. Qui
+   non viene ricomposto: viene scalato per intero finche' non riempie lo
+   schermo. Un reflow responsive spezzerebbe l'allineamento fra knob, incisioni
+   e display, che e' il punto dell'estetica del pannello.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html { background:#090d0c; height:100%; -webkit-text-size-adjust:100%; }
+html, body { overflow:hidden; overscroll-behavior:none; }
+body {
+  height:100%; margin:0; padding:0; display:block;
+  -webkit-tap-highlight-color:transparent;   /* niente lampo blu sui pad */
+  -webkit-touch-callout:none;                /* niente menu da pressione lunga */
+  touch-action:manipulation;                 /* niente zoom da doppio tap */
+}
+
+#app-stage {
+  position:fixed; left:0; top:0; width:100%;
+  /* --vvh e' l'altezza del viewport visivo: in Safari la barra indirizzi si
+     ritrae e inset:0 riporterebbe un'altezza che non e' quella visibile,
+     spostando in basso il centro del pannello. */
+  height:var(--vvh, 100%);
+  display:flex; align-items:center; justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#app-scale { width:1160px; transform-origin:center center; will-change:transform; }
+#app-scale > .chassis { width:1160px; max-width:none; margin:0; }
+
+/* Trascinando un knob, iOS interpreta il gesto anche come selezione di testo e
+   fa comparire la lente di ingrandimento sopra il pannello. Il testo di uno
+   strumento non si seleziona: si legge. Restano selezionabili i soli campi in
+   cui si scrive davvero. */
+#app-stage { -webkit-user-select:none; user-select:none; }
+#app-stage input, #app-stage textarea, #app-stage select {
+  -webkit-user-select:text; user-select:text;
+}
+
+/* La barra finestra finta simula una cornice desktop che sul tablet non
+   esiste: un tasto di chiusura che non chiude nulla e' un difetto, non un
+   dettaglio skeuomorfico. */
+.windowbar { display:none !important; }
+
+/* Il tocco non ha un "fuori": senza questo l'ultimo controllo sfiorato resta
+   illuminato come se il dito fosse ancora sopra. */
+@media (hover:none) {
+  .tab:hover:not(.active)        { color:#aeb5b1; background:transparent; }
+  .knob:hover                    { --ring:#5f625c; }
+  .knob:active                   { --ring:var(--acid-mid); }
+  .btn:hover                     { filter:none; }
+  .btn.acid:hover                { filter:none; }
+  .fxpower:hover:not(.on)        { background:inherit; }
+  .pnav:hover                    { background:inherit; border-color:inherit; }
+  .step:hover                    { background:inherit; top:0; }
+  .preset-item:hover             { background:inherit; }
+  .scale-sel select:hover        { background:inherit; }
+  .btn.res3:hover                { background:inherit; box-shadow:inherit; color:inherit; }
+  .pad:hover .pad-face           { filter:none; }
+  .res-btn.res-active:hover      { background:inherit; }
+  .wave-btn:hover:not(.active)   { filter:none; }
+  .keycap:hover:not(.active) .keycap-top { filter:none; }
+}
+
+/* Bersagli piu' generosi dove il dito e' piu' grosso del cursore. */
+@media (pointer:coarse) {
+  .pmod  { min-height:16px; }
+  .pnav  { min-width:26px; min-height:26px; }
+}
+
+/* Invito a girare il tablet: mostrato solo quando la scala verticale
+   scenderebbe sotto 0.78 (vedi fit()). */
+#rotate-hint {
+  position:fixed; inset:0; z-index:9999; display:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  background:#090d0c; color:#c5cbc7;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:3px;
+  text-transform:uppercase; text-align:center; padding:32px;
+}
+#rotate-hint svg {
+  width:76px; height:76px; stroke:#66f50e; fill:none;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+  filter:drop-shadow(0 0 10px rgba(102,245,14,.35));
+}
+#rotate-hint b { display:block; font-size:12px; font-weight:500; color:#e6ebe4; }
+#rotate-hint i {
+  display:block; margin-top:9px; font-style:normal;
+  font-size:9px; letter-spacing:2.2px; color:#7d857f;
+}
+body.is-portrait #rotate-hint { display:flex; }
+body.is-portrait #app-stage   { visibility:hidden; }
+</style>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   GUSCIO APPLICAZIONE — adattamento allo schermo e igiene del tocco
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var DESIGN_W = 1160;   // larghezza di progetto del pannello
+  var MAX_UP   = 1.5;    // oltre questo l'ingrandimento ammorbidisce le texture
+
+  var chassis = document.querySelector('.chassis');
+  if(!chassis) return;
+
+  var stage = document.createElement('div'); stage.id = 'app-stage';
+  var scale = document.createElement('div'); scale.id = 'app-scale';
+  chassis.parentNode.insertBefore(stage, chassis);
+  scale.appendChild(chassis);
+  stage.appendChild(scale);
+
+  var hint = document.createElement('div');
+  hint.id = 'rotate-hint';
+  hint.innerHTML =
+    '<svg viewBox="0 0 64 64" aria-hidden="true">' +
+      // tablet in verticale, che ruota verso l'orizzontale
+      '<rect x="18" y="10" width="20" height="32" rx="3"/>' +
+      '<rect x="12" y="47" width="32" height="11" rx="2" opacity=".34"/>' +
+      '<path d="M44 15a17 17 0 0 1 7 15"/>' +
+      '<path d="M41 9.5 46.5 16 40 20"/>' +
+    '</svg>' +
+    '<div><b>Gira il tablet</b><i>AcidLab suona in orizzontale</i></div>';
+  document.body.appendChild(hint);
+
+  function fit(){
+    var vv = window.visualViewport;
+    var vw = vv ? vv.width  : window.innerWidth;
+    var vh = vv ? vv.height : window.innerHeight;
+
+    // offsetHeight ignora la transform, quindi resta l'altezza di layout reale
+    // anche dopo la prima scalatura: nessun accumulo fra un fit e il successivo.
+    var h = scale.offsetHeight || 700;
+    var s = Math.min(vw / DESIGN_W, vh / h, MAX_UP);
+    scale.style.transform = 'scale(' + s.toFixed(4) + ')';
+    document.documentElement.style.setProperty('--vvh', vh + 'px');
+
+    // In verticale il pannello ci sta comunque, ma sotto una certa scala le
+    // incisioni da 6 px non si leggono piu': meglio chiedere di girare il
+    // tablet che offrire uno strumento illeggibile. La soglia guarda la scala
+    // ottenuta, non la larghezza, cosi' un iPad Pro in verticale (che ha
+    // spazio a sufficienza) non viene bloccato inutilmente.
+    document.body.classList.toggle('is-portrait', vh > vw && s < 0.78);
+  }
+
+  fit();
+  addEventListener('resize', fit);
+  addEventListener('orientationchange', function(){ setTimeout(fit, 250); });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+  // I font web arrivano dopo il primo layout e cambiano l'altezza dei display.
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  addEventListener('load', fit);
+  // Cambiare pagina puo' cambiare l'altezza del contenuto.
+  document.querySelectorAll('.nav-tabs .tab').forEach(function(t){
+    t.addEventListener('click', function(){ requestAnimationFrame(fit); });
+  });
+
+  // ── Igiene del tocco ──────────────────────────────────────────────────────
+  // Il pinch di iOS non passa da touch-action: va fermato sui suoi eventi.
+  ['gesturestart','gesturechange','gestureend'].forEach(function(ev){
+    document.addEventListener(ev, function(e){ e.preventDefault(); }, {passive:false});
+  });
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  // Due dita sul pannello sono un tentativo di zoom, non un gesto dello strumento.
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length > 1) e.preventDefault();
+  }, {passive:false});
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); });
+
+  // ── Audio: iOS lo sblocca solo dentro a un gesto ──────────────────────────
+  // Su iPhone e iPad l'audio di WebAudio segue l'interruttore silenzioso: con
+  // la levetta abbassata lo strumento resta muto senza dare alcun segnale, e
+  // sembra rotto. Dichiarare la sessione come 'playback' lo esclude da quella
+  // regola, come fa qualunque app musicale nativa (iOS 16.4 e successivi;
+  // altrove la proprieta' non esiste e non fa niente).
+  try { if(navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(_){}
+
+  function unlock(){
+    try { if(navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(_){}
+    if(window._acidUnlockAudio) window._acidUnlockAudio();
+    removeEventListener('pointerdown', unlock, true);
+  }
+  addEventListener('pointerdown', unlock, true);
+  // Tornando in primo piano il contesto puo' essere stato sospeso dal sistema.
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && window._acidResumeAudio) window._acidResumeAudio();
+  });
+})();
+</script>
 </body>
 </html>

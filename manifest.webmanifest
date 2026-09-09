@@ -1,0 +1,19 @@
+{
+  "name": "AcidLab Bass Synthesizer",
+  "short_name": "AcidLab",
+  "description": "Sintetizzatore di basso acid ispirato alla Roland TB-303.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#090d0c",
+  "theme_color": "#090d0c",
+  "icons": [
+    { "src": "assets/icons/icon-192.png",     "sizes": "192x192",   "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png",     "sizes": "512x512",   "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-1024.png",    "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-192.png", "sizes": "192x192",   "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512",   "type": "image/png", "purpose": "maskable" }
+  ]
+}
