@@ -2282,7 +2282,7 @@ body {
 }
 .gauge-mount .hy-face::before,.gauge-mount .hy-face::after,.gauge-mount .hy-cap { display:none; }
 .gauge-mount .hy-needle {
-  display:block; position:absolute; z-index:4; left:50%; top:86%;
+  display:block; position:absolute; z-index:4; left:50%; top:96%;
   width:22%; height:1px; border-radius:1px;
   background:linear-gradient(90deg,#7e100b,#ff3b27 72%,#ffb096);
   box-shadow:0 1px 1px rgba(0,0,0,.72),0 0 3px rgba(255,54,35,.38);
@@ -5041,6 +5041,11 @@ registerProcessor('tb303-processor', TB303Processor);
   }
 
   async function ensureAudio(){
+    // Nel plugin il suono lo fa il DSP C++: qui il motore WebAudio non deve
+    // nemmeno nascere, o si ritrova un secondo sintetizzatore dentro la
+    // WebView sopra a quello vero. Il bridge JUCE accende questo interruttore;
+    // nel browser non esiste e il percorso resta identico a prima.
+    if(window._juceNoWebAudio) return false;
     if(ready) return true;
     if(starting){ for(let i=0;i<40 && !ready;i++) await new Promise(r=>setTimeout(r,25)); return ready; }
     starting=true;

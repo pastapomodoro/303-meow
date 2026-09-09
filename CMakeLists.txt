@@ -64,6 +64,21 @@ juce_add_binary_data(TB303Assets
         Resources/ui.html
         acidlab-knob-61f-128px.png
         Resources/panel_texture.png
+        # Gli asset che la WebView disegna. Senza questi il plugin mostrava il
+        # VU come un rettangolo bianco, il logo come un punto di domanda e la
+        # piastra senza texture: la pagina li cerca via http, e dentro la
+        # WebView li puo' dare solo il resource provider. Aggiungerne uno qui
+        # basta: getResource li trova per nome dalla tabella di JUCE, senza
+        # una seconda lista da tenere allineata.
+        assets/branding/acidlab-logo-header.webp
+        assets/branding/acidlab-logo-master.webp
+        assets/branding/acidlab-vu-meter-modern-v4.webp
+        assets/branding/acidlab-fader-track.webp
+        assets/branding/acidlab-fader-grip-v3.webp
+        assets/textures/acidv_dark_chassis.webp
+        assets/textures/acidv_panel_offwhite.webp
+        assets/textures/acidv_keycap_ivory.webp
+        assets/ui/settings-acidlab-bg.webp
 )
 
 set(SOURCE_FILES

@@ -287,5 +287,43 @@ TB303Editor::getResource(const juce::String& url)
         };
     }
 
+    // Tutto il resto per NOME DI FILE, dalla tabella che genera JUCE.
+    //
+    // La pagina cerca i suoi asset via http (assets/branding/..., textures,
+    // il fondo di SETTINGS): fuori dal browser quelle richieste le puo'
+    // soddisfare solo questo provider, e finche' non lo faceva il plugin
+    // mostrava il VU come un rettangolo bianco e il logo come un punto di
+    // domanda. Si cerca in originalFilenames invece di mappare a mano un
+    // simbolo per file: aggiungere una riga a juce_add_binary_data basta, e
+    // non c'e' una seconda lista che puo' restare indietro.
+    const auto nomeFile = url.fromLastOccurrenceOf("/", false, false);
+    if(nomeFile.isNotEmpty())
+    {
+        for(int i = 0; i < BinaryData::namedResourceListSize; ++i)
+        {
+            if(nomeFile != juce::String(BinaryData::originalFilenames[i]))
+                continue;
+
+            int taglia = 0;
+            if(const auto* trovato = BinaryData::getNamedResource(BinaryData::namedResourceList[i], taglia))
+            {
+                const auto* data = reinterpret_cast<const std::byte*>(trovato);
+                std::vector<std::byte> vec(data, data + taglia);
+
+                const auto est = nomeFile.fromLastOccurrenceOf(".", false, false).toLowerCase();
+                juce::String tipo = "application/octet-stream";
+                if     (est == "webp") tipo = "image/webp";
+                else if(est == "png")  tipo = "image/png";
+                else if(est == "jpg" || est == "jpeg") tipo = "image/jpeg";
+                else if(est == "svg")  tipo = "image/svg+xml";
+                else if(est == "html") tipo = "text/html";
+                else if(est == "css")  tipo = "text/css";
+                else if(est == "js")   tipo = "text/javascript";
+
+                return juce::WebBrowserComponent::Resource{ std::move(vec), tipo };
+            }
+        }
+    }
+
     return {};
 }
