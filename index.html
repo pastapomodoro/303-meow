@@ -3004,16 +3004,16 @@ body {
                   <div class="dsp-big" id="fp-tempo">130 BPM</div>
                 </div>
                 <div>
-                  <div class="dsp-k" style="margin-bottom:3px;">Waveform</div>
-                  <div class="dsp-big" id="fp-wave">SAW</div>
+                  <div class="dsp-k" style="margin-bottom:3px;">Gate</div>
+                  <div class="dsp-big" id="fp-gate">12/16</div>
                 </div>
                 <div>
-                  <div class="dsp-k" style="margin-bottom:3px;">Cutoff</div>
-                  <div class="dsp-big" id="fp-cut">600Hz</div>
+                  <div class="dsp-k" style="margin-bottom:3px;">Acc · Slide</div>
+                  <div class="dsp-big" id="fp-artic">3 · 2</div>
                 </div>
                 <div>
-                  <div class="dsp-k" style="margin-bottom:3px;">Resonance</div>
-                  <div class="dsp-big" id="fp-res">0.75</div>
+                  <div class="dsp-k" style="margin-bottom:3px;">Scala</div>
+                  <div class="dsp-big" id="fp-scale" style="font-size:13px;">C Eb G Bb</div>
                 </div>
               </div>
             </div>
@@ -3062,6 +3062,12 @@ body {
                 <option value="9">10 — Needle Peak</option>
                 <option value="10">11 — Midnight Roll</option>
                 <option value="11">12 — Controlled Burn</option>
+                <option value="12">13 — Classic Acid</option>
+                <option value="13">14 — Rollin Acid</option>
+                <option value="14">15 — Munich Sequence</option>
+                <option value="15">16 — Night Drive</option>
+                <option value="16">17 — Deep Squelch</option>
+                <option value="17">18 — Phrygian Drive</option>
               </select>
               <div style="pointer-events:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);">
                 <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -3935,6 +3941,13 @@ const SYNTH_DATA = [
   {name:'Needle Peak',     cut:.396486,res:.96,env:.86,dec:.09,acc:.74,vol:.56,dis:.03,wave:'SQR',sub:.00,dlyT:.188,dlyF:.24,dlyM:.00,rvbS:.25,rvbM:.00},
   {name:'Midnight Roll',   cut:.220546,res:.68,env:.44,dec:.46,acc:.62,vol:.70,dis:.12,wave:'SQR',sub:.46,dlyT:.500,dlyF:.38,dlyM:.10,rvbS:.45,rvbM:.04},
   {name:'Controlled Burn', cut:.347268,res:.44,env:.68,dec:.24,acc:.72,vol:.42,dis:.62,wave:'SQR',sub:.08,dlyT:.250,dlyF:.25,dlyM:.00,rvbS:.28,rvbM:.00},
+  // ── timbri dei banchi (generati da apply_banks_v11.py) ──
+  {name:'Classic Acid',   cut:0.327703,res:.74,env:.72,dec:.22,acc:.76,vol:.70,dis:.05,wave:'SAW',sub:.00,dlyT:.375,dlyF:.28,dlyM:.00,rvbS:.35,rvbM:.00},
+  {name:'Rollin Acid',    cut:0.289468,res:.80,env:.78,dec:.14,acc:.82,vol:.59,dis:.30,wave:'SAW',sub:.12,dlyT:.250,dlyF:.36,dlyM:.06,rvbS:.36,rvbM:.02},
+  {name:'Munich Sequence',cut:0.536744,res:.38,env:.26,dec:.17,acc:.58,vol:.77,dis:.02,wave:'SAW',sub:.55,dlyT:.300,dlyF:.26,dlyM:.18,rvbS:.55,rvbM:.14},
+  {name:'Night Drive',    cut:0.367668,res:.52,env:.40,dec:.32,acc:.60,vol:.76,dis:.06,wave:'SAW',sub:.45,dlyT:.500,dlyF:.42,dlyM:.16,rvbS:.60,rvbM:.10},
+  {name:'Deep Squelch',   cut:0.227146,res:.80,env:.74,dec:.30,acc:.68,vol:.66,dis:.12,wave:'SQR',sub:.70,dlyT:.250,dlyF:.44,dlyM:.12,rvbS:.52,rvbM:.08},
+  {name:'Phrygian Drive', cut:0.309472,res:.82,env:.80,dec:.16,acc:.86,vol:.38,dis:.34,wave:'SQR',sub:.26,dlyT:.214,dlyF:.38,dlyM:.05,rvbS:.40,rvbM:.03},
 ];
 
 // Anteprima del pattern selezionato: legge FACTORY_PATTERNS_JS, la stessa
@@ -3971,13 +3984,27 @@ function renderPatternPreview(idx){
   }
 }
 
+// Note della scala, per leggere l'insieme intervallare della linea.
+const PC_NAMES=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
 function onFactorySelect(sel){
   const i=sel ? (sel.value|0) : 0;
   const d=FACTORY_DATA[i]||FACTORY_DATA[0];
   const t=document.getElementById('fp-tempo'); if(t) t.textContent=d.tempo+' BPM';
-  const w=document.getElementById('fp-wave');  if(w) w.textContent=d.wave;
-  const c=document.getElementById('fp-cut');   if(c) c.textContent=d.cut;
-  const r=document.getElementById('fp-res');   if(r) r.textContent=d.res.toFixed(2);
+
+  // La card mostra proprieta' della LINEA e non del timbro. Prima leggeva
+  // onda, cutoff e risonanza del banco: da quando il preset Pattern non
+  // scrive piu' il timbro, quei tre campi avrebbero raccontato un suono
+  // diverso da quello che stai sentendo.
+  const pats=window.FACTORY_PATTERNS_JS;
+  const pat=(pats && (pats[i]||pats[0])) || [];
+  const on=pat.filter(s=>s && s.gate);
+  const pcs=[...new Set(on.map(s=>((s.note+(s.octave||0)*12)%12)))].sort((a,b)=>a-b);
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('fp-gate', on.length+'/16');
+  set('fp-artic', on.filter(s=>s.accent).length+' · '+on.filter(s=>s.slide).length);
+  set('fp-scale', pcs.map(p=>PC_NAMES[p]).join(' ') || '—');
+
   const ln=document.getElementById('loaded-name'); if(ln) ln.textContent=d.name;
   const lt=document.getElementById('loaded-type'); if(lt) lt.textContent='Factory Pattern · '+d.tempo+' BPM';
   renderPatternPreview(i);
@@ -4969,16 +4996,12 @@ registerProcessor('tb303-processor', TB303Processor);
   }
   function applyFactory(d,idx){
     if(!d) return;
-    if(knobCtl.cutoff)    knobCtl.cutoff(parseFloat(String(d.cut))||600);
-    if(knobCtl.resonance) knobCtl.resonance(d.res);
-    if(knobCtl.envMod)    knobCtl.envMod(d.env);
-    if(knobCtl.decay)     knobCtl.decay(d.dec);
-    if(knobCtl.accent)    knobCtl.accent(d.acc);
-    if(knobCtl.volume)    knobCtl.volume(d.vol);
-    if(knobCtl.distortion)knobCtl.distortion(d.dis);
-    setWaveUI((d.wave||'SAW').toUpperCase()==='SQR');
-    if(d.sub!=null) send('subOsc', d.sub);   // sub per banco
-    applyPresetFX(d);
+    // Il preset Pattern cambia SOLO la linea e il tempo. Prima scriveva anche
+    // cutoff, risonanza, inviluppo, decay, accento, volume, distorsione, onda,
+    // sub e FX: scegliere una linea azzerava il suono costruito a mano, e le
+    // due tendine della pagina PRESET non erano davvero indipendenti nonostante
+    // le etichette. Il timbro lo decide la lista Synth, dove ogni banco ha la
+    // sua voce con lo stesso nome se si vuole la coppia originale.
     setTempo(d.tempo);
     if(d.name) setTxt('lcd-preset', d.name);
     if(idx!=null && window._setPresetIdx) window._setPresetIdx(idx);

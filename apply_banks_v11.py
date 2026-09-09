@@ -146,6 +146,36 @@ def emit_banks():
     return res[:-1] if res.endswith(",") else res
 
 
+MARKER = "  // ── timbri dei banchi (generati da apply_banks_v11.py) ──"
+
+
+def emit_synth_extra():
+    """I timbri dei banchi come voci della lista Synth.
+
+    Il preset Pattern non scrive piu' il timbro, quindi la coppia
+    linea+suono con cui un banco e' stato pensato non sarebbe piu'
+    raggiungibile: qui diventa una voce Synth con lo stesso nome.
+
+    cut in SYNTH_DATA e' normalizzato 0..1, non in Hz: la conversione e' la
+    stessa v2n della UI, pow((hz-min)/(max-min), skew) sul range del knob
+    Cutoff (120..5000, skew 0.4).
+    """
+    lo, hi, skew = 120.0, 5000.0, 0.4
+    w = max(len(n) for n, _, _, _ in BANKS) + 3
+    out = [MARKER]
+    for (name, _, _, _), s in zip(BANKS, SYNTH):
+        t, wave, cut, res, env, dec, acc, vol, dis, sub, dT, dF, dM, rS, rM = s
+        n = (max(0.0, min(1.0, (cut - lo) / (hi - lo))) ** skew)
+        nm = f"'{name}',"
+        out.append(
+            f"  {{name:{nm:<{w}}cut:{n:.6f}".rstrip("0").rstrip(".") + f",res:{d2(res)},"
+            f"env:{d2(env)},dec:{d2(dec)},acc:{d2(acc)},vol:{d2(vol)},dis:{d2(dis)},"
+            f"wave:'{wave}',sub:{d2(sub)},dlyT:{d3(dT)},dlyF:{d2(dF)},dlyM:{d2(dM)},"
+            f"rvbS:{d2(rS)},rvbM:{d2(rM)}}},"
+        )
+    return "\n".join(out)
+
+
 html = TARGET.read_text()
 orig = html
 
@@ -179,6 +209,31 @@ if mo:
     html = html[:mo.start(1)] + opts + "\n" + html[mo.end(1):]
     print("  ok  <option> del menu")
 print(f"  ok  testi iniziali ({n})")
+
+# SYNTH_DATA: i 12 timbri scritti a mano restano, i 6 dei banchi si
+# rigenerano. Il marcatore rende l'operazione ripetibile senza duplicare.
+m = re.search(r"(const SYNTH_DATA = \[\n)(.*?)(\n\];)", html, re.S)
+if not m:
+    sys.exit("SYNTH_DATA non trovato")
+body = m.group(2)
+if MARKER in body:
+    body = body[:body.index(MARKER)].rstrip("\n")
+html = html[:m.start(2)] + body + "\n" + emit_synth_extra() + html[m.end(2):]
+print(f"  ok  SYNTH_DATA (+{len(BANKS)} timbri dei banchi)")
+
+# Le <option> di synth-select sono markup statico: le rigenero dai nomi
+# effettivamente presenti in SYNTH_DATA, cosi' gli indici non scivolano.
+names = re.findall(r"\{name:'([^']+)'", re.search(
+    r"const SYNTH_DATA = \[\n(.*?)\n\];", html, re.S).group(1))
+opts = "\n".join(
+    f'                <option value="{i}">{i + 1:02d} — {n}</option>'
+    for i, n in enumerate(names))
+ms = re.search(r"([ \t]*<option value=\"0\">01 — Classic Acid 303</option>\n"
+               r"(?:[ \t]*<option value=\"\d+\">.*?</option>\n?)*)", html)
+if not ms:
+    sys.exit("<option> di synth-select non trovate")
+html = html[:ms.start(1)] + opts + "\n" + html[ms.end(1):]
+print(f"  ok  <option> Synth ({len(names)} voci)")
 
 if html == orig:
     sys.exit("nessuna modifica")
