@@ -230,6 +230,11 @@ body {
 /* le pagine corte distribuiscono lo spazio nel contenuto invece di lasciare
    una fascia vuota in fondo */
 #page-settings > .settings-grid { flex:none; }
+/* Settings scorre: con la card Oscillatore le schede sono sette e la griglia
+   non ci sta piu' nell'altezza fissa del pannello. Scorrere qui non costa
+   niente — non e' una pagina che si usa suonando — mentre allargare il
+   pannello per farcele stare sballava le proporzioni di tutte le altre. */
+#page-settings { overflow-y:auto; -webkit-overflow-scrolling:touch; }
 /* La riga si dimensiona sul contenuto, non sullo spazio che avanza: con flex:1
    e align-content stretch le due card venivano tirate a 333px pur avendo ~184px
    di contenuto, e il buco finiva DENTRO la card, dove sembra un errore. Cosi'
@@ -3208,19 +3213,22 @@ body {
         </div>
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Oscillatore</span></div>
-          <div class="card-body" style="padding:14px;">
-            <div style="display:flex;gap:6px;">
-              <div class="wave-btn active" onclick="setWave(this)">SAW</div>
-              <div class="wave-btn" onclick="setWave(this)">SQR</div>
-            </div>
-            <div class="set-hint" style="margin:8px 0 14px;">Prima la forma d'onda la decideva solo il preset e non c'era modo di scegliere. Sega e quadra sono generate con PolyBLEP, quindi senza aliasing anche sulle note alte.</div>
-            <div style="display:flex;justify-content:center;padding:2px 0 4px;">
-              <div class="knob-wrap">
-                <div class="knob" style="width:58px;height:58px;"></div>
+          <!-- Onda e accordatura affiancate, non impilate: impilate la card
+               veniva alta 313 px contro le 234, 190 e 191 delle altre della
+               stessa riga, alzava la riga della griglia e la pagina Settings
+               sforava di 216 px. -->
+          <div class="card-body" style="padding:13px 14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;">
+                <div class="wave-btn active" onclick="setWave(this)">SAW</div>
+                <div class="wave-btn" onclick="setWave(this)">SQR</div>
+              </div>
+              <div class="knob-wrap" style="flex:0 0 auto;">
+                <div class="knob" style="width:52px;height:52px;"></div>
                 <div class="knob-lbl">Tuning</div><div class="knob-val">0.0</div>
               </div>
             </div>
-            <div class="set-hint" style="margin-top:10px;">Accordatura generale, ±12 semitoni. Sul TB-303 la manopola TUNING sta sul pannello: si accorda a orecchio col resto della strumentazione e resta ferma per tutto il set.</div></div>
+            <div class="set-hint" style="margin-top:9px;">Forma d'onda e accordatura della macchina, ±12 semitoni.</div></div>
         </div>
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Audio Engine</span></div>
@@ -4165,7 +4173,15 @@ function setMode(mode){
   let level = 0;
   let clipHeldUntil = 0; // timestamp ms — clip indicator persiste 2s dopo l'evento
 
+  let vuScritto=-1, clipScritto=null;
   setInterval(()=>{
+    // Se il meter non e' sullo schermo non si scrive nulla: --psi sta sulla
+    // radice, e una custom property sulla radice invalida lo stile di TUTTO il
+    // documento — oltre mille nodi, centoventisette dei quali con tre o piu'
+    // livelli di ombra. Farlo dodici volte al secondo anche da un'altra
+    // scheda, e anche in silenzio, era lavoro buttato.
+    if(!container.offsetParent) return;
+
     const target=Math.max(0,Math.min(1,Number(window._outputMeterLevel)||0));
     // attacco rapido e rilascio piu' lento, come un meter hardware
     level = target>level ? level*.30+target*.70 : level*.82+target*.18;
@@ -4174,14 +4190,22 @@ function setMode(mode){
     // Scala logaritmica -36…+3 dB per la lancetta analogica.
     const db=20*Math.log10(Math.max(level,0.0001));
     const vu=Math.max(0,Math.min(1,(db+36)/39));
-    document.documentElement.style.setProperty('--psi',vu.toFixed(4));
 
     const isClipping = level >= 0.94;
     if(isClipping) clipHeldUntil = Date.now() + 2000;
     const clipHeld = Date.now() < clipHeldUntil;
+    const clip = isClipping||clipHeld;
 
-    container.style.setProperty('--vu-cut',(100-vu*100).toFixed(1)+'%');
-    container.classList.toggle('clip',isClipping||clipHeld);
+    // A meter fermo il valore arrotondato non cambia: si evita di riscrivere
+    // lo stesso numero e di far ricalcolare lo stile per niente. Tre decimali
+    // sono piu' di quanto la lancetta possa mostrare.
+    const q=+vu.toFixed(3);
+    if(q!==vuScritto){
+      vuScritto=q;
+      document.documentElement.style.setProperty('--psi',q);
+      container.style.setProperty('--vu-cut',(100-q*100).toFixed(1)+'%');
+    }
+    if(clip!==clipScritto){ clipScritto=clip; container.classList.toggle('clip',clip); }
   }, 80);
 })();
 </script>
@@ -4440,22 +4464,39 @@ registerProcessor('tb303-processor', TB303Processor);
   // ── Oscilloscopio: traccia il segnale reale in uscita ─────────────────────
   // Nessuna simulazione: cutoff che apre l'onda, creste di risonanza e picchi
   // d'accento si vedono perché stanno davvero nel segnale.
-  let scopeRAF=0;
+  let scopeRAF=0, scopeRO=null;
   function startScope(analyser){
     const cv=document.getElementById('scope'); if(!cv) return;
     const wrap=cv.parentElement, ctx2d=cv.getContext('2d');
     const buf=new Uint8Array(analyser.fftSize);
     if(scopeRAF) cancelAnimationFrame(scopeRAF);
 
-    const draw=()=>{
+    // La dimensione del buffer si aggiorna quando il canvas cambia davvero,
+    // non a ogni frame: getBoundingClientRect dentro il loop forzava un
+    // ricalcolo del layout sessanta volte al secondo su oltre mille nodi
+    // chiusi in un layer scalato, ed era il costo piu' alto della pagina.
+    if(scopeRO) scopeRO.disconnect();
+    scopeRO=new ResizeObserver(es=>{
+      const b=es[0].contentRect;
+      if(b.width<2||b.height<2) return;
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      cv.width=Math.round(b.width*dpr);
+      cv.height=Math.round(b.height*dpr);
+    });
+    scopeRO.observe(cv);
+
+    var ultimo=0;
+    const draw=(t)=>{
       scopeRAF=requestAnimationFrame(draw);
       if(document.hidden) return;
-      const r=cv.getBoundingClientRect();
-      if(r.width<2||r.height<2) return;
-      const dpr=Math.min(window.devicePixelRatio||1,2);
-      if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){
-        cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
-      }
+      // document.hidden non basta: cambiando scheda l'oscilloscopio resta nel
+      // DOM ma invisibile, e continuava a disegnare a 60 fps mentre si stava
+      // sul sequencer. offsetParent e' null quando un antenato ha display:none.
+      if(!cv.offsetParent) return;
+      // Trenta fotogrammi bastano a un oscilloscopio e dimezzano il lavoro.
+      if(t-ultimo < 32) return;
+      ultimo=t;
+      if(cv.width<2||cv.height<2) return;
       const W=cv.width, H=cv.height;
       analyser.getByteTimeDomainData(buf);
 
