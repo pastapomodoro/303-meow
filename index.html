@@ -900,7 +900,12 @@ body {
 }
 .lcd-topstats b { color:var(--lcd-green); font-weight:600; }
 .lcd-mid {
-  display:grid; grid-template-columns:minmax(0,1.55fr) 108px minmax(132px,.82fr);
+  /* I preset stanno in mezzo, non spinti a destra, e la colonna e' la piu'
+     larga dopo l'onda: da iPad cambiare preset era il gesto piu' scomodo del
+     pannello, con due frecce da 16 px in un angolo. L'onda cede la larghezza
+     - a lei serve estensione orizzontale ma ne aveva in abbondanza - e il
+     riquadro VCO/VCF, che e' solo decorativo, cede dodici pixel. */
+  display:grid; grid-template-columns:minmax(0,1.15fr) minmax(196px,1fr) 96px;
   gap:7px; align-items:stretch; height:94px; margin:0 0 7px;
 }
 .lcd-module {
@@ -946,25 +951,35 @@ body {
   font-family:var(--mono); font-size:6px; letter-spacing:1.4px;
   text-transform:uppercase; color:#376b10;
 }
-.preset-nav { display:grid; grid-template-columns:16px minmax(0,1fr) 16px; align-items:center; gap:3px; margin-bottom:3px; }
+.preset-nav {
+  display:grid; grid-template-columns:34px minmax(0,1fr) 34px;
+  align-items:center; gap:6px; margin:auto 0;   /* centrata nel riquadro */
+}
 .preset-name {
   flex:1; min-width:0; text-align:center;
-  font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.35px;
+  font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.35px;
   color:var(--lcd-green); text-shadow:0 0 9px var(--acid-glow);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 /* frecce: tasti incisi nel vetro del display, non bottoni web */
 .pnav {
-  flex-shrink:0; width:16px; height:16px; padding:0; cursor:pointer;
+  /* 16x16 era un bersaglio da mouse. Il minimo per un dito e' 44 pt e
+     l'altezza della fascia non li concede, ma 34x40 - con touch-action
+     none, che evita che il tap venga letto come inizio di uno scroll - li
+     rende premibili al primo colpo invece che al terzo. */
+  flex-shrink:0; width:34px; height:40px; padding:0; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  font-size:8px; line-height:1; color:var(--lcd-green);
+  font-size:13px; line-height:1; color:var(--lcd-green);
   background:rgba(136,255,0,.07); border:1px solid rgba(136,255,0,.28);
-  border-radius:3px; transition:all .1s;
+  border-radius:4px; transition:all .1s;
+  touch-action:none; -webkit-tap-highlight-color:transparent;
 }
 .pnav:hover  { background:rgba(136,255,0,.18); border-color:rgba(136,255,0,.5); }
 .pnav:active { background:rgba(136,255,0,.30); transform:translateY(1px); }
 .lcd-side-rows { margin-top:auto; }
-.lcd-side .dsp-row { min-height:11px; line-height:11px; }
+.lcd-side .dsp-row { min-height:11px; line-height:11px; display:flex; align-items:center; gap:4px; }
+.lcd-side .dsp-row .dsp-k + .dsp-v { margin-right:auto; }
+.lcd-side .dsp-row .dsp-v:last-child { margin-right:0; }
 .lcd-side .dsp-k, .lcd-side .dsp-v { font-size:6px; letter-spacing:1px; }
 .scope-wrap canvas { display:block; width:100%; height:100%; }
 /* reticolo inciso dietro alla traccia */
@@ -1508,23 +1523,8 @@ body {
   box-shadow: 0 0 5px var(--acid-glow);
 }
 
-/* ── fascia inferiore incisa: legenda + contatori ── */
-.seqbay-foot {
-  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-  margin-top:9px; padding-top:8px;
-  border-top:1px solid rgba(0,0,0,.10);
-  font-family:var(--mono); font-size:7px; letter-spacing:1.6px;
-  color:var(--text-dim); text-transform:uppercase;
-}
-.seqbay-foot b { color:var(--acid-dark); font-weight:600; letter-spacing:1px; }
-.foot-key { display:inline-flex; align-items:center; gap:6px; }
-.foot-dot { width:5px;height:5px;border-radius:50%;
-  background:radial-gradient(circle at 38% 30%,#eaffb8,var(--acid));
-  box-shadow:0 0 4px var(--acid-glow); }
-.foot-bar { width:12px;height:3px;border-radius:2px;
-  background:linear-gradient(180deg,#d6ff7a,#72c800);
-  box-shadow:0 0 4px var(--acid-glow); }
-.foot-hint { margin-left:auto; color:var(--text-xs); letter-spacing:1.2px; }
+/* La fascia inferiore della bandella (.seqbay-foot e i suoi .foot-*) e' stata
+   rimossa insieme al suo markup: vedi il commento nell'HTML del sequencer. */
 
 /* larghezze strette: 16 → 8+8 → 4×4, mai overflow orizzontale */
 @media (max-width:900px) {
@@ -1537,7 +1537,6 @@ body {
   .pad { height:42px; }
   .seqbay { padding:11px 12px; }
   .seqbay-hdr { flex-wrap:wrap; gap:8px; }
-  .foot-hint { display:none; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -2098,7 +2097,6 @@ body {
   box-shadow:inset 0 1px 0 rgba(255,255,255,.78),0 0 0 1px rgba(83,87,83,.20);
 }
 .seqbay-hdr { margin-bottom:5px; }
-.seqbay-foot { margin-top:6px; padding-top:5px; }
 .pad { height:31px; }
 .pad-num { font-size:6px; }
 .fxscrew { opacity:.45; }
@@ -2617,6 +2615,22 @@ body {
                       </div>
                     </div>
 
+                    <div class="lcd-side">
+                      <div class="lcd-side-k">Pattern preset</div>
+                      <div class="preset-nav">
+                        <button class="pnav" id="pnav-prev" title="Preset precedente" aria-label="Preset precedente">◀</button>
+                        <div class="preset-name" id="lcd-preset">Classic Acid</div>
+                        <button class="pnav" id="pnav-next" title="Preset successivo" aria-label="Preset successivo">▶</button>
+                      </div>
+                      <!-- Bank, Res e Steps su una riga sola invece che su tre:
+                           le tre righe impilate occupavano l'altezza che ora
+                           serve alle frecce. Sono tre numeri di servizio, si
+                           leggono uguale in fila. -->
+                      <div class="lcd-side-rows">
+                        <div class="dsp-row"><span class="dsp-k">Bank</span><span class="dsp-v"><span id="lcd-bank">01</span>/06</span><span class="dsp-k">Res</span><span class="dsp-v"><span class="res-lcd">1/16</span></span><span class="dsp-k">Steps</span><span class="dsp-v">16</span></div>
+                      </div>
+                    </div>
+
                     <div class="lcd-engine-panel">
                       <div class="lcd-engine-cell">
                         <div class="lcd-engine-head"><span>VCO</span><b id="wave-lcd">SAW</b></div>
@@ -2631,20 +2645,6 @@ body {
                           <path class="lcd-graph-grid" d="M0 22H100 M0 12H100"/>
                           <path class="lcd-graph-line" id="lcd-vcf-curve" d="M0 7 C45 7 60 7 69 8 C78 10 80 18 100 22"/>
                         </svg>
-                      </div>
-                    </div>
-
-                    <div class="lcd-side">
-                      <div class="lcd-side-k">Pattern preset</div>
-                      <div class="preset-nav">
-                        <button class="pnav" id="pnav-prev" title="Preset precedente" aria-label="Preset precedente">◀</button>
-                        <div class="preset-name" id="lcd-preset">Classic Acid</div>
-                        <button class="pnav" id="pnav-next" title="Preset successivo" aria-label="Preset successivo">▶</button>
-                      </div>
-                      <div class="lcd-side-rows">
-                        <div class="dsp-row"><span class="dsp-k">Bank</span><span class="dsp-v"><span id="lcd-bank">01</span>/06</span></div>
-                        <div class="dsp-row"><span class="dsp-k">Res</span><span class="dsp-v"><span class="res-lcd">1/16</span></span></div>
-                        <div class="dsp-row"><span class="dsp-k">Steps</span><span class="dsp-v">16</span></div>
                       </div>
                     </div>
                   </div>
@@ -2764,12 +2764,17 @@ body {
 
         <div class="seq-pads" id="seq-pads"></div>
 
-        <div class="seqbay-foot">
-          <span class="foot-key"><span class="foot-dot"></span>Accent</span>
-          <span class="foot-key"><span class="foot-bar"></span>Slide</span>
-          <span>Res <b class="res-lcd">1/16</b></span>
-          <span class="foot-hint">Tasto = gate · marker = accent / slide</span>
-        </div>
+        <!-- Qui c'era la legenda "Accent / Slide / Res / Tasto = gate", alta 21
+             px fra margine e padding. Non e' mai stata visibile: la pagina
+             SYNTH ha un deficit costante di circa 20 px - .grid-3 sta a 436,
+             piu' 9 di gap piu' 122 di bandella fa 567 contro i 546 del
+             contenitore, che ha overflow:hidden - e i 33 px tagliati dal fondo
+             si mangiavano la legenda intera piu' 4 px della riga dei pad,
+             cioe' la meta' inferiore dei pallini di accent e slide.
+             Togliendola la bandella scende a 101 px e ci sta, e i marker si
+             vedono per intero. L'informazione non si perde: la risoluzione e'
+             gia' nel display LCD, e la pagina SEQUENCER ha le due righe SLIDE
+             e ACCENT con le loro etichette. -->
       </div>
 
     </div>
@@ -4652,7 +4657,7 @@ class TB303Processor extends AudioWorkletProcessor {
     else { this.aVal*=this.aDec; if(this.aVal<1e-6){this.aVal=0; this.aState=0;} }
   }
   cutG(hz){ const sr4=this.sr*4; let f=Math.min(Math.max(hz,20),sr4*0.45); const g=Math.tan(Math.PI*f/sr4); return g/(1+g); }
-  fStep(input,g,feedback){ const bias=.035, z=Math.tanh(bias); const fb=Math.tanh((input-feedback*this.stageT[3])*.78+bias)-z; for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const target=Math.tanh(si*(.92+.045*i)+bias)-z; const v=g*(target-this.stageT[i]); this.stage[i]+=2*v; this.stageT[i]=Math.tanh(this.stage[i]*.72+bias)-z; } return this.stageT[2]+.18*(this.stageT[1]-this.stageT[2]); }
+  fStep(input,g,feedback){ const bias=.035, z=Math.tanh(bias); const fb=Math.tanh((input-feedback*this.stageT[3])*.80+bias)-z; for(let i=0;i<4;i++){ const si=(i===0)?fb:this.stageT[i-1]; const target=Math.tanh(si*(.92+.045*i)+bias)-z; const v=g*(target-this.stageT[i]); this.stage[i]+=2*v; this.stageT[i]=Math.tanh(this.stage[i]*.80+bias)-z; } return this.stageT[2]; }
   vcf(input,env,acc){
     let bc=Math.min(Math.max(this.baseCutoff,20),18000); const logC=Math.log2(bc);
     const es=Math.pow(Math.min(Math.max(env,0),1),.72), a=this.envMod;
@@ -4672,8 +4677,8 @@ class TB303Processor extends AudioWorkletProcessor {
     // L'accento ALZA la risonanza: e' quel circuito a produrre il pompaggio
     // sulle note accentate. Qui la sottraeva, col segno invertito rispetto
     // all'hardware.
-    let res=this.resonance+acc*this.accentMod*.05; res=Math.min(Math.max(res,0),.985);
-    const g=this.cutG(mod), feedback=3.6*Math.pow(res,1.35);
+    let res=this.resonance+acc*this.accentMod*.10; res=Math.min(Math.max(res,0),.985);
+    const g=this.cutG(mod), feedback=3.85*Math.pow(res,1.15);
     // Compensazione della fondamentale. Il feedback del ladder svuota il
     // fondamentale a risonanza alta: con .38 restava a un terzo dell'ottava
     // superiore e il suono non aveva corpo.
