@@ -1424,8 +1424,17 @@ body {
   transition: background .12s, box-shadow .08s, transform .06s;
 }
 /* LED annegato nel cappuccio */
+/* Larghezza con un tetto, non solo percentuale. Con left/right al 24% la
+   larghezza seguiva il pad e l'altezza restava di 4 px: il rapporto del LED
+   passava da 3,9:1 a 760 px di finestra a 8,6:1 su iPad e 11,2:1 su schermo
+   largo, cioe' da spia a filo stirato. Un LED e' un componente fisico, la sua
+   dimensione non dipende da quanto e' larga la tastiera. Il tetto a 22 px
+   tiene il rapporto intorno a 5,5:1, che e' la proporzione di disegno.
+   Centrato con left/right a 0 e margin auto: niente transform, che sui pad
+   e' gia' usata per l'affondamento al tocco. */
 .pad-led {
-  position:absolute; left:24%; right:24%; top:6px; height:4px; border-radius:2px;
+  position:absolute; left:0; right:0; margin:0 auto;
+  width:min(52%,22px); top:6px; height:4px; border-radius:2px;
   background:linear-gradient(180deg,#9b9c94 0%,#74756e 100%);
   box-shadow: inset 0 1px 1px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.6);
   transition: background .1s, box-shadow .1s;
@@ -2412,12 +2421,19 @@ body {
   height:7px; border:1px solid rgba(0,0,0,.28);
   background:linear-gradient(90deg,var(--acid) var(--p,0%),#111714 var(--p,0%));
 }
+/* Il logo si adatta al riquadro invece di essere ritagliato. Con width:100% e
+   height:auto dentro un guscio da 76 px con overflow:hidden, un'immagine 3:1
+   alla larghezza della card veniva alta 100 px e ne perdeva 24: il marchio
+   arrivava tagliato sopra e sotto. Con max-width e max-height il browser
+   scala mantenendo le proporzioni e non taglia niente.
+   Fondo e cornice via: il logo ha il canale alpha, quindi appoggia sulla
+   piastra della card. Il rettangolo chiaro sembrava il bordo bianco di
+   un'immagine senza trasparenza, cioe' proprio il difetto da togliere. */
 .about-logo-shell {
-  width:100%; height:76px; overflow:hidden; display:flex; align-items:center;
-  border-radius:4px; background:#f6f6f2;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+  width:100%; height:76px; display:flex;
+  align-items:center; justify-content:center;
 }
-.about-logo { display:block; width:100%; height:auto; }
+.about-logo { display:block; max-width:100%; max-height:100%; width:auto; height:auto; }
 
 @media (max-width:900px) {
   .nav-tabs { min-width:0; flex:1; }
@@ -3306,7 +3322,10 @@ body {
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">About</span></div>
           <div class="card-body" style="padding:14px;">
-            <div class="about-logo-shell"><img class="about-logo" src="assets/branding/acidlab-logo-master.webp" alt="AcidLab — Bass Synthesizer"></div>
+            <!-- Il file -header ha il canale alpha, il -master no: e' un WebP
+                 con un solo chunk VP8 e il bianco cotto dentro, per questo qui
+                 si vedeva il riquadro bianco. Stesso disegno, stessi 900x300. -->
+            <div class="about-logo-shell"><img class="about-logo" src="assets/branding/acidlab-logo-header.webp" alt="AcidLab — Bass Synthesizer"></div>
             <div style="font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text-dim);margin-top:5px;">VERSION 1.1.0</div>
             <div style="height:1px;background:var(--border);margin:12px 0;"></div>
             <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.7;">
