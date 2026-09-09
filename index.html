@@ -722,8 +722,46 @@ body {
 .fxk .knob-lbl{ font-size:8px; letter-spacing:1px; }
 .fxk .knob-val{ font-size:8px; color:var(--acid-dark); font-weight:600; }
 /* ── Settings ── */
-.settings-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:start; }
-.settings-wide{ display:grid; grid-template-columns:1.5fr 1fr; gap:12px; margin-top:12px; }
+.settings-atmosphere{
+  position:absolute; inset:0; z-index:0; border-radius:8px; pointer-events:none;
+  background-image:
+    linear-gradient(90deg,rgba(4,8,5,.16),rgba(4,8,5,.02) 25% 75%,rgba(4,8,5,.16)),
+    url("assets/ui/settings-acidlab-bg.webp");
+  background-size:cover; background-position:center; background-repeat:no-repeat;
+}
+
+#page-settings{
+  position:relative; isolation:isolate; overflow:hidden;
+  height:calc(var(--page-h, 596px) - 24px);
+  min-height:calc(var(--page-h, 596px) - 24px);
+  padding:12px; border-radius:8px;
+  background:#07100b;
+  box-shadow:inset 0 0 0 1px rgba(136,255,0,.12),inset 0 0 55px rgba(0,0,0,.72);
+}
+#page-settings > .settings-grid,
+#page-settings > .settings-wide{ position:relative; z-index:1; }
+#page-settings > .settings-grid{
+  flex:0 0 238px;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+}
+#page-settings > .settings-wide{
+  flex:1 1 auto; min-height:0; margin-top:0;
+  grid-template-columns:minmax(0,1.65fr) minmax(250px,.85fr);
+}
+#page-settings .card{
+  min-width:0;
+  background:linear-gradient(178deg,rgba(253,253,249,.93),rgba(235,237,230,.88));
+  -webkit-backdrop-filter:blur(3px) saturate(.75); backdrop-filter:blur(3px) saturate(.75);
+  box-shadow:0 0 0 1px rgba(153,172,156,.48),0 7px 18px rgba(0,0,0,.34),
+             inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(0,0,0,.08);
+}
+#page-settings .settings-grid > .card{ height:238px; }
+#page-settings .settings-wide > .card{ height:100%; min-height:0; }
+#page-settings .card-hdr::before{
+  background:var(--acid); box-shadow:0 0 7px var(--acid-glow);
+}
+.settings-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; align-items:stretch; }
+.settings-wide{ display:grid; grid-template-columns:1.5fr 1fr; gap:10px; margin-top:10px; }
 .set-hint{ font-family:var(--mono); font-size:8px; color:var(--text-dim); letter-spacing:.5px; line-height:1.5; }
 .acid-range{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:4px;
   background:linear-gradient(90deg, #88ff00 var(--p,0%), #202225 var(--p,0%));
@@ -2442,6 +2480,21 @@ body {
 }
 .about-logo { display:block; max-width:100%; max-height:100%; width:auto; height:auto; }
 
+/* SETTINGS e' l'unica vista ambientata: le card restano componenti AcidLab,
+   ma diventano moduli montati sulla piastra ImageGen invece di coprirla. */
+#page-settings .card{
+  background:linear-gradient(180deg,rgba(248,249,243,.78),rgba(224,227,218,.70));
+  border:1px solid rgba(185,204,178,.48);
+  box-shadow:0 7px 18px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.88);
+}
+#page-settings .card-hdr{
+  background:linear-gradient(180deg,rgba(19,29,23,.84),rgba(7,15,10,.78));
+  border-bottom:1px solid rgba(102,245,14,.30);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 0 rgba(255,255,255,.42);
+}
+#page-settings .card-hdr-txt{ color:#dfe7df; text-shadow:0 1px 1px rgba(0,0,0,.8); }
+#page-settings .card-hdr::before{ background:var(--acid); box-shadow:0 0 7px var(--acid-glow); }
+
 @media (max-width:900px) {
   .nav-tabs { min-width:0; flex:1; }
   .status-area { display:none; }
@@ -3059,7 +3112,10 @@ body {
                 <option value="0">01 — Classic Acid</option>
                 <option value="1">02 — Rollin Acid</option>
                 <option value="2">03 — Munich Sequence</option>
-                <option value="3">04 — Night Drive</option>
+                <!-- selected anche nell'HTML, non solo via JS: se lo script
+                     tarda o non parte, la tendina dice comunque quale banco
+                     e' quello di accensione invece di mostrarne un altro. -->
+                <option value="3" selected>04 — Night Drive</option>
                 <option value="4">05 — Deep Squelch</option>
                 <option value="5">06 — Phrygian Drive</option>
               </select>
@@ -3227,6 +3283,7 @@ body {
 
     <!-- ══════════════ 05 SETTINGS ══════════════ -->
     <div class="page" id="page-settings">
+      <div class="settings-atmosphere" aria-hidden="true"></div>
       <div class="settings-grid">
         <div class="card">
           <div class="card-hdr"><span class="card-hdr-txt">Tempo</span></div>
@@ -5196,7 +5253,13 @@ registerProcessor('tb303-processor', TB303Processor);
   const FACTORY_PATTERNS=FACTORY_BANKS.map(b=>b[0]);
   window.FACTORY_PATTERNS_JS=FACTORY_PATTERNS;
   window.FACTORY_BANKS_JS=FACTORY_BANKS;
-  let srcMode='seq', presetIdx=0;
+  // Night Drive e' il banco d'accensione: e' quello che si vuole sentire
+  // aprendo l'app. Sta in una costante sola perche' l'indice serve in quattro
+  // punti - stato iniziale, linea caricata, targhetta del display e select -
+  // e quattro zeri sparsi che devono restare d'accordo sono un modo sicuro
+  // di ritrovarsi con la linea di un banco e il timbro di un altro.
+  const BANCO_INIZIALE=3;
+  let srcMode='seq', presetIdx=BANCO_INIZIALE;
   const cloneP=p=>p.map(x=>({note:x.note,gate:!!x.gate,accent:!!x.accent,slide:!!x.slide,octave:x.octave||0}));
   // Il piano roll e' la sorgente del pattern in TUTTI E TRE i modi, MIDI
   // compreso: in MIDI mode la nota premuta traspone questo pattern, quindi
@@ -6018,7 +6081,7 @@ registerProcessor('tb303-processor', TB303Processor);
     };
     prev.onclick=()=>salta(-1);
     next.onclick=()=>salta(1);
-    mostraPreset(0);
+    mostraPreset(BANCO_INIZIALE);
   }
   function mostraPreset(i){
     const d=(window.FACTORY_DATA||[])[i];
@@ -6040,9 +6103,17 @@ registerProcessor('tb303-processor', TB303Processor);
     // con la coda WebAudio usata dalla preview nel browser.
     if(!window._jucePatternBridge) wirePatternButtons();
     wireFader(); wireWheel(); wirePresetNav(); resetControlDefaults(); ulRender();
-    if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[0]);
+    if(window._prSetPattern) window._prSetPattern(FACTORY_PATTERNS[BANCO_INIZIALE]);
     seqBuild();
     if(window.setSrcMode) window.setSrcMode('seq');
+    // Il banco d'accensione si applica dalla sua select invece di scrivere a
+    // mano i valori: cosi' passa dallo stesso percorso del click dell'utente e
+    // porta dietro tempo, timbro, nome sul display e voce accoppiata, senza
+    // una seconda strada da tenere allineata. Va dopo resetControlDefaults,
+    // che altrimenti riporterebbe i knob ai DEFAULTS sopra al preset.
+    const fsIni=document.getElementById('factory-select');
+    if(fsIni){ fsIni.value=String(BANCO_INIZIALE); window.onFactorySelect(fsIni); }
+    else applyFactory(FD()[BANCO_INIZIALE], BANCO_INIZIALE);
     // Il ripristino va per ULTIMO. Qui sopra la linea di fabbrica viene
     // caricata in ogni caso e setSrcMode la manda al motore: ripristinando
     // prima, lo stato salvato veniva sovrascritto da entrambi, e poi il
