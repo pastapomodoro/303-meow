@@ -36,6 +36,13 @@ static juce::WebBrowserComponent::Options makeOptions(TB303Editor* e,
         .withOptionsFrom(play)
         .withOptionsFrom(waveform)
         // ── Native functions ──────────────────────────────────────
+        // La UI chiede lo stato quando e' pronta: il bridge manda
+        // requestStateUpdate 400 ms dopo il caricamento. Senza questo
+        // ascoltatore quella richiesta cadeva nel vuoto, e a transport fermo
+        // la striscia degli step restava vuota - non c'era modo di sapere che
+        // pattern stesse suonando, ne' di sequenziare.
+        .withEventListener("requestStateUpdate",
+            [e](const juce::var&){ e->emitState(); })
         .withNativeFunction("selectPattern",
             [e](const juce::Array<juce::var>& args, juce::WebBrowserComponent::NativeFunctionCompletion c){
                 if(!args.isEmpty()) e->processor.getSequencer().selectPattern((int)args[0]);
@@ -232,19 +239,25 @@ juce::var TB303Editor::buildStateVar()
     return juce::var(state.get());
 }
 
+void TB303Editor::emitState()
+{
+    auto& seq = processor.getSequencer();
+    lastStep    = seq.getCurrentStep();
+    lastPattern = seq.getCurrentPatternIndex();
+    browser.emitEventIfBrowserIsVisible("stateUpdate", buildStateVar());
+}
+
 void TB303Editor::timerCallback()
 {
     auto& seq = processor.getSequencer();
     int curStep = seq.getCurrentStep();
     int curPat  = seq.getCurrentPatternIndex();
 
-    // Emit stateUpdate whenever step or pattern changes
+    // Solo sui cambi: a venti volte al secondo mandare sempre tutto sarebbe
+    // lavoro inutile. Lo stato iniziale non arriva da qui ma dalla richiesta
+    // della UI, vedi il listener di requestStateUpdate.
     if(curStep != lastStep || curPat != lastPattern)
-    {
-        lastStep    = curStep;
-        lastPattern = curPat;
-        browser.emitEventIfBrowserIsVisible("stateUpdate", buildStateVar());
-    }
+        emitState();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

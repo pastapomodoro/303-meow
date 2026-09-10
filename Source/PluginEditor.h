@@ -15,6 +15,15 @@ public:
 
     TB303Processor& processor;
 
+    // Pubblica come getResource, e per lo stesso motivo: la chiama una lambda
+    // registrata in makeOptions, che e' una funzione libera. Manda lo stato del
+    // sequencer alla UI su richiesta e non solo dal timer, perche' il primo
+    // invio del timer parte ~50 ms dopo l'apertura - quando la WebView non ha
+    // ancora caricato la pagina - e si perde; dopo, a transport fermo, non
+    // cambiando ne' step ne' pattern non ne partono altri e la UI resta senza
+    // dati per sempre.
+    void emitState();
+
     std::optional<juce::WebBrowserComponent::Resource>
         getResource(const juce::String& url);
 

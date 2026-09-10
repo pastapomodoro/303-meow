@@ -115,7 +115,12 @@ BRIDGE = r"""
   let juceCurrentStep=0, jucePattern=0;
 
   // ── Knob drag helper ──────────────────────────────────────────────────────
-  const knobNorm={};  // cache of current normalised value per knob element
+  // WeakMap e non oggetto: le chiavi sono elementi DOM, e un oggetto le
+  // converte in stringa - tutti i knob finivano nella stessa casella
+  // '[object HTMLDivElement]'. Ogni knob prendeva come punto di partenza del
+  // trascinamento il valore dell'ULTIMO knob mosso, quindi appena lo toccavi
+  // scattava la': un knob a 0 saltava al volo dove stava quello di prima.
+  const knobNorm=new WeakMap();  // valore normalizzato corrente, per elemento
   function setKnobAngle(knobEl,v){
     if(!knobEl)return;
     // Sprite-knob path (shared helper from the sketch); fall back to CSS rotate.
@@ -126,15 +131,15 @@ BRIDGE = r"""
     let sy=0,sv=0,drag=false;
     knobEl.style.cursor='ns-resize';
     knobEl.addEventListener('mousedown',e=>{
-      drag=true; sy=e.clientY; sv=knobNorm[knobEl]||0; e.preventDefault();
+      drag=true; sy=e.clientY; sv=knobNorm.get(knobEl)||0; e.preventDefault();
     });
     knobEl.addEventListener('touchstart',e=>{
-      drag=true; sy=e.touches[0].clientY; sv=knobNorm[knobEl]||0; e.preventDefault();
+      drag=true; sy=e.touches[0].clientY; sv=knobNorm.get(knobEl)||0; e.preventDefault();
     },{passive:false});
     const move=cy=>{
       if(!drag)return;
       const v=Math.max(0,Math.min(1,sv+(sy-cy)/160));
-      knobNorm[knobEl]=v; setKnobAngle(knobEl,v); onNorm(v);
+      knobNorm.set(knobEl,v); setKnobAngle(knobEl,v); onNorm(v);
     };
     document.addEventListener('mousemove',e=>{if(drag)move(e.clientY);});
     document.addEventListener('touchmove',e=>{if(drag)move(e.touches[0].clientY);},{passive:true});
@@ -171,7 +176,7 @@ BRIDGE = r"""
     // shows the real scaled value — Hz, seconds, semitones, …)
     state.valueChangedEvent.add(()=>{
       const nv=state.getNormalisedValue();
-      knobNorm[knob]=nv; setKnobAngle(knob,nv);
+      knobNorm.set(knob,nv); setKnobAngle(knob,nv);
       if(valEl) valEl.textContent=fmt(state.getScaledValue());
     });
     // Drag → JUCE
@@ -183,7 +188,7 @@ BRIDGE = r"""
     });
     // Init visual
     const nv0=state.getNormalisedValue();
-    knobNorm[knob]=nv0; setKnobAngle(knob,nv0);
+    knobNorm.set(knob,nv0); setKnobAngle(knob,nv0);
     if(valEl) valEl.textContent=fmt(state.getScaledValue());
   });
 
